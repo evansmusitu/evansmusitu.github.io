@@ -1,0 +1,197 @@
+name: Open Model Dual-Family Council
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/open-model-dual-family-council.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dual-family-council:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      QWEN_REPO: Qwen/Qwen3-4B-GGUF
+      QWEN_REVISION: bc640142c66e1fdd12af0bd68f40445458f3869b
+      QWEN_FILE: Qwen3-4B-Q4_K_M.gguf
+      QWEN_SHA256: 7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5
+      GRANITE_REPO: ibm-granite/granite-3.3-2b-instruct-GGUF
+      GRANITE_REVISION: main
+      GRANITE_FILE: granite-3.3-2b-instruct-Q4_K_M.gguf
+      GRANITE_SHA256: ac71e9e32c0bea919b409c5918f69ca74339854b0319c5065e4e9fb6d95c4852
+    steps:
+      - name: Record runner resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          uname -a | tee runner-uname.txt
+          free -h | tee runner-memory.txt
+          df -h . | tee runner-disk.txt
+
+      - name: Install pinned llama.cpp CPU binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz"
+          curl -fL --retry 3 --retry-delay 2 "$url" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama
+          tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli"
+          chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+          "$cli" --version | tee llama-version.txt
+
+      - name: Download and verify Qwen3-4B
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://huggingface.co/${QWEN_REPO}/resolve/${QWEN_REVISION}/${QWEN_FILE}?download=true"
+          curl -fL --retry 3 --retry-delay 2 "$url" -o qwen.gguf
+          test -s qwen.gguf
+          echo "${QWEN_SHA256}  qwen.gguf" | sha256sum -c -
+          sha256sum qwen.gguf | tee qwen-model.sha256
+          stat -c '%s' qwen.gguf | tee qwen-model.bytes
+
+      - name: Execute and verify Qwen3-4B
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 180s "$LLAMA_CLI" \
+            -m qwen.gguf \
+            -p $'/no_think\nCompute 19 * 23. Return only the integer answer.' \
+            -n 48 \
+            -c 1024 \
+            --temp 0 \
+            --seed 42 \
+            --single-turn \
+            --no-display-prompt \
+            --no-show-timings \
+            > qwen-output.txt 2> qwen-stderr.txt
+          test -s qwen-output.txt
+          grep -Eq '(^|[^0-9])437([^0-9]|$)' qwen-output.txt
+          sha256sum qwen-output.txt | tee qwen-output.sha256
+          wc -c qwen-output.txt | tee qwen-output.bytes
+          rm -f qwen.gguf
+
+      - name: Download and verify Granite 3.3 2B
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://huggingface.co/${GRANITE_REPO}/resolve/${GRANITE_REVISION}/${GRANITE_FILE}?download=true"
+          curl -fL --retry 3 --retry-delay 2 "$url" -o granite.gguf
+          test -s granite.gguf
+          echo "${GRANITE_SHA256}  granite.gguf" | sha256sum -c -
+          sha256sum granite.gguf | tee granite-model.sha256
+          stat -c '%s' granite.gguf | tee granite-model.bytes
+
+      - name: Execute and verify Granite 3.3 2B
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 180s "$LLAMA_CLI" \
+            -m granite.gguf \
+            -p 'Compute 19 * 23. Return only the integer answer.' \
+            -n 48 \
+            -c 1024 \
+            --temp 0 \
+            --seed 42 \
+            --single-turn \
+            --no-display-prompt \
+            --no-show-timings \
+            > granite-output.txt 2> granite-stderr.txt
+          test -s granite-output.txt
+          grep -Eq '(^|[^0-9])437([^0-9]|$)' granite-output.txt
+          sha256sum granite-output.txt | tee granite-output.sha256
+          wc -c granite-output.txt | tee granite-output.bytes
+          rm -f granite.gguf
+
+      - name: Seal dual-family evidence
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          def hash_file(path):
+              return pathlib.Path(path).read_text(encoding='utf-8').split()[0]
+          def int_file(path):
+              return int(pathlib.Path(path).read_text(encoding='utf-8').strip())
+          qout=pathlib.Path('qwen-output.txt')
+          gout=pathlib.Path('granite-output.txt')
+          payload={
+              'schema':'open-model.github-actions-dual-family-council.v1',
+              'execution_surface':'GITHUB_ACTIONS_PUBLIC_LOCAL_CPU',
+              'provider_api_used':False,
+              'provider_spend_usd':0.0,
+              'foundation_training':False,
+              'weights_modified':False,
+              'task':{'type':'deterministic_arithmetic','expression':'19*23','expected':'437'},
+              'qwen':{
+                  'repo':os.environ['QWEN_REPO'],
+                  'revision':os.environ['QWEN_REVISION'],
+                  'file':os.environ['QWEN_FILE'],
+                  'model_sha256':hash_file('qwen-model.sha256'),
+                  'model_bytes':int_file('qwen-model.bytes'),
+                  'output_sha256':hashlib.sha256(qout.read_bytes()).hexdigest(),
+                  'verified':True,
+              },
+              'granite':{
+                  'repo':os.environ['GRANITE_REPO'],
+                  'revision_reference':os.environ['GRANITE_REVISION'],
+                  'content_sha256_pinned':os.environ['GRANITE_SHA256'],
+                  'file':os.environ['GRANITE_FILE'],
+                  'model_sha256':hash_file('granite-model.sha256'),
+                  'model_bytes':int_file('granite-model.bytes'),
+                  'output_sha256':hashlib.sha256(gout.read_bytes()).hexdigest(),
+                  'verified':True,
+              },
+              'independent_model_families':['qwen3','granite-3.3'],
+              'cross_family_quorum':2,
+              'github_run_id':int(os.environ['RUN_ID']),
+              'github_run_attempt':int(os.environ['RUN_ATTEMPT']),
+              'source_sha':os.environ['SOURCE_SHA'],
+              'production_authority':False,
+              'live_trading_authorized':False,
+              'result':'DUAL_FAMILY_CANARY_VERIFIED',
+          }
+          pathlib.Path('OPEN_MODEL_DUAL_FAMILY_COUNCIL_EVIDENCE.json').write_text(
+              json.dumps(payload,sort_keys=True,indent=2)+'\n',encoding='utf-8'
+          )
+          print(json.dumps(payload,sort_keys=True,indent=2))
+          PY
+
+      - name: Upload evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-model-dual-family-council
+          path: |
+            OPEN_MODEL_DUAL_FAMILY_COUNCIL_EVIDENCE.json
+            qwen-model.sha256
+            qwen-model.bytes
+            qwen-output.txt
+            qwen-output.sha256
+            qwen-output.bytes
+            qwen-stderr.txt
+            granite-model.sha256
+            granite-model.bytes
+            granite-output.txt
+            granite-output.sha256
+            granite-output.bytes
+            granite-stderr.txt
+            llama-version.txt
+            runner-memory.txt
+            runner-disk.txt
+          if-no-files-found: warn
+          retention-days: 30
