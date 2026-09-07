@@ -1,0 +1,107 @@
+name: Open Model Granite Lite Critic
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/open-model-granite-lite-critic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  granite-lite-critic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: ibm-granite/granite-4.0-h-350m-GGUF
+      MODEL_REVISION: main
+      MODEL_FILE: granite-4.0-h-350m-Q4_K_M.gguf
+      MODEL_SHA256: 0a8d6a7373602fadfba274a640ba784b86cc6847f1c67f1b0a90fa2ec266b7fb
+    steps:
+      - name: Install pinned llama.cpp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama && tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli" && chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+          "$cli" --version | tee llama-version.txt
+
+      - name: Download and verify official Granite 4.0 h-350M
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          test -s model.gguf
+          echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
+          stat -c '%s' model.gguf | tee model.bytes
+
+      - name: Execute deterministic Granite critic canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 120s "$LLAMA_CLI" \
+            -m model.gguf \
+            -p 'Compute 19 * 23. Return only the integer answer.' \
+            -n 48 \
+            -c 1024 \
+            --temp 0 \
+            --seed 42 \
+            --single-turn \
+            --no-display-prompt \
+            --no-show-timings \
+            > output.txt 2> stderr.txt
+          test -s output.txt
+          grep -Eq '(^|[^0-9])437([^0-9]|$)' output.txt
+          sha256sum output.txt | tee output.sha256
+
+      - name: Seal Granite critic evidence
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          out=pathlib.Path('output.txt')
+          p={
+            'schema':'open-model.github-public-runner-model-result.v1',
+            'family':'granite-4.0-h',
+            'role':'independent_critic',
+            'repo':os.environ['MODEL_REPO'],
+            'revision_reference':os.environ['MODEL_REVISION'],
+            'content_sha256_pinned':os.environ['MODEL_SHA256'],
+            'file':os.environ['MODEL_FILE'],
+            'model_bytes':int(pathlib.Path('model.bytes').read_text()),
+            'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),
+            'task':'19*23','expected':'437','verified':True,
+            'provider_api_used':False,'provider_spend_usd':0.0,
+            'weights_modified':False,'foundation_training':False,
+            'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],
+            'production_authority':False,'live_trading_authorized':False
+          }
+          raw=(json.dumps(p,sort_keys=True,indent=2)+'\n').encode()
+          pathlib.Path('granite-lite-result.json').write_bytes(raw)
+          print(json.dumps(p,sort_keys=True,indent=2))
+          print('EVIDENCE_SHA256='+hashlib.sha256(raw).hexdigest())
+          PY
+
+      - name: Upload Granite critic evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: granite-lite-critic-result
+          path: |
+            granite-lite-result.json
+            output.txt
+            output.sha256
+            stderr.txt
+            llama-version.txt
+          retention-days: 30
