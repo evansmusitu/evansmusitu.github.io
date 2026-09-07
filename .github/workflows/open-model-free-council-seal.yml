@@ -1,0 +1,148 @@
+name: Open Model Free Council Seal
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/open-model-free-council-seal.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  seal-council:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      REPO: evansmusitu/evansmusitu.github.io
+      QWEN_RUN_ID: '34150261568'
+      QWEN_ARTIFACT_ID: '10029111427'
+      QWEN_ARTIFACT_DIGEST: 'sha256:b1b46c256717e0d1abb2e69c47265e245c56bcfd125f10e5488c1414fc256efb'
+      QWEN_MODEL_SHA256: '7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5'
+      PHI_RUN_ID: '34151414657'
+      PHI_ARTIFACT_ID: '10029522030'
+      PHI_ARTIFACT_DIGEST: 'sha256:064f45f721cfe2dcaa704fb13f0c7e2c4ca8306f5bcbe6cd8eb8879a0f089c32'
+      PHI_MODEL_SHA256: '8a83c7fb9049a9b2e92266fa7ad04933bb53aa1e85136b7b30f1b8000ff2edef'
+    steps:
+      - name: Verify source artifact metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for spec in \
+            "qwen:${QWEN_ARTIFACT_ID}:${QWEN_RUN_ID}:${QWEN_ARTIFACT_DIGEST}" \
+            "phi:${PHI_ARTIFACT_ID}:${PHI_RUN_ID}:${PHI_ARTIFACT_DIGEST}"
+          do
+            IFS=: read -r label artifact_id run_id digest_algo digest_hex <<< "$spec"
+            expected_digest="${digest_algo}:${digest_hex}"
+            curl -fsSL \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${REPO}/actions/artifacts/${artifact_id}" \
+              > "${label}-artifact-meta.json"
+            python - "$label" "$run_id" "$expected_digest" <<'PY'
+          import json,sys,pathlib
+          label,run_id,expected_digest=sys.argv[1:]
+          p=json.loads(pathlib.Path(f'{label}-artifact-meta.json').read_text())
+          assert str(p['workflow_run']['id'])==run_id, (p['workflow_run']['id'],run_id)
+          assert p['digest']==expected_digest, (p['digest'],expected_digest)
+          assert p['expired'] is False
+          print(label, 'artifact metadata verified', p['id'], p['digest'])
+          PY
+          done
+
+      - name: Download Qwen verified evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: qwen-reasoner-result
+          path: qwen
+          repository: evansmusitu/evansmusitu.github.io
+          run-id: 34150261568
+          github-token: ${{ github.token }}
+
+      - name: Download Phi verified evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: phi3-critic-result
+          path: phi
+          repository: evansmusitu/evansmusitu.github.io
+          run-id: 34151414657
+          github-token: ${{ github.token }}
+
+      - name: Verify independent-family quorum and seal
+        shell: bash
+        env:
+          COUNCIL_RUN_ID: ${{ github.run_id }}
+          COUNCIL_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os,pathlib,re
+          q=json.loads(pathlib.Path('qwen/qwen-result.json').read_text())
+          p=json.loads(pathlib.Path('phi/phi3-result.json').read_text())
+
+          assert q['verified'] is True
+          assert p['verified'] is True
+          assert q['family']=='qwen3'
+          assert p['family']=='phi3'
+          assert q['family'] != p['family']
+          assert q['role']=='reasoner'
+          assert p['role']=='independent_critic'
+          assert q['task']==p['task']=='19*23'
+          assert q['expected']==p['expected']=='437'
+          assert str(q['github_run_id'])==os.environ['QWEN_RUN_ID']
+          assert str(p['github_run_id'])==os.environ['PHI_RUN_ID']
+          assert q['model_sha256']==os.environ['QWEN_MODEL_SHA256']
+          assert p['model_sha256']==os.environ['PHI_MODEL_SHA256']
+          assert q['repo']=='Qwen/Qwen3-4B-GGUF'
+          assert p['repo']=='microsoft/Phi-3-mini-4k-instruct-gguf'
+          assert q['provider_api_used'] is False and p['provider_api_used'] is False
+          assert q['provider_spend_usd']==0.0 and p['provider_spend_usd']==0.0
+          assert q['weights_modified'] is False and p['weights_modified'] is False
+          assert q['production_authority'] is False and p['production_authority'] is False
+          assert q['live_trading_authorized'] is False and p['live_trading_authorized'] is False
+          assert re.search(r'(^|[^0-9])437([^0-9]|$)', pathlib.Path('qwen/output.txt').read_text(errors='replace'))
+          assert re.search(r'(^|[^0-9])437([^0-9]|$)', pathlib.Path('phi/output.txt').read_text(errors='replace'))
+
+          evidence={
+            'schema':'open-model.github-public-runner-cross-run-council-evidence.v1',
+            'result':'DUAL_FAMILY_CANARY_VERIFIED',
+            'execution_surface':'GITHUB_ACTIONS_PUBLIC_LOCAL_CPU',
+            'council_run_id':int(os.environ['COUNCIL_RUN_ID']),
+            'council_source_sha':os.environ['COUNCIL_SOURCE_SHA'],
+            'cross_family_quorum':2,
+            'independent_model_families':['qwen3','phi3'],
+            'source_artifacts':[
+              {'run_id':int(os.environ['QWEN_RUN_ID']),'artifact_id':int(os.environ['QWEN_ARTIFACT_ID']),'artifact_digest':os.environ['QWEN_ARTIFACT_DIGEST']},
+              {'run_id':int(os.environ['PHI_RUN_ID']),'artifact_id':int(os.environ['PHI_ARTIFACT_ID']),'artifact_digest':os.environ['PHI_ARTIFACT_DIGEST']}
+            ],
+            'members':[q,p],
+            'provider_api_used':False,
+            'provider_spend_usd':0.0,
+            'foundation_training':False,
+            'weights_modified':False,
+            'production_authority':False,
+            'live_trading_authorized':False,
+            'frontier_superiority_certified':False
+          }
+          raw=(json.dumps(evidence,sort_keys=True,indent=2)+'\n').encode()
+          pathlib.Path('OPEN_MODEL_FREE_COUNCIL_EVIDENCE.json').write_bytes(raw)
+          pathlib.Path('OPEN_MODEL_FREE_COUNCIL_EVIDENCE.sha256').write_text(hashlib.sha256(raw).hexdigest()+'  OPEN_MODEL_FREE_COUNCIL_EVIDENCE.json\n')
+          print(json.dumps(evidence,sort_keys=True,indent=2))
+          print('COUNCIL_EVIDENCE_SHA256='+hashlib.sha256(raw).hexdigest())
+          PY
+
+      - name: Upload sealed council evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-model-free-council-evidence
+          path: |
+            OPEN_MODEL_FREE_COUNCIL_EVIDENCE.json
+            OPEN_MODEL_FREE_COUNCIL_EVIDENCE.sha256
+            qwen-artifact-meta.json
+            phi-artifact-meta.json
+          retention-days: 30
