@@ -59,8 +59,10 @@ jobs:
             --no-show-timings \
             > output.txt 2> stderr.txt
           test -s output.txt
-          grep -Eq '(^|[^0-9])437([^0-9]|$)' output.txt
           sha256sum output.txt | tee output.sha256
+          printf '%s\n' '--- GRANITE RAW OUTPUT ---'
+          cat output.txt
+          printf '%s\n' '--- END GRANITE RAW OUTPUT ---'
 
       - name: Seal Granite critic evidence
         shell: bash
@@ -70,8 +72,10 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import hashlib,json,os,pathlib
+          import hashlib,json,os,pathlib,re
           out=pathlib.Path('output.txt')
+          text=out.read_text(encoding='utf-8', errors='replace')
+          verified=bool(re.search(r'(^|[^0-9])437([^0-9]|$)', text))
           p={
             'schema':'open-model.github-public-runner-model-result.v1',
             'family':'granite-4.0-h',
@@ -82,7 +86,8 @@ jobs:
             'file':os.environ['MODEL_FILE'],
             'model_bytes':int(pathlib.Path('model.bytes').read_text()),
             'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),
-            'task':'19*23','expected':'437','verified':True,
+            'output_text':text,
+            'task':'19*23','expected':'437','verified':verified,
             'provider_api_used':False,'provider_spend_usd':0.0,
             'weights_modified':False,'foundation_training':False,
             'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],
@@ -95,6 +100,7 @@ jobs:
           PY
 
       - name: Upload Granite critic evidence
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: granite-lite-critic-result
@@ -104,4 +110,11 @@ jobs:
             output.sha256
             stderr.txt
             llama-version.txt
+          if-no-files-found: warn
           retention-days: 30
+
+      - name: Enforce Granite answer gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Eq '(^|[^0-9])437([^0-9]|$)' output.txt
