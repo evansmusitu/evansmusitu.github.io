@@ -1,0 +1,182 @@
+name: Open Model Parallel Council
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/open-model-parallel-council.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qwen-reasoner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: Qwen/Qwen3-4B-GGUF
+      MODEL_REVISION: bc640142c66e1fdd12af0bd68f40445458f3869b
+      MODEL_FILE: Qwen3-4B-Q4_K_M.gguf
+      MODEL_SHA256: 7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5
+    steps:
+      - name: Install pinned llama.cpp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama && tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli" && chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+          "$cli" --version | tee qwen-llama-version.txt
+      - name: Download immutable Qwen3-4B
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
+          stat -c '%s' model.gguf > model.bytes
+      - name: Execute deterministic Qwen canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 180s "$LLAMA_CLI" -m model.gguf -p $'/no_think\nCompute 19 * 23. Return only the integer answer.' -n 48 -c 1024 --temp 0 --seed 42 --single-turn --no-display-prompt --no-show-timings > output.txt 2> stderr.txt
+          test -s output.txt
+          grep -Eq '(^|[^0-9])437([^0-9]|$)' output.txt
+          sha256sum output.txt > output.sha256
+      - name: Seal Qwen result
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          out=pathlib.Path('output.txt')
+          p={'schema':'open-model.github-public-runner-model-result.v1','family':'qwen3','role':'reasoner','repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],'file':os.environ['MODEL_FILE'],'model_sha256':os.environ['MODEL_SHA256'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'task':'19*23','expected':'437','verified':True,'provider_api_used':False,'provider_spend_usd':0.0,'weights_modified':False,'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False}
+          pathlib.Path('qwen-result.json').write_text(json.dumps(p,sort_keys=True,indent=2)+'\n')
+          print(json.dumps(p,sort_keys=True,indent=2))
+          PY
+      - name: Upload Qwen result
+        uses: actions/upload-artifact@v4
+        with:
+          name: qwen-reasoner-result
+          path: |
+            qwen-result.json
+            output.txt
+            output.sha256
+            stderr.txt
+            qwen-llama-version.txt
+          retention-days: 30
+
+  granite-critic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: ibm-granite/granite-3.3-2b-instruct-GGUF
+      MODEL_REVISION: d47d6f4baa3bcd00aaf2c3eb4ea2f4497f277861
+      MODEL_FILE: granite-3.3-2b-instruct-Q2_K.gguf
+      MODEL_SHA256: 8be25be65b4a2955781fd93df51f4752e6f6fe5c035bea5573b97538736dfedd
+    steps:
+      - name: Install pinned llama.cpp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama && tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli" && chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+          "$cli" --version | tee granite-llama-version.txt
+      - name: Download immutable Granite 3.3 2B
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
+          stat -c '%s' model.gguf > model.bytes
+      - name: Execute deterministic Granite canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 180s "$LLAMA_CLI" -m model.gguf -p 'Compute 19 * 23. Return only the integer answer.' -n 48 -c 1024 --temp 0 --seed 42 --single-turn --no-display-prompt --no-show-timings > output.txt 2> stderr.txt
+          test -s output.txt
+          grep -Eq '(^|[^0-9])437([^0-9]|$)' output.txt
+          sha256sum output.txt > output.sha256
+      - name: Seal Granite result
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          out=pathlib.Path('output.txt')
+          p={'schema':'open-model.github-public-runner-model-result.v1','family':'granite-3.3','role':'independent_critic','repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],'file':os.environ['MODEL_FILE'],'model_sha256':os.environ['MODEL_SHA256'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'task':'19*23','expected':'437','verified':True,'provider_api_used':False,'provider_spend_usd':0.0,'weights_modified':False,'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False}
+          pathlib.Path('granite-result.json').write_text(json.dumps(p,sort_keys=True,indent=2)+'\n')
+          print(json.dumps(p,sort_keys=True,indent=2))
+          PY
+      - name: Upload Granite result
+        uses: actions/upload-artifact@v4
+        with:
+          name: granite-critic-result
+          path: |
+            granite-result.json
+            output.txt
+            output.sha256
+            stderr.txt
+            granite-llama-version.txt
+          retention-days: 30
+
+  quorum:
+    needs: [qwen-reasoner, granite-critic]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download Qwen evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: qwen-reasoner-result
+          path: qwen
+      - name: Download Granite evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: granite-critic-result
+          path: granite
+      - name: Verify independent-family quorum
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          q=json.loads(pathlib.Path('qwen/qwen-result.json').read_text())
+          g=json.loads(pathlib.Path('granite/granite-result.json').read_text())
+          assert q['verified'] is True and g['verified'] is True
+          assert q['family'] != g['family']
+          assert q['task']==g['task']=='19*23'
+          assert q['expected']==g['expected']=='437'
+          assert q['provider_spend_usd']==0.0 and g['provider_spend_usd']==0.0
+          assert q['provider_api_used'] is False and g['provider_api_used'] is False
+          assert q['weights_modified'] is False and g['weights_modified'] is False
+          p={'schema':'open-model.github-public-runner-council-evidence.v1','execution_surface':'GITHUB_ACTIONS_PUBLIC_LOCAL_CPU','github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'members':[q,g],'independent_model_families':[q['family'],g['family']],'cross_family_quorum':2,'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,'production_authority':False,'live_trading_authorized':False,'result':'DUAL_FAMILY_CANARY_VERIFIED'}
+          raw=(json.dumps(p,sort_keys=True,indent=2)+'\n').encode()
+          pathlib.Path('OPEN_MODEL_FREE_COUNCIL_EVIDENCE.json').write_bytes(raw)
+          print(json.dumps(p,sort_keys=True,indent=2))
+          print('EVIDENCE_SHA256='+hashlib.sha256(raw).hexdigest())
+          PY
+      - name: Upload council evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-model-free-council-evidence
+          path: OPEN_MODEL_FREE_COUNCIL_EVIDENCE.json
+          retention-days: 30
