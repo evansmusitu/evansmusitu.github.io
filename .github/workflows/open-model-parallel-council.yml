@@ -79,10 +79,10 @@ jobs:
     env:
       LLAMA_TAG: b10837
       LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
-      MODEL_REPO: ibm-granite/granite-3.3-2b-instruct-GGUF
-      MODEL_REVISION: d47d6f4baa3bcd00aaf2c3eb4ea2f4497f277861
-      MODEL_FILE: granite-3.3-2b-instruct-Q2_K.gguf
-      MODEL_SHA256: 8be25be65b4a2955781fd93df51f4752e6f6fe5c035bea5573b97538736dfedd
+      MODEL_REPO: ibm-granite/granite-4.0-1b-GGUF
+      MODEL_REVISION: main
+      MODEL_FILE: granite-4.0-1b-Q4_0.gguf
+      MODEL_SHA256: 227e78e2fb9a3e5699190be0ce0885fd2ea72a242ed1bf718c2148c45dd090b5
     steps:
       - name: Install pinned llama.cpp
         shell: bash
@@ -95,31 +95,33 @@ jobs:
           test -n "$cli" && chmod +x "$cli"
           echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
           "$cli" --version | tee granite-llama-version.txt
-      - name: Download immutable Granite 3.3 2B
+      - name: Download and verify pinned Granite 4.0 1B
         shell: bash
         run: |
           set -euo pipefail
           curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
           echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
           stat -c '%s' model.gguf > model.bytes
-      - name: Execute deterministic Granite canary
+      - name: Execute Granite canary with complete generation budget
         shell: bash
         run: |
           set -euo pipefail
-          timeout 180s "$LLAMA_CLI" -m model.gguf -p 'Compute 19 * 23. Return only the integer answer.' -n 48 -c 1024 --temp 0 --seed 42 --single-turn --no-display-prompt --no-show-timings > output.txt 2> stderr.txt
+          timeout 180s "$LLAMA_CLI" -m model.gguf -p 'Compute 19 * 23. Return only the integer answer.' -n 256 -c 1024 --temp 0 --seed 42 --single-turn --no-display-prompt --no-show-timings > output.txt 2> stderr.txt
           test -s output.txt
-          grep -Eq '(^|[^0-9])437([^0-9]|$)' output.txt
           sha256sum output.txt > output.sha256
-      - name: Seal Granite result
+          cat output.txt
+      - name: Seal Granite result before enforcement
         shell: bash
         env:
           RUN_ID: ${{ github.run_id }}
           SOURCE_SHA: ${{ github.sha }}
         run: |
           python - <<'PY'
-          import hashlib,json,os,pathlib
+          import hashlib,json,os,pathlib,re
           out=pathlib.Path('output.txt')
-          p={'schema':'open-model.github-public-runner-model-result.v1','family':'granite-3.3','role':'independent_critic','repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],'file':os.environ['MODEL_FILE'],'model_sha256':os.environ['MODEL_SHA256'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'task':'19*23','expected':'437','verified':True,'provider_api_used':False,'provider_spend_usd':0.0,'weights_modified':False,'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False}
+          text=out.read_text(encoding='utf-8',errors='replace')
+          verified=bool(re.search(r'(^|[^0-9])437([^0-9]|$)',text))
+          p={'schema':'open-model.github-public-runner-model-result.v1','family':'granite-4.0','role':'independent_critic','repo':os.environ['MODEL_REPO'],'revision_reference':os.environ['MODEL_REVISION'],'content_sha256_pinned':os.environ['MODEL_SHA256'],'file':os.environ['MODEL_FILE'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'output_text':text,'task':'19*23','expected':'437','verified':verified,'provider_api_used':False,'provider_spend_usd':0.0,'weights_modified':False,'foundation_training':False,'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False}
           pathlib.Path('granite-result.json').write_text(json.dumps(p,sort_keys=True,indent=2)+'\n')
           print(json.dumps(p,sort_keys=True,indent=2))
           PY
@@ -134,6 +136,11 @@ jobs:
             stderr.txt
             granite-llama-version.txt
           retention-days: 30
+      - name: Enforce Granite answer gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Eq '(^|[^0-9])437([^0-9]|$)' output.txt
 
   quorum:
     needs: [qwen-reasoner, granite-critic]
