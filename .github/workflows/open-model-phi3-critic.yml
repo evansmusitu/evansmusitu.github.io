@@ -1,0 +1,112 @@
+name: Open Model Phi3 Critic
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/open-model-phi3-critic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  phi3-critic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: microsoft/Phi-3-mini-4k-instruct-gguf
+      MODEL_REVISION: 8842f87a812f23f981be51e31fbbfbc34e72c16d
+      MODEL_FILE: Phi-3-mini-4k-instruct-q4.gguf
+      MODEL_SHA256: 8a83c7fb9049a9b2e92266fa7ad04933bb53aa1e85136b7b30f1b8000ff2edef
+    steps:
+      - name: Install pinned llama.cpp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama && tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli" && chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+          "$cli" --version | tee llama-version.txt
+
+      - name: Download and verify immutable Phi-3 Mini
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          test -s model.gguf
+          echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
+          stat -c '%s' model.gguf | tee model.bytes
+
+      - name: Execute deterministic Phi-3 critic canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          prompt=$'<|user|>\nCompute 19 * 23. Return only the integer answer.<|end|>\n<|assistant|>'
+          timeout 180s "$LLAMA_CLI" \
+            -m model.gguf \
+            -p "$prompt" \
+            -n 64 \
+            -c 1024 \
+            --temp 0 \
+            --seed 42 \
+            --single-turn \
+            --no-display-prompt \
+            --no-show-timings \
+            > output.txt 2> stderr.txt
+          test -s output.txt
+          sha256sum output.txt | tee output.sha256
+          cat output.txt
+
+      - name: Seal Phi-3 evidence before enforcement
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,pathlib,re
+          out=pathlib.Path('output.txt')
+          text=out.read_text(encoding='utf-8',errors='replace')
+          verified=bool(re.search(r'(^|[^0-9])437([^0-9]|$)',text))
+          p={
+            'schema':'open-model.github-public-runner-model-result.v1',
+            'family':'phi3','role':'independent_critic',
+            'repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],
+            'file':os.environ['MODEL_FILE'],'model_sha256':os.environ['MODEL_SHA256'],
+            'model_bytes':int(pathlib.Path('model.bytes').read_text()),
+            'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'output_text':text,
+            'task':'19*23','expected':'437','verified':verified,
+            'provider_api_used':False,'provider_spend_usd':0.0,
+            'weights_modified':False,'foundation_training':False,
+            'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],
+            'production_authority':False,'live_trading_authorized':False
+          }
+          raw=(json.dumps(p,sort_keys=True,indent=2)+'\n').encode()
+          pathlib.Path('phi3-result.json').write_bytes(raw)
+          print(json.dumps(p,sort_keys=True,indent=2))
+          print('EVIDENCE_SHA256='+hashlib.sha256(raw).hexdigest())
+          PY
+
+      - name: Upload Phi-3 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: phi3-critic-result
+          path: |
+            phi3-result.json
+            output.txt
+            output.sha256
+            stderr.txt
+            llama-version.txt
+          retention-days: 30
+
+      - name: Enforce Phi-3 answer gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Eq '(^|[^0-9])437([^0-9]|$)' output.txt
