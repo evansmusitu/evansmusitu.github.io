@@ -38,8 +38,11 @@ jobs:
           echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
           mkdir llama
           tar -xzf llama.tar.gz -C llama
-          test -x llama/llama-cli
-          llama/llama-cli --version | tee llama-version.txt
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli"
+          chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+          "$cli" --version | tee llama-version.txt
 
       - name: Download immutable official Qwen3 0.6B GGUF
         shell: bash
@@ -55,7 +58,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          llama/llama-cli \
+          "$LLAMA_CLI" \
             -m model.gguf \
             -p 'Respond with the single word READY.' \
             -n 24 \
