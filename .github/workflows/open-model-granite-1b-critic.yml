@@ -1,0 +1,115 @@
+name: Open Model Granite 1B Critic
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/open-model-granite-1b-critic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  granite-1b-critic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: ibm-granite/granite-4.0-1b-GGUF
+      MODEL_REVISION: main
+      MODEL_FILE: granite-4.0-1b-Q4_0.gguf
+      MODEL_SHA256: 227e78e2fb9a3e5699190be0ce0885fd2ea72a242ed1bf718c2148c45dd090b5
+    steps:
+      - name: Install pinned llama.cpp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama && tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli" && chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+          "$cli" --version | tee llama-version.txt
+
+      - name: Download and verify official Granite 4.0 1B
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          test -s model.gguf
+          echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
+          stat -c '%s' model.gguf | tee model.bytes
+
+      - name: Execute deterministic Granite 1B critic canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 150s "$LLAMA_CLI" \
+            -m model.gguf \
+            -p 'Compute 19 * 23. Return only the integer answer.' \
+            -n 64 \
+            -c 1024 \
+            --temp 0 \
+            --seed 42 \
+            --single-turn \
+            --no-display-prompt \
+            --no-show-timings \
+            > output.txt 2> stderr.txt
+          test -s output.txt
+          sha256sum output.txt | tee output.sha256
+          printf '%s\n' '--- GRANITE 1B RAW OUTPUT ---'
+          cat output.txt
+          printf '%s\n' '--- END GRANITE 1B RAW OUTPUT ---'
+
+      - name: Seal Granite 1B evidence
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os,pathlib,re
+          out=pathlib.Path('output.txt')
+          text=out.read_text(encoding='utf-8',errors='replace')
+          verified=bool(re.search(r'(^|[^0-9])437([^0-9]|$)', text))
+          p={
+            'schema':'open-model.github-public-runner-model-result.v1',
+            'family':'granite-4.0','role':'independent_critic',
+            'repo':os.environ['MODEL_REPO'],'revision_reference':os.environ['MODEL_REVISION'],
+            'content_sha256_pinned':os.environ['MODEL_SHA256'],'file':os.environ['MODEL_FILE'],
+            'model_bytes':int(pathlib.Path('model.bytes').read_text()),
+            'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'output_text':text,
+            'task':'19*23','expected':'437','verified':verified,
+            'provider_api_used':False,'provider_spend_usd':0.0,'weights_modified':False,
+            'foundation_training':False,'github_run_id':int(os.environ['RUN_ID']),
+            'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False
+          }
+          raw=(json.dumps(p,sort_keys=True,indent=2)+'\n').encode()
+          pathlib.Path('granite-1b-result.json').write_bytes(raw)
+          print(json.dumps(p,sort_keys=True,indent=2))
+          print('EVIDENCE_SHA256='+hashlib.sha256(raw).hexdigest())
+          PY
+
+      - name: Upload Granite 1B evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: granite-1b-critic-result
+          path: |
+            granite-1b-result.json
+            output.txt
+            output.sha256
+            stderr.txt
+            llama-version.txt
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Enforce Granite 1B answer gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Eq '(^|[^0-9])437([^0-9]|$)' output.txt
