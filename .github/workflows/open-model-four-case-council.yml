@@ -1,0 +1,256 @@
+name: Open Model Four Case Council
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/open-model-four-case-council.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qwen-reasoner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: Qwen/Qwen3-4B-GGUF
+      MODEL_REVISION: bc640142c66e1fdd12af0bd68f40445458f3869b
+      MODEL_FILE: Qwen3-4B-Q4_K_M.gguf
+      MODEL_SHA256: 7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5
+    steps:
+      - name: Install pinned llama.cpp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama && tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli" && chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+          "$cli" --version | tee llama-version.txt
+
+      - name: Download and verify immutable Qwen3-4B
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          test -s model.gguf
+          echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
+          stat -c '%s' model.gguf | tee model.bytes
+
+      - name: Execute four deterministic Qwen cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir outputs
+          run_case() {
+            local id="$1"; shift
+            local prompt="$1"
+            timeout 180s "$LLAMA_CLI" \
+              -m model.gguf -p $'/no_think\n'"$prompt" \
+              -n 64 -c 1024 --temp 0 --seed 42 --single-turn \
+              --no-display-prompt --no-show-timings \
+              > "outputs/${id}.txt" 2> "outputs/${id}.stderr.txt"
+            test -s "outputs/${id}.txt"
+          }
+          run_case multiplication 'Compute 19 * 23. Return only the integer answer.'
+          run_case algebra 'Solve 8*x - 11 = 45. Return only the integer value of x.'
+          run_case compounding 'An asset price starts at 100, falls by 20 percent, then rises by 25 percent from the new price. Return only the final price as an integer.'
+          run_case logic 'Every cobalt object is metallic. No metallic object is transparent. Can any cobalt object be transparent? Return 1 for yes and 0 for no.'
+
+      - name: Seal Qwen four-case evidence before enforcement
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          expected={'multiplication':'437','algebra':'7','compounding':'100','logic':'0'}
+          def final_answer(text):
+              lines=[line.strip() for line in text.splitlines() if line.strip()]
+              lines=[line for line in lines if line!='Exiting...']
+              return lines[-1] if lines else ''
+          cases=[]
+          for name,want in expected.items():
+              path=pathlib.Path('outputs')/f'{name}.txt'
+              text=path.read_text(encoding='utf-8',errors='replace')
+              observed=final_answer(text)
+              cases.append({'case':name,'expected':want,'observed':observed,'verified':observed==want,'output_sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
+          p={'schema':'open-model.github-public-runner-four-case-model-result.v1','family':'qwen3','role':'reasoner','repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],'file':os.environ['MODEL_FILE'],'model_sha256':os.environ['MODEL_SHA256'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),'cases':cases,'verified':all(c['verified'] for c in cases),'provider_api_used':False,'provider_spend_usd':0.0,'weights_modified':False,'foundation_training':False,'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False}
+          pathlib.Path('qwen-four-case-result.json').write_text(json.dumps(p,sort_keys=True,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(p,sort_keys=True,indent=2))
+          PY
+
+      - name: Upload Qwen four-case evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: qwen-four-case-result
+          path: |
+            qwen-four-case-result.json
+            outputs/
+            llama-version.txt
+          retention-days: 30
+
+      - name: Enforce Qwen four-case gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('qwen-four-case-result.json'))
+          assert p['verified'] is True, p['cases']
+          PY
+
+  phi3-critic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: microsoft/Phi-3-mini-4k-instruct-gguf
+      MODEL_REVISION: 8842f87a812f23f981be51e31fbbfbc34e72c16d
+      MODEL_FILE: Phi-3-mini-4k-instruct-q4.gguf
+      MODEL_SHA256: 8a83c7fb9049a9b2e92266fa7ad04933bb53aa1e85136b7b30f1b8000ff2edef
+    steps:
+      - name: Install pinned llama.cpp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama && tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli" && chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+          "$cli" --version | tee llama-version.txt
+
+      - name: Download and verify immutable Phi-3 Mini
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          test -s model.gguf
+          echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
+          stat -c '%s' model.gguf | tee model.bytes
+
+      - name: Execute four deterministic Phi-3 cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir outputs
+          run_case() {
+            local id="$1"; shift
+            local question="$1"
+            local prompt=$'<|user|>\n'"${question}"$'<|end|>\n<|assistant|>'
+            timeout 180s "$LLAMA_CLI" \
+              -m model.gguf -p "$prompt" \
+              -n 64 -c 1024 --temp 0 --seed 42 --single-turn \
+              --no-display-prompt --no-show-timings \
+              > "outputs/${id}.txt" 2> "outputs/${id}.stderr.txt"
+            test -s "outputs/${id}.txt"
+          }
+          run_case multiplication 'Compute 19 * 23. Return only the integer answer.'
+          run_case algebra 'Solve 8*x - 11 = 45. Return only the integer value of x.'
+          run_case compounding 'An asset price starts at 100, falls by 20 percent, then rises by 25 percent from the new price. Return only the final price as an integer.'
+          run_case logic 'Every cobalt object is metallic. No metallic object is transparent. Can any cobalt object be transparent? Return 1 for yes and 0 for no.'
+
+      - name: Seal Phi-3 four-case evidence before enforcement
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          expected={'multiplication':'437','algebra':'7','compounding':'100','logic':'0'}
+          def final_answer(text):
+              lines=[line.strip() for line in text.splitlines() if line.strip()]
+              lines=[line for line in lines if line!='Exiting...']
+              return lines[-1] if lines else ''
+          cases=[]
+          for name,want in expected.items():
+              path=pathlib.Path('outputs')/f'{name}.txt'
+              text=path.read_text(encoding='utf-8',errors='replace')
+              observed=final_answer(text)
+              cases.append({'case':name,'expected':want,'observed':observed,'verified':observed==want,'output_sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
+          p={'schema':'open-model.github-public-runner-four-case-model-result.v1','family':'phi3','role':'independent_critic','repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],'file':os.environ['MODEL_FILE'],'model_sha256':os.environ['MODEL_SHA256'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),'cases':cases,'verified':all(c['verified'] for c in cases),'provider_api_used':False,'provider_spend_usd':0.0,'weights_modified':False,'foundation_training':False,'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False}
+          pathlib.Path('phi3-four-case-result.json').write_text(json.dumps(p,sort_keys=True,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(p,sort_keys=True,indent=2))
+          PY
+
+      - name: Upload Phi-3 four-case evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: phi3-four-case-result
+          path: |
+            phi3-four-case-result.json
+            outputs/
+            llama-version.txt
+          retention-days: 30
+
+      - name: Enforce Phi-3 four-case gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('phi3-four-case-result.json'))
+          assert p['verified'] is True, p['cases']
+          PY
+
+  quorum:
+    needs: [qwen-reasoner, phi3-critic]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download Qwen four-case evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: qwen-four-case-result
+          path: qwen
+
+      - name: Download Phi-3 four-case evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: phi3-four-case-result
+          path: phi
+
+      - name: Verify four-case cross-family quorum
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          q=json.loads(pathlib.Path('qwen/qwen-four-case-result.json').read_text())
+          p=json.loads(pathlib.Path('phi/phi3-four-case-result.json').read_text())
+          assert q['verified'] is True and p['verified'] is True
+          assert q['github_run_id']==p['github_run_id']==int(os.environ['RUN_ID'])
+          assert q['family']=='qwen3' and p['family']=='phi3'
+          assert q['family'] != p['family']
+          assert [c['case'] for c in q['cases']]==[c['case'] for c in p['cases']]
+          assert all(c['verified'] for c in q['cases']) and all(c['verified'] for c in p['cases'])
+          assert q['provider_spend_usd']==p['provider_spend_usd']==0.0
+          assert q['provider_api_used'] is False and p['provider_api_used'] is False
+          evidence={'schema':'open-model.github-public-runner-four-case-council-evidence.v1','result':'FOUR_CASE_DUAL_FAMILY_CANARY_VERIFIED','execution_surface':'GITHUB_ACTIONS_PUBLIC_LOCAL_CPU','github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'case_count':4,'model_case_checks':8,'cross_family_quorum':2,'independent_model_families':['qwen3','phi3'],'members':[q,p],'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,'production_authority':False,'live_trading_authorized':False,'frontier_superiority_certified':False}
+          raw=(json.dumps(evidence,sort_keys=True,indent=2)+'\n').encode()
+          pathlib.Path('OPEN_MODEL_FREE_FOUR_CASE_COUNCIL_EVIDENCE.json').write_bytes(raw)
+          pathlib.Path('OPEN_MODEL_FREE_FOUR_CASE_COUNCIL_EVIDENCE.sha256').write_text(hashlib.sha256(raw).hexdigest()+'  OPEN_MODEL_FREE_FOUR_CASE_COUNCIL_EVIDENCE.json\n')
+          print(json.dumps(evidence,sort_keys=True,indent=2))
+          print('EVIDENCE_SHA256='+hashlib.sha256(raw).hexdigest())
+          PY
+
+      - name: Upload four-case council evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: open-model-free-four-case-council-evidence
+          path: |
+            OPEN_MODEL_FREE_FOUR_CASE_COUNCIL_EVIDENCE.json
+            OPEN_MODEL_FREE_FOUR_CASE_COUNCIL_EVIDENCE.sha256
+          retention-days: 30
