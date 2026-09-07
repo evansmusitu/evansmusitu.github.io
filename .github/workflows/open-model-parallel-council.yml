@@ -32,37 +32,49 @@ jobs:
           cli="$(find llama -type f -name llama-cli -print -quit)"
           test -n "$cli" && chmod +x "$cli"
           echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
-          "$cli" --version | tee qwen-llama-version.txt
-      - name: Download immutable Qwen3-4B
+          "$cli" --version | tee llama-version.txt
+
+      - name: Download and verify immutable Qwen3-4B
         shell: bash
         run: |
           set -euo pipefail
           curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          test -s model.gguf
           echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
-          stat -c '%s' model.gguf > model.bytes
+          stat -c '%s' model.gguf | tee model.bytes
+
       - name: Execute deterministic Qwen canary
         shell: bash
         run: |
           set -euo pipefail
-          timeout 180s "$LLAMA_CLI" -m model.gguf -p $'/no_think\nCompute 19 * 23. Return only the integer answer.' -n 48 -c 1024 --temp 0 --seed 42 --single-turn --no-display-prompt --no-show-timings > output.txt 2> stderr.txt
+          timeout 180s "$LLAMA_CLI" \
+            -m model.gguf \
+            -p $'/no_think\nCompute 19 * 23. Return only the integer answer.' \
+            -n 48 -c 1024 --temp 0 --seed 42 --single-turn \
+            --no-display-prompt --no-show-timings \
+            > output.txt 2> stderr.txt
           test -s output.txt
-          grep -Eq '(^|[^0-9])437([^0-9]|$)' output.txt
-          sha256sum output.txt > output.sha256
-      - name: Seal Qwen result
+          sha256sum output.txt | tee output.sha256
+          cat output.txt
+
+      - name: Seal Qwen evidence before enforcement
         shell: bash
         env:
           RUN_ID: ${{ github.run_id }}
           SOURCE_SHA: ${{ github.sha }}
         run: |
           python - <<'PY'
-          import hashlib,json,os,pathlib
+          import hashlib,json,os,pathlib,re
           out=pathlib.Path('output.txt')
-          p={'schema':'open-model.github-public-runner-model-result.v1','family':'qwen3','role':'reasoner','repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],'file':os.environ['MODEL_FILE'],'model_sha256':os.environ['MODEL_SHA256'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'task':'19*23','expected':'437','verified':True,'provider_api_used':False,'provider_spend_usd':0.0,'weights_modified':False,'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False}
-          pathlib.Path('qwen-result.json').write_text(json.dumps(p,sort_keys=True,indent=2)+'\n')
+          text=out.read_text(encoding='utf-8',errors='replace')
+          verified=bool(re.search(r'(^|[^0-9])437([^0-9]|$)',text))
+          p={'schema':'open-model.github-public-runner-model-result.v2','family':'qwen3','role':'reasoner','repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],'file':os.environ['MODEL_FILE'],'model_sha256':os.environ['MODEL_SHA256'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'output_text':text,'task':'19*23','expected':'437','verified':verified,'provider_api_used':False,'provider_spend_usd':0.0,'weights_modified':False,'foundation_training':False,'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False}
+          pathlib.Path('qwen-result.json').write_text(json.dumps(p,sort_keys=True,indent=2)+'\n',encoding='utf-8')
           print(json.dumps(p,sort_keys=True,indent=2))
           PY
-      - name: Upload Qwen result
-        uses: actions/upload-artifact@v4
+
+      - name: Upload Qwen evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: qwen-reasoner-result
           path: |
@@ -70,19 +82,23 @@ jobs:
             output.txt
             output.sha256
             stderr.txt
-            qwen-llama-version.txt
+            llama-version.txt
           retention-days: 30
 
-  granite-critic:
+      - name: Enforce Qwen answer gate
+        shell: bash
+        run: grep -Eq '(^|[^0-9])437([^0-9]|$)' output.txt
+
+  phi3-critic:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       LLAMA_TAG: b10837
       LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
-      MODEL_REPO: ibm-granite/granite-4.0-1b-GGUF
-      MODEL_REVISION: main
-      MODEL_FILE: granite-4.0-1b-Q4_0.gguf
-      MODEL_SHA256: 227e78e2fb9a3e5699190be0ce0885fd2ea72a242ed1bf718c2148c45dd090b5
+      MODEL_REPO: microsoft/Phi-3-mini-4k-instruct-gguf
+      MODEL_REVISION: 8842f87a812f23f981be51e31fbbfbc34e72c16d
+      MODEL_FILE: Phi-3-mini-4k-instruct-q4.gguf
+      MODEL_SHA256: 8a83c7fb9049a9b2e92266fa7ad04933bb53aa1e85136b7b30f1b8000ff2edef
     steps:
       - name: Install pinned llama.cpp
         shell: bash
@@ -94,23 +110,32 @@ jobs:
           cli="$(find llama -type f -name llama-cli -print -quit)"
           test -n "$cli" && chmod +x "$cli"
           echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
-          "$cli" --version | tee granite-llama-version.txt
-      - name: Download and verify pinned Granite 4.0 1B
+          "$cli" --version | tee llama-version.txt
+
+      - name: Download and verify immutable Phi-3 Mini
         shell: bash
         run: |
           set -euo pipefail
           curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          test -s model.gguf
           echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
-          stat -c '%s' model.gguf > model.bytes
-      - name: Execute Granite canary with complete generation budget
+          stat -c '%s' model.gguf | tee model.bytes
+
+      - name: Execute deterministic Phi-3 canary
         shell: bash
         run: |
           set -euo pipefail
-          timeout 180s "$LLAMA_CLI" -m model.gguf -p 'Compute 19 * 23. Return only the integer answer.' -n 256 -c 1024 --temp 0 --seed 42 --single-turn --no-display-prompt --no-show-timings > output.txt 2> stderr.txt
+          prompt=$'<|user|>\nCompute 19 * 23. Return only the integer answer.<|end|>\n<|assistant|>'
+          timeout 180s "$LLAMA_CLI" \
+            -m model.gguf -p "$prompt" \
+            -n 64 -c 1024 --temp 0 --seed 42 --single-turn \
+            --no-display-prompt --no-show-timings \
+            > output.txt 2> stderr.txt
           test -s output.txt
-          sha256sum output.txt > output.sha256
+          sha256sum output.txt | tee output.sha256
           cat output.txt
-      - name: Seal Granite result before enforcement
+
+      - name: Seal Phi-3 evidence before enforcement
         shell: bash
         env:
           RUN_ID: ${{ github.run_id }}
@@ -121,43 +146,45 @@ jobs:
           out=pathlib.Path('output.txt')
           text=out.read_text(encoding='utf-8',errors='replace')
           verified=bool(re.search(r'(^|[^0-9])437([^0-9]|$)',text))
-          p={'schema':'open-model.github-public-runner-model-result.v1','family':'granite-4.0','role':'independent_critic','repo':os.environ['MODEL_REPO'],'revision_reference':os.environ['MODEL_REVISION'],'content_sha256_pinned':os.environ['MODEL_SHA256'],'file':os.environ['MODEL_FILE'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'output_text':text,'task':'19*23','expected':'437','verified':verified,'provider_api_used':False,'provider_spend_usd':0.0,'weights_modified':False,'foundation_training':False,'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False}
-          pathlib.Path('granite-result.json').write_text(json.dumps(p,sort_keys=True,indent=2)+'\n')
+          p={'schema':'open-model.github-public-runner-model-result.v2','family':'phi3','role':'independent_critic','repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],'file':os.environ['MODEL_FILE'],'model_sha256':os.environ['MODEL_SHA256'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'output_text':text,'task':'19*23','expected':'437','verified':verified,'provider_api_used':False,'provider_spend_usd':0.0,'weights_modified':False,'foundation_training':False,'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False}
+          pathlib.Path('phi3-result.json').write_text(json.dumps(p,sort_keys=True,indent=2)+'\n',encoding='utf-8')
           print(json.dumps(p,sort_keys=True,indent=2))
           PY
-      - name: Upload Granite result
-        uses: actions/upload-artifact@v4
+
+      - name: Upload Phi-3 evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: granite-critic-result
+          name: phi3-critic-result
           path: |
-            granite-result.json
+            phi3-result.json
             output.txt
             output.sha256
             stderr.txt
-            granite-llama-version.txt
+            llama-version.txt
           retention-days: 30
-      - name: Enforce Granite answer gate
+
+      - name: Enforce Phi-3 answer gate
         shell: bash
-        run: |
-          set -euo pipefail
-          grep -Eq '(^|[^0-9])437([^0-9]|$)' output.txt
+        run: grep -Eq '(^|[^0-9])437([^0-9]|$)' output.txt
 
   quorum:
-    needs: [qwen-reasoner, granite-critic]
+    needs: [qwen-reasoner, phi3-critic]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Download Qwen evidence
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: qwen-reasoner-result
           path: qwen
-      - name: Download Granite evidence
-        uses: actions/download-artifact@v4
+
+      - name: Download Phi-3 evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: granite-critic-result
-          path: granite
-      - name: Verify independent-family quorum
+          name: phi3-critic-result
+          path: phi
+
+      - name: Verify same-run independent-family quorum
         shell: bash
         env:
           RUN_ID: ${{ github.run_id }}
@@ -165,25 +192,32 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import hashlib,json,os,pathlib
+          import hashlib,json,os,pathlib,re
           q=json.loads(pathlib.Path('qwen/qwen-result.json').read_text())
-          g=json.loads(pathlib.Path('granite/granite-result.json').read_text())
-          assert q['verified'] is True and g['verified'] is True
-          assert q['family'] != g['family']
-          assert q['task']==g['task']=='19*23'
-          assert q['expected']==g['expected']=='437'
-          assert q['provider_spend_usd']==0.0 and g['provider_spend_usd']==0.0
-          assert q['provider_api_used'] is False and g['provider_api_used'] is False
-          assert q['weights_modified'] is False and g['weights_modified'] is False
-          p={'schema':'open-model.github-public-runner-council-evidence.v1','execution_surface':'GITHUB_ACTIONS_PUBLIC_LOCAL_CPU','github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'members':[q,g],'independent_model_families':[q['family'],g['family']],'cross_family_quorum':2,'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,'production_authority':False,'live_trading_authorized':False,'result':'DUAL_FAMILY_CANARY_VERIFIED'}
-          raw=(json.dumps(p,sort_keys=True,indent=2)+'\n').encode()
-          pathlib.Path('OPEN_MODEL_FREE_COUNCIL_EVIDENCE.json').write_bytes(raw)
-          print(json.dumps(p,sort_keys=True,indent=2))
+          p=json.loads(pathlib.Path('phi/phi3-result.json').read_text())
+          assert q['verified'] is True and p['verified'] is True
+          assert q['family']=='qwen3' and p['family']=='phi3' and q['family'] != p['family']
+          assert q['role']=='reasoner' and p['role']=='independent_critic'
+          assert q['github_run_id']==p['github_run_id']==int(os.environ['RUN_ID'])
+          assert q['task']==p['task']=='19*23' and q['expected']==p['expected']=='437'
+          assert q['provider_api_used'] is False and p['provider_api_used'] is False
+          assert q['provider_spend_usd']==p['provider_spend_usd']==0.0
+          assert q['weights_modified'] is False and p['weights_modified'] is False
+          assert re.search(r'(^|[^0-9])437([^0-9]|$)',pathlib.Path('qwen/output.txt').read_text(errors='replace'))
+          assert re.search(r'(^|[^0-9])437([^0-9]|$)',pathlib.Path('phi/output.txt').read_text(errors='replace'))
+          evidence={'schema':'open-model.github-public-runner-same-run-council-evidence.v1','result':'DUAL_FAMILY_CANARY_VERIFIED','execution_surface':'GITHUB_ACTIONS_PUBLIC_LOCAL_CPU','github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'cross_family_quorum':2,'independent_model_families':['qwen3','phi3'],'members':[q,p],'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,'production_authority':False,'live_trading_authorized':False,'frontier_superiority_certified':False}
+          raw=(json.dumps(evidence,sort_keys=True,indent=2)+'\n').encode()
+          pathlib.Path('OPEN_MODEL_FREE_SAME_RUN_COUNCIL_EVIDENCE.json').write_bytes(raw)
+          pathlib.Path('OPEN_MODEL_FREE_SAME_RUN_COUNCIL_EVIDENCE.sha256').write_text(hashlib.sha256(raw).hexdigest()+'  OPEN_MODEL_FREE_SAME_RUN_COUNCIL_EVIDENCE.json\n')
+          print(json.dumps(evidence,sort_keys=True,indent=2))
           print('EVIDENCE_SHA256='+hashlib.sha256(raw).hexdigest())
           PY
-      - name: Upload council evidence
-        uses: actions/upload-artifact@v4
+
+      - name: Upload same-run council evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: open-model-free-council-evidence
-          path: OPEN_MODEL_FREE_COUNCIL_EVIDENCE.json
+          name: open-model-free-same-run-council-evidence
+          path: |
+            OPEN_MODEL_FREE_SAME_RUN_COUNCIL_EVIDENCE.json
+            OPEN_MODEL_FREE_SAME_RUN_COUNCIL_EVIDENCE.sha256
           retention-days: 30
