@@ -1,0 +1,127 @@
+name: Open Model Local Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/open-model-local-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qwen-local-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: Qwen/Qwen3-0.6B-GGUF
+      MODEL_REVISION: 23749fefcc72300e3a2ad315e1317431b06b590a
+      MODEL_FILE: Qwen3-0.6B-Q8_0.gguf
+    steps:
+      - name: Record runner resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          uname -a
+          free -h
+          df -h .
+
+      - name: Install pinned llama.cpp CPU binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz"
+          curl -fL --retry 3 --retry-delay 2 "$url" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama
+          tar -xzf llama.tar.gz -C llama
+          test -x llama/llama-cli
+          llama/llama-cli --version | tee llama-version.txt
+
+      - name: Download immutable official Qwen3 0.6B GGUF
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true"
+          curl -fL --retry 3 --retry-delay 2 "$url" -o model.gguf
+          test -s model.gguf
+          sha256sum model.gguf | tee model.sha256
+          stat -c '%s' model.gguf | tee model.bytes
+
+      - name: Execute provider-free local inference
+        shell: bash
+        run: |
+          set -euo pipefail
+          llama/llama-cli \
+            -m model.gguf \
+            -p 'Respond with the single word READY.' \
+            -n 24 \
+            -c 512 \
+            --temp 0 \
+            --seed 42 \
+            --no-display-prompt \
+            > model-output.txt 2> model-stderr.txt
+          test -s model-output.txt
+          sha256sum model-output.txt | tee output.sha256
+          wc -c model-output.txt | tee output.bytes
+          tail -c 512 model-output.txt
+
+      - name: Seal public runner evidence
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          model = pathlib.Path('model.gguf')
+          output = pathlib.Path('model-output.txt')
+          payload = {
+              'schema': 'open-model.local-github-actions-canary.v1',
+              'execution_surface': 'GITHUB_ACTIONS_PUBLIC_LOCAL_CPU',
+              'provider_api_used': False,
+              'provider_spend_usd': 0.0,
+              'foundation_training': False,
+              'weights_modified': False,
+              'model_repo': os.environ['MODEL_REPO'],
+              'model_revision': os.environ['MODEL_REVISION'],
+              'model_file': os.environ['MODEL_FILE'],
+              'model_sha256': hashlib.sha256(model.read_bytes()).hexdigest(),
+              'model_bytes': model.stat().st_size,
+              'llama_cpp_tag': os.environ['LLAMA_TAG'],
+              'llama_cpp_archive_sha256': os.environ['LLAMA_SHA256'],
+              'output_sha256': hashlib.sha256(output.read_bytes()).hexdigest(),
+              'output_bytes': output.stat().st_size,
+              'github_run_id': int(os.environ['RUN_ID']),
+              'github_run_attempt': int(os.environ['RUN_ATTEMPT']),
+              'source_sha': os.environ['SOURCE_SHA'],
+              'production_authority': False,
+              'live_trading_authorized': False,
+              'result': 'LOCAL_INFERENCE_EXECUTED',
+          }
+          pathlib.Path('OPEN_MODEL_LOCAL_CANARY_EVIDENCE.json').write_text(
+              json.dumps(payload, sort_keys=True, indent=2) + '\n', encoding='utf-8'
+          )
+          print(json.dumps(payload, sort_keys=True, indent=2))
+          PY
+
+      - name: Upload evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-model-local-qwen-canary
+          path: |
+            OPEN_MODEL_LOCAL_CANARY_EVIDENCE.json
+            model.sha256
+            output.sha256
+            output.bytes
+            model-output.txt
+            model-stderr.txt
+            llama-version.txt
+          if-no-files-found: warn
+          retention-days: 30
