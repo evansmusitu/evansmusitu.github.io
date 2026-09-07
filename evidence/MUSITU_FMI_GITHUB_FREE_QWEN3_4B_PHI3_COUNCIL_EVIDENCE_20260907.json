@@ -1,0 +1,77 @@
+{
+  "cross_family_quorum": 2,
+  "execution_surface": "GITHUB_ACTIONS_PUBLIC_LOCAL_CPU",
+  "expected": "437",
+  "foundation_training": false,
+  "independent_model_families": [
+    "qwen3",
+    "phi3"
+  ],
+  "live_trading_authorized": false,
+  "members": [
+    {
+      "expected": "437",
+      "family": "qwen3",
+      "file": "Qwen3-4B-Q4_K_M.gguf",
+      "github_run_id": 34150261568,
+      "live_trading_authorized": false,
+      "model_bytes": 2497280256,
+      "model_sha256": "7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5",
+      "output_sha256": "9f56cea3d04638cebdff5a6197274b0e7544d234bef564eb64fa643fe095c919",
+      "production_authority": false,
+      "provider_api_used": false,
+      "provider_spend_usd": 0.0,
+      "repo": "Qwen/Qwen3-4B-GGUF",
+      "revision": "bc640142c66e1fdd12af0bd68f40445458f3869b",
+      "role": "reasoner",
+      "schema": "open-model.github-public-runner-model-result.v1",
+      "source_sha": "3b33310ef79ea4e8cf0fb699196bf637bd10526d",
+      "task": "19*23",
+      "verified": true,
+      "weights_modified": false
+    },
+    {
+      "expected": "437",
+      "family": "phi3",
+      "file": "Phi-3-mini-4k-instruct-q4.gguf",
+      "foundation_training": false,
+      "github_run_id": 34151414657,
+      "live_trading_authorized": false,
+      "model_bytes": 2393231072,
+      "model_sha256": "8a83c7fb9049a9b2e92266fa7ad04933bb53aa1e85136b7b30f1b8000ff2edef",
+      "output_sha256": "1ec953577fcf15058a5e6c473bc18cbfb14f45cc5a904ec584b295e0df09e69f",
+      "production_authority": false,
+      "provider_api_used": false,
+      "provider_spend_usd": 0.0,
+      "repo": "microsoft/Phi-3-mini-4k-instruct-gguf",
+      "revision": "8842f87a812f23f981be51e31fbbfbc34e72c16d",
+      "role": "independent_critic",
+      "schema": "open-model.github-public-runner-model-result.v1",
+      "source_sha": "3ffe853dfe8092292ea1140ef4995e9492613a4e",
+      "task": "19*23",
+      "verified": true,
+      "weights_modified": false
+    }
+  ],
+  "production_authority": false,
+  "provider_api_used": false,
+  "provider_spend_usd": 0.0,
+  "result": "DUAL_FAMILY_CANARY_VERIFIED",
+  "schema": "open-model.github-public-runner-cross-run-council-evidence.v1",
+  "source_artifacts": [
+    {
+      "artifact_id": 10029111427,
+      "artifact_zip_sha256": "b1b46c256717e0d1abb2e69c47265e245c56bcfd125f10e5488c1414fc256efb",
+      "name": "qwen-reasoner-result",
+      "run_id": 34150261568
+    },
+    {
+      "artifact_id": 10029522030,
+      "artifact_zip_sha256": "064f45f721cfe2dcaa704fb13f0c7e2c4ca8306f5bcbe6cd8eb8879a0f089c32",
+      "name": "phi3-critic-result",
+      "run_id": 34151414657
+    }
+  ],
+  "task": "19*23",
+  "weights_modified": false
+}
