@@ -1,0 +1,331 @@
+name: Open Model Finance Qualification V2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/open-model-finance-qualification-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qwen8b-finance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: Qwen/Qwen3-8B-GGUF
+      MODEL_REVISION: 6a569868d07d3bd59e8b97fb001bf8c0b254bb20
+      MODEL_FILE: Qwen3-8B-Q4_K_M.gguf
+      MODEL_SHA256: d98cdcbd03e17ce47681435b5150e34c1417f50b5c0019dd560e4882c5745785
+    steps:
+      - name: Install pinned llama.cpp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama && tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli" && chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+          "$cli" --version | tee llama-version.txt
+
+      - name: Download and verify immutable Qwen3-8B
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          test -s model.gguf
+          echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
+          stat -c '%s' model.gguf | tee model.bytes
+
+      - name: Execute 8-case finance qualification
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > prompt.txt <<'EOF'
+          /no_think
+          Solve these eight independent public finance/risk questions. Return exactly eight answer lines, one per item, in the form N=ANSWER. Do not include explanations.
+          1) A price rises from 100 to 112. Integer percentage return?
+          2) An account is 10000 dollars and the risk limit is 1 percent. Maximum allowed loss in dollars?
+          3) Long entry 50, stop 48, target 56. Reward divided by risk as a scalar?
+          4) Short 10 shares at 50 and cover at 45. Profit in dollars, ignoring fees?
+          5) Prices are 100, 101, 102, 103, 104. Overall direction: UP, DOWN, or FLAT?
+          6) Equity peak 200 and trough 150. Integer drawdown percentage?
+          7) Two equal-weight assets return +10 percent and -10 percent. Portfolio return percentage using the arithmetic weighted average?
+          8) Risk budget is 100 dollars and proposed worst-case loss is 120 dollars. Return ALLOW or BLOCK.
+          EOF
+          timeout 300s "$LLAMA_CLI" \
+            -m model.gguf -f prompt.txt \
+            -n 256 -c 2048 --temp 0 --seed 42 --single-turn \
+            --no-display-prompt --no-show-timings \
+            > output.txt 2> stderr.txt
+          test -s output.txt
+          sha256sum output.txt | tee output.sha256
+          cat output.txt
+
+      - name: Parse and seal Qwen3-8B evidence before enforcement
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from decimal import Decimal, InvalidOperation
+          import hashlib, json, os, pathlib, re
+
+          text=pathlib.Path('output.txt').read_text(encoding='utf-8',errors='replace')
+          line_re=re.compile(r'^\s*([1-8])\s*[\)\.:]?\s*(?:N\s*)?(?:=|:)?\s*(.*?)\s*$', re.I)
+          values={}
+          for line in text.splitlines():
+              m=line_re.match(line)
+              if m:
+                  candidate=m.group(2).strip()
+                  if candidate:
+                      values[m.group(1)]=candidate
+
+          expected={'1':'12','2':'100','3':'3','4':'50','5':'UP','6':'25','7':'0','8':'BLOCK'}
+          numeric={'1','2','3','4','6','7'}
+
+          def numeric_value(raw):
+              s=raw.strip().upper().replace('$','').replace('%','').replace(',','').replace('+','').strip()
+              try:
+                  return Decimal(s)
+              except InvalidOperation:
+                  return None
+
+          results={}
+          for k,want in expected.items():
+              raw=values.get(k,'')
+              if k in numeric:
+                  got=numeric_value(raw)
+                  results[k]=got is not None and got==Decimal(want)
+              else:
+                  results[k]=raw.strip().upper()==want
+
+          payload={
+            'schema':'open-model.github-public-runner-finance-qualification.v2',
+            'family':'qwen3','model_size':'8b','role':'reasoner',
+            'repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],'file':os.environ['MODEL_FILE'],
+            'model_sha256':os.environ['MODEL_SHA256'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),
+            'output_sha256':hashlib.sha256(pathlib.Path('output.txt').read_bytes()).hexdigest(),'output_text':text,
+            'suite':'PUBLIC_SAFE_FINANCE_RISK_8','expected_values':expected,'observed_values':values,
+            'case_results':results,'cases_passed':sum(results.values()),'cases_total':8,'verified':all(results.values()),
+            'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,
+            'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],
+            'production_authority':False,'live_trading_authorized':False
+          }
+          pathlib.Path('qwen8b-finance-result.json').write_text(json.dumps(payload,sort_keys=True,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(payload,sort_keys=True,indent=2))
+          PY
+
+      - name: Upload Qwen3-8B evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: qwen8b-finance-qualification
+          path: |
+            qwen8b-finance-result.json
+            output.txt
+            output.sha256
+            stderr.txt
+            llama-version.txt
+          retention-days: 30
+
+      - name: Enforce Qwen3-8B 8-case gate
+        shell: bash
+        run: python -c "import json; d=json.load(open('qwen8b-finance-result.json')); assert d['verified'] is True and d['cases_passed']==8"
+
+  ministral3b-finance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: mistralai/Ministral-3-3B-Instruct-2512-GGUF
+      MODEL_REVISION: eb599d408350ea2bb60452cb86be7c7b2fc28227
+      MODEL_FILE: Ministral-3-3B-Instruct-2512-Q4_K_M.gguf
+      MODEL_SHA256: 9ed150d4367e68df0ac8e1540f6ddc65b42d0ee26378329d1ecbca60f93fc5f8
+    steps:
+      - name: Install pinned llama.cpp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama && tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli" && chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+          "$cli" --version | tee llama-version.txt
+
+      - name: Download and verify immutable Ministral 3B
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          test -s model.gguf
+          echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
+          stat -c '%s' model.gguf | tee model.bytes
+
+      - name: Execute 8-case finance qualification
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > prompt.txt <<'EOF'
+          Solve these eight independent public finance/risk questions. Return exactly eight answer lines, one per item, in the form N=ANSWER. Do not include explanations.
+          1) A price rises from 100 to 112. Integer percentage return?
+          2) An account is 10000 dollars and the risk limit is 1 percent. Maximum allowed loss in dollars?
+          3) Long entry 50, stop 48, target 56. Reward divided by risk as a scalar?
+          4) Short 10 shares at 50 and cover at 45. Profit in dollars, ignoring fees?
+          5) Prices are 100, 101, 102, 103, 104. Overall direction: UP, DOWN, or FLAT?
+          6) Equity peak 200 and trough 150. Integer drawdown percentage?
+          7) Two equal-weight assets return +10 percent and -10 percent. Portfolio return percentage using the arithmetic weighted average?
+          8) Risk budget is 100 dollars and proposed worst-case loss is 120 dollars. Return ALLOW or BLOCK.
+          EOF
+          timeout 300s "$LLAMA_CLI" \
+            -m model.gguf -f prompt.txt \
+            -n 256 -c 2048 --temp 0 --seed 42 --single-turn \
+            --no-display-prompt --no-show-timings \
+            > output.txt 2> stderr.txt
+          test -s output.txt
+          sha256sum output.txt | tee output.sha256
+          cat output.txt
+
+      - name: Parse and seal Ministral evidence before enforcement
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from decimal import Decimal, InvalidOperation
+          import hashlib, json, os, pathlib, re
+
+          text=pathlib.Path('output.txt').read_text(encoding='utf-8',errors='replace')
+          line_re=re.compile(r'^\s*([1-8])\s*[\)\.:]?\s*(?:N\s*)?(?:=|:)?\s*(.*?)\s*$', re.I)
+          values={}
+          for line in text.splitlines():
+              m=line_re.match(line)
+              if m:
+                  candidate=m.group(2).strip()
+                  if candidate:
+                      values[m.group(1)]=candidate
+
+          expected={'1':'12','2':'100','3':'3','4':'50','5':'UP','6':'25','7':'0','8':'BLOCK'}
+          numeric={'1','2','3','4','6','7'}
+
+          def numeric_value(raw):
+              s=raw.strip().upper().replace('$','').replace('%','').replace(',','').replace('+','').strip()
+              try:
+                  return Decimal(s)
+              except InvalidOperation:
+                  return None
+
+          results={}
+          for k,want in expected.items():
+              raw=values.get(k,'')
+              if k in numeric:
+                  got=numeric_value(raw)
+                  results[k]=got is not None and got==Decimal(want)
+              else:
+                  results[k]=raw.strip().upper()==want
+
+          payload={
+            'schema':'open-model.github-public-runner-finance-qualification.v2',
+            'family':'ministral3','model_size':'3b','role':'independent_critic',
+            'repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],'file':os.environ['MODEL_FILE'],
+            'model_sha256':os.environ['MODEL_SHA256'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),
+            'output_sha256':hashlib.sha256(pathlib.Path('output.txt').read_bytes()).hexdigest(),'output_text':text,
+            'suite':'PUBLIC_SAFE_FINANCE_RISK_8','expected_values':expected,'observed_values':values,
+            'case_results':results,'cases_passed':sum(results.values()),'cases_total':8,'verified':all(results.values()),
+            'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,
+            'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],
+            'production_authority':False,'live_trading_authorized':False
+          }
+          pathlib.Path('ministral3b-finance-result.json').write_text(json.dumps(payload,sort_keys=True,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(payload,sort_keys=True,indent=2))
+          PY
+
+      - name: Upload Ministral evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ministral3b-finance-qualification
+          path: |
+            ministral3b-finance-result.json
+            output.txt
+            output.sha256
+            stderr.txt
+            llama-version.txt
+          retention-days: 30
+
+      - name: Enforce Ministral 8-case gate
+        shell: bash
+        run: python -c "import json; d=json.load(open('ministral3b-finance-result.json')); assert d['verified'] is True and d['cases_passed']==8"
+
+  finance-quorum-v2:
+    needs: [qwen8b-finance, ministral3b-finance]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download Qwen3-8B evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: qwen8b-finance-qualification
+          path: qwen
+
+      - name: Download Ministral evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ministral3b-finance-qualification
+          path: ministral
+
+      - name: Verify 8-case cross-family finance quorum
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          q=json.loads(pathlib.Path('qwen/qwen8b-finance-result.json').read_text())
+          m=json.loads(pathlib.Path('ministral/ministral3b-finance-result.json').read_text())
+          for x in (q,m):
+              assert x['suite']=='PUBLIC_SAFE_FINANCE_RISK_8'
+              assert x['verified'] is True and x['cases_passed']==x['cases_total']==8
+              assert x['github_run_id']==int(os.environ['RUN_ID'])
+              assert x['provider_api_used'] is False and x['provider_spend_usd']==0.0
+              assert x['foundation_training'] is False and x['weights_modified'] is False
+              assert x['production_authority'] is False and x['live_trading_authorized'] is False
+          assert q['family']=='qwen3' and m['family']=='ministral3' and q['family']!=m['family']
+          evidence={
+            'schema':'open-model.github-public-runner-finance-council-evidence.v2',
+            'result':'PUBLIC_SAFE_FINANCE_8_CASE_DUAL_FAMILY_VERIFIED',
+            'execution_surface':'GITHUB_ACTIONS_PUBLIC_LOCAL_CPU',
+            'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],
+            'suite':'PUBLIC_SAFE_FINANCE_RISK_8','cases_total':8,'cross_family_quorum':2,
+            'independent_model_families':['qwen3','ministral3'],'members':[q,m],
+            'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,
+            'production_authority':False,'live_trading_authorized':False,'frontier_superiority_certified':False
+          }
+          raw=(json.dumps(evidence,sort_keys=True,indent=2)+'\n').encode()
+          pathlib.Path('OPEN_MODEL_FINANCE_COUNCIL_V2_EVIDENCE.json').write_bytes(raw)
+          pathlib.Path('OPEN_MODEL_FINANCE_COUNCIL_V2_EVIDENCE.sha256').write_text(hashlib.sha256(raw).hexdigest()+'  OPEN_MODEL_FINANCE_COUNCIL_V2_EVIDENCE.json\n')
+          print(json.dumps(evidence,sort_keys=True,indent=2))
+          print('EVIDENCE_SHA256='+hashlib.sha256(raw).hexdigest())
+          PY
+
+      - name: Upload finance council V2 evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: open-model-finance-council-v2-evidence
+          path: |
+            OPEN_MODEL_FINANCE_COUNCIL_V2_EVIDENCE.json
+            OPEN_MODEL_FINANCE_COUNCIL_V2_EVIDENCE.sha256
+          retention-days: 30
