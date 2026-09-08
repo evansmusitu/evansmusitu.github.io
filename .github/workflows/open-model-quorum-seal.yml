@@ -1,0 +1,165 @@
+name: Open Model Zero-Cost Quorum Seal
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/open-model-quorum-seal.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  quorum-seal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      QWEN_RUN_ID: '34150261568'
+      QWEN_ARTIFACT_ID: '10029111427'
+      QWEN_ARTIFACT_DIGEST: 'sha256:b1b46c256717e0d1abb2e69c47265e245c56bcfd125f10e5488c1414fc256efb'
+      QWEN_MODEL_SHA256: '7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5'
+      QWEN_OUTPUT_SHA256: '9f56cea3d04638cebdff5a6197274b0e7544d234bef564eb64fa643fe095c919'
+      QWEN_SOURCE_SHA: '3b33310ef79ea4e8cf0fb699196bf637bd10526d'
+      PHI_RUN_ID: '34151414657'
+      PHI_ARTIFACT_ID: '10029522030'
+      PHI_ARTIFACT_DIGEST: 'sha256:064f45f721cfe2dcaa704fb13f0c7e2c4ca8306f5bcbe6cd8eb8879a0f089c32'
+      PHI_MODEL_SHA256: '8a83c7fb9049a9b2e92266fa7ad04933bb53aa1e85136b7b30f1b8000ff2edef'
+      PHI_OUTPUT_SHA256: '1ec953577fcf15058a5e6c473bc18cbfb14f45cc5a904ec584b295e0df09e69f'
+      PHI_SOURCE_SHA: '3ffe853dfe8092292ea1140ef4995e9492613a4e'
+
+    steps:
+      - name: Verify source artifact metadata from GitHub API
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fsSL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H 'Accept: application/vnd.github+json' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${QWEN_ARTIFACT_ID}" \
+            -o qwen-meta.json
+          curl -fsSL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H 'Accept: application/vnd.github+json' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${PHI_ARTIFACT_ID}" \
+            -o phi-meta.json
+          python - <<'PY'
+          import json, os, pathlib
+          q=json.loads(pathlib.Path('qwen-meta.json').read_text())
+          p=json.loads(pathlib.Path('phi-meta.json').read_text())
+          assert q['name']=='qwen-reasoner-result'
+          assert p['name']=='phi3-critic-result'
+          assert q['expired'] is False and p['expired'] is False
+          assert q['digest']==os.environ['QWEN_ARTIFACT_DIGEST']
+          assert p['digest']==os.environ['PHI_ARTIFACT_DIGEST']
+          assert int(q['workflow_run']['id'])==int(os.environ['QWEN_RUN_ID'])
+          assert int(p['workflow_run']['id'])==int(os.environ['PHI_RUN_ID'])
+          PY
+
+      - name: Download exact Qwen artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: qwen-reasoner-result
+          path: qwen
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 34150261568
+
+      - name: Download exact Phi artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: phi3-critic-result
+          path: phi
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 34151414657
+
+      - name: Verify cross-family member evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          q=json.loads(pathlib.Path('qwen/qwen-result.json').read_text())
+          p=json.loads(pathlib.Path('phi/phi3-result.json').read_text())
+          qout=pathlib.Path('qwen/output.txt').read_bytes()
+          pout=pathlib.Path('phi/output.txt').read_bytes()
+
+          assert q['schema']=='open-model.github-public-runner-model-result.v1'
+          assert p['schema']=='open-model.github-public-runner-model-result.v1'
+          assert q['family']=='qwen3' and p['family']=='phi3'
+          assert q['family'] != p['family']
+          assert q['role']=='reasoner' and p['role']=='independent_critic'
+          assert q['task']==p['task']=='19*23'
+          assert q['expected']==p['expected']=='437'
+          assert q['verified'] is True and p['verified'] is True
+          assert int(q['github_run_id'])==int(os.environ['QWEN_RUN_ID'])
+          assert int(p['github_run_id'])==int(os.environ['PHI_RUN_ID'])
+          assert q['source_sha']==os.environ['QWEN_SOURCE_SHA']
+          assert p['source_sha']==os.environ['PHI_SOURCE_SHA']
+          assert q['model_sha256']==os.environ['QWEN_MODEL_SHA256']
+          assert p['model_sha256']==os.environ['PHI_MODEL_SHA256']
+          assert q['output_sha256']==os.environ['QWEN_OUTPUT_SHA256']
+          assert p['output_sha256']==os.environ['PHI_OUTPUT_SHA256']
+          assert hashlib.sha256(qout).hexdigest()==os.environ['QWEN_OUTPUT_SHA256']
+          assert hashlib.sha256(pout).hexdigest()==os.environ['PHI_OUTPUT_SHA256']
+          assert q['provider_api_used'] is False and p['provider_api_used'] is False
+          assert float(q['provider_spend_usd'])==0.0 and float(p['provider_spend_usd'])==0.0
+          assert q['weights_modified'] is False and p['weights_modified'] is False
+          assert q['production_authority'] is False and p['production_authority'] is False
+          assert q['live_trading_authorized'] is False and p['live_trading_authorized'] is False
+          PY
+
+      - name: Seal zero-cost council evidence
+        shell: bash
+        env:
+          QUORUM_RUN_ID: ${{ github.run_id }}
+          QUORUM_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          q=json.loads(pathlib.Path('qwen/qwen-result.json').read_text())
+          p=json.loads(pathlib.Path('phi/phi3-result.json').read_text())
+          payload={
+            'schema':'open-model.github-public-runner-council-evidence.v2',
+            'execution_surface':'GITHUB_ACTIONS_PUBLIC_LOCAL_CPU',
+            'quorum_run_id':int(os.environ['QUORUM_RUN_ID']),
+            'quorum_source_sha':os.environ['QUORUM_SOURCE_SHA'],
+            'member_artifacts':[
+              {'name':'qwen-reasoner-result','artifact_id':int(os.environ['QWEN_ARTIFACT_ID']),'artifact_digest':os.environ['QWEN_ARTIFACT_DIGEST'],'source_run_id':int(os.environ['QWEN_RUN_ID'])},
+              {'name':'phi3-critic-result','artifact_id':int(os.environ['PHI_ARTIFACT_ID']),'artifact_digest':os.environ['PHI_ARTIFACT_DIGEST'],'source_run_id':int(os.environ['PHI_RUN_ID'])}
+            ],
+            'members':[q,p],
+            'independent_model_families':['qwen3','phi3'],
+            'cross_family_quorum':2,
+            'task':'19*23',
+            'expected':'437',
+            'provider_api_used':False,
+            'provider_spend_usd':0.0,
+            'foundation_training':False,
+            'weights_modified':False,
+            'production_authority':False,
+            'live_trading_authorized':False,
+            'result':'DUAL_FAMILY_CANARY_VERIFIED'
+          }
+          raw=(json.dumps(payload,sort_keys=True,indent=2)+'\n').encode()
+          pathlib.Path('OPEN_MODEL_ZERO_COST_COUNCIL_EVIDENCE.json').write_bytes(raw)
+          pathlib.Path('OPEN_MODEL_ZERO_COST_COUNCIL_EVIDENCE.sha256').write_text(hashlib.sha256(raw).hexdigest()+'  OPEN_MODEL_ZERO_COST_COUNCIL_EVIDENCE.json\n')
+          print(json.dumps(payload,sort_keys=True,indent=2))
+          print('EVIDENCE_SHA256='+hashlib.sha256(raw).hexdigest())
+          PY
+
+      - name: Upload quorum evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-model-zero-cost-council-evidence
+          path: |
+            OPEN_MODEL_ZERO_COST_COUNCIL_EVIDENCE.json
+            OPEN_MODEL_ZERO_COST_COUNCIL_EVIDENCE.sha256
+            qwen-meta.json
+            phi-meta.json
+          retention-days: 30
