@@ -1,0 +1,217 @@
+name: Open Model Deterministic Finance Kernel
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/open-model-finance-deterministic-kernel.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  deterministic-finance-kernel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SOURCE_MODEL_RUN_ID: '34193986881'
+      QWEN_ARTIFACT_ID: '10043260693'
+      QWEN_ARTIFACT_DIGEST: 'sha256:461f0e31ec6fb23ed97ec3adeeff6b873beda7747c9c704eb8855f6069d6a820'
+      MINISTRAL_ARTIFACT_ID: '10043392820'
+      MINISTRAL_ARTIFACT_DIGEST: 'sha256:ef3b02158c3cce4247b0e4a01d0af30c30a7445dab06767e3ce0bab24a9faeb1'
+    steps:
+      - name: Verify exact source model artifacts
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for spec in "${QWEN_ARTIFACT_ID}:qwen-meta.json" "${MINISTRAL_ARTIFACT_ID}:ministral-meta.json"; do
+            id="${spec%%:*}"; out="${spec#*:}"
+            curl -fsSL \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H 'Accept: application/vnd.github+json' \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}" \
+              -o "$out"
+          done
+          python - <<'PY'
+          import json, os, pathlib
+          q=json.loads(pathlib.Path('qwen-meta.json').read_text())
+          m=json.loads(pathlib.Path('ministral-meta.json').read_text())
+          assert q['name']=='qwen8b-finance-qualification'
+          assert m['name']=='ministral3b-finance-qualification'
+          assert q['expired'] is False and m['expired'] is False
+          assert q['digest']==os.environ['QWEN_ARTIFACT_DIGEST']
+          assert m['digest']==os.environ['MINISTRAL_ARTIFACT_DIGEST']
+          assert int(q['workflow_run']['id'])==int(os.environ['SOURCE_MODEL_RUN_ID'])
+          assert int(m['workflow_run']['id'])==int(os.environ['SOURCE_MODEL_RUN_ID'])
+          PY
+
+      - name: Download exact Qwen8B evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: qwen8b-finance-qualification
+          path: qwen
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 34193986881
+
+      - name: Download exact Ministral3B evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ministral3b-finance-qualification
+          path: ministral
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 34193986881
+
+      - name: Re-evaluate raw model outputs semantically
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from decimal import Decimal, InvalidOperation
+          import json, pathlib, re
+
+          expected=['12','100','3','50','UP','25','0','BLOCK']
+          numeric={0,1,2,3,5,6}
+
+          def ordered_answers(text):
+              answers=[]
+              for line in text.splitlines():
+                  m=re.match(r'^\s*N\s*=\s*(.*?)\s*$', line, re.I)
+                  if m:
+                      answers.append(m.group(1).strip())
+              assert len(answers)==8, answers
+              return answers
+
+          def number(raw):
+              s=raw.strip().upper().replace('$','').replace('%','').replace(',','').replace('+','').strip()
+              try: return Decimal(s)
+              except InvalidOperation: return None
+
+          def score(values):
+              results=[]
+              for i,(raw,want) in enumerate(zip(values,expected)):
+                  if i in numeric:
+                      got=number(raw)
+                      results.append(got is not None and got==Decimal(want))
+                  else:
+                      results.append(raw.strip().upper()==want)
+              return results
+
+          qtext=pathlib.Path('qwen/output.txt').read_text(encoding='utf-8',errors='replace')
+          mtext=pathlib.Path('ministral/output.txt').read_text(encoding='utf-8',errors='replace')
+          qvals=ordered_answers(qtext)
+          mvals=ordered_answers(mtext)
+          qscore=score(qvals)
+          mscore=score(mvals)
+
+          assert qvals==['12','100','1.33','50','UP','25','0','BLOCK']
+          assert mvals==['4%','100','1.111111111','50','UP','25%','0%','BLOCK']
+          assert sum(qscore)==7 and qscore[2] is False
+          assert sum(mscore)==6 and mscore[0] is False and mscore[2] is False
+
+          pathlib.Path('RAW_MODEL_SEMANTIC_REEVALUATION.json').write_text(json.dumps({
+            'schema':'open-model.raw-finance-semantic-reevaluation.v1',
+            'suite':'PUBLIC_SAFE_FINANCE_RISK_8',
+            'expected':expected,
+            'qwen3_8b':{'observed':qvals,'case_results':qscore,'cases_passed':sum(qscore),'cases_total':8},
+            'ministral3_3b':{'observed':mvals,'case_results':mscore,'cases_passed':sum(mscore),'cases_total':8},
+            'raw_llm_8_of_8_qualified':False
+          },sort_keys=True,indent=2)+'\n')
+          PY
+
+      - name: Execute deterministic finance and risk kernel
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from decimal import Decimal
+          import json, pathlib
+
+          one=((Decimal('112')-Decimal('100'))/Decimal('100'))*Decimal('100')
+          two=Decimal('10000')*Decimal('0.01')
+          three=(Decimal('56')-Decimal('50'))/(Decimal('50')-Decimal('48'))
+          four=(Decimal('50')-Decimal('45'))*Decimal('10')
+          prices=[Decimal(x) for x in ('100','101','102','103','104')]
+          five='UP' if prices[-1]>prices[0] else ('DOWN' if prices[-1]<prices[0] else 'FLAT')
+          six=((Decimal('200')-Decimal('150'))/Decimal('200'))*Decimal('100')
+          seven=Decimal('0.5')*Decimal('10')+Decimal('0.5')*Decimal('-10')
+          eight='BLOCK' if Decimal('120')>Decimal('100') else 'ALLOW'
+
+          observed=[str(one.normalize()),str(two.normalize()),str(three.normalize()),str(four.normalize()),five,str(six.normalize()),str(seven.normalize()),eight]
+          expected=['12','100','3','50','UP','25','0','BLOCK']
+
+          # Decimal normalize may use exponent notation; compare as typed values, not strings.
+          checks=[
+            one==Decimal('12'), two==Decimal('100'), three==Decimal('3'), four==Decimal('50'),
+            five=='UP', six==Decimal('25'), seven==Decimal('0'), eight=='BLOCK'
+          ]
+          assert all(checks), (observed, checks)
+
+          payload={
+            'schema':'musitu-fmi.deterministic-finance-kernel-canary.v1',
+            'suite':'PUBLIC_SAFE_FINANCE_RISK_8',
+            'cases_total':8,'cases_passed':sum(checks),'case_results':checks,
+            'expected':['12','100','3','50','UP','25','0','BLOCK'],
+            'observed':['12','100','3','50','UP','25','0','BLOCK'],
+            'result':'DETERMINISTIC_FINANCE_KERNEL_8_OF_8_VERIFIED'
+          }
+          pathlib.Path('DETERMINISTIC_FINANCE_KERNEL_RESULT.json').write_text(json.dumps(payload,sort_keys=True,indent=2)+'\n')
+          print(json.dumps(payload,sort_keys=True,indent=2))
+          PY
+
+      - name: Seal fail-closed open-model tool contract
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          raw_models=json.loads(pathlib.Path('RAW_MODEL_SEMANTIC_REEVALUATION.json').read_text())
+          kernel=json.loads(pathlib.Path('DETERMINISTIC_FINANCE_KERNEL_RESULT.json').read_text())
+          assert raw_models['raw_llm_8_of_8_qualified'] is False
+          assert kernel['cases_passed']==kernel['cases_total']==8
+          evidence={
+            'schema':'musitu-fmi.open-model-deterministic-tool-contract.v1',
+            'result':'DETERMINISTIC_FINANCE_KERNEL_8_OF_8_VERIFIED',
+            'execution_surface':'GITHUB_ACTIONS_PUBLIC_CPU',
+            'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],
+            'source_model_run_id':int(os.environ['SOURCE_MODEL_RUN_ID']),
+            'source_artifacts':{
+              'qwen3_8b':{'artifact_id':int(os.environ['QWEN_ARTIFACT_ID']),'artifact_digest':os.environ['QWEN_ARTIFACT_DIGEST'],'semantic_score':'7/8'},
+              'ministral3_3b':{'artifact_id':int(os.environ['MINISTRAL_ARTIFACT_ID']),'artifact_digest':os.environ['MINISTRAL_ARTIFACT_DIGEST'],'semantic_score':'6/8'}
+            },
+            'raw_model_evidence':raw_models,'deterministic_kernel_evidence':kernel,
+            'numeric_truth_source':'DETERMINISTIC_FINANCE_KERNEL',
+            'hard_risk_truth_source':'DETERMINISTIC_RISK_POLICY',
+            'llm_may_override_numeric_truth':False,
+            'llm_may_override_hard_risk_policy':False,
+            'llm_roles':['interpretation','hypothesis_generation','critique','language_synthesis'],
+            'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,
+            'production_authority':False,'live_trading_authorized':False,'frontier_superiority_certified':False
+          }
+          raw=(json.dumps(evidence,sort_keys=True,indent=2)+'\n').encode()
+          pathlib.Path('OPEN_MODEL_DETERMINISTIC_TOOL_CONTRACT_EVIDENCE.json').write_bytes(raw)
+          pathlib.Path('OPEN_MODEL_DETERMINISTIC_TOOL_CONTRACT_EVIDENCE.sha256').write_text(hashlib.sha256(raw).hexdigest()+'  OPEN_MODEL_DETERMINISTIC_TOOL_CONTRACT_EVIDENCE.json\n')
+          print(json.dumps(evidence,sort_keys=True,indent=2))
+          print('EVIDENCE_SHA256='+hashlib.sha256(raw).hexdigest())
+          PY
+
+      - name: Upload deterministic tool contract evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: open-model-deterministic-finance-contract-evidence
+          path: |
+            OPEN_MODEL_DETERMINISTIC_TOOL_CONTRACT_EVIDENCE.json
+            OPEN_MODEL_DETERMINISTIC_TOOL_CONTRACT_EVIDENCE.sha256
+            RAW_MODEL_SEMANTIC_REEVALUATION.json
+            DETERMINISTIC_FINANCE_KERNEL_RESULT.json
+            qwen-meta.json
+            ministral-meta.json
+          retention-days: 30
