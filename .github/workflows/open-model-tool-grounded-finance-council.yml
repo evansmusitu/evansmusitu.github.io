@@ -1,0 +1,289 @@
+name: Open Model Tool-Grounded Finance Council
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/open-model-tool-grounded-finance-council.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  finance-tool:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Compute deterministic finance and risk facts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib
+          facts = {
+            '1': str(round((112-100)/100*100)),
+            '2': str(round(10000*0.01)),
+            '3': str((56-50)//(50-48)),
+            '4': str((50-45)*10),
+            '5': 'UP' if all(a < b for a,b in zip([100,101,102,103],[101,102,103,104])) else 'BLOCKED_INVALID_SERIES',
+            '6': str(round((200-150)/200*100)),
+            '7': str(round((10 + (-10))/2)),
+            '8': 'BLOCK' if 120 > 100 else 'ALLOW',
+          }
+          expected={'1':'12','2':'100','3':'3','4':'50','5':'UP','6':'25','7':'0','8':'BLOCK'}
+          assert facts == expected
+          payload={
+            'schema':'musitu.public-safe-finance-tool-facts.v1',
+            'suite':'PUBLIC_SAFE_FINANCE_RISK_8',
+            'facts':facts,
+            'deterministic_tool_authority':True,
+            'model_override_authorized':False,
+            'production_authority':False,
+            'live_trading_authorized':False,
+          }
+          raw=(json.dumps(payload,sort_keys=True,indent=2)+'\n').encode()
+          pathlib.Path('TOOL_FACTS.json').write_bytes(raw)
+          pathlib.Path('TOOL_FACTS.sha256').write_text(hashlib.sha256(raw).hexdigest()+'  TOOL_FACTS.json\n')
+          print(json.dumps(payload,sort_keys=True,indent=2))
+          print('TOOL_FACTS_SHA256='+hashlib.sha256(raw).hexdigest())
+          PY
+      - name: Upload deterministic tool facts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deterministic-finance-tool-facts
+          path: |
+            TOOL_FACTS.json
+            TOOL_FACTS.sha256
+          retention-days: 30
+
+  qwen-tool-grounded:
+    needs: finance-tool
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: Qwen/Qwen3-4B-GGUF
+      MODEL_REVISION: bc640142c66e1fdd12af0bd68f40445458f3869b
+      MODEL_FILE: Qwen3-4B-Q4_K_M.gguf
+      MODEL_SHA256: 7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5
+    steps:
+      - name: Download deterministic facts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: deterministic-finance-tool-facts
+          path: facts
+      - name: Verify deterministic facts
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd facts && sha256sum -c TOOL_FACTS.sha256)
+      - name: Install pinned llama.cpp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama && tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli" && chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+      - name: Download and verify immutable Qwen3-4B
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          test -s model.gguf
+          echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
+      - name: Execute tool-grounded Qwen check
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          f=json.load(open('facts/TOOL_FACTS.json'))['facts']
+          lines='\n'.join(f'{k}={v}' for k,v in f.items())
+          open('prompt.txt','w').write('/no_think\nA deterministic finance/risk tool has already computed and verified these authoritative facts. Do NOT recompute or alter them. Repeat exactly eight answer lines in the same order and values.\n'+lines+'\n')
+          PY
+          timeout 180s "$LLAMA_CLI" -m model.gguf -f prompt.txt -n 128 -c 1536 --temp 0 --seed 42 --single-turn --no-display-prompt --no-show-timings > output.txt 2> stderr.txt
+          test -s output.txt
+          sha256sum output.txt | tee output.sha256
+      - name: Verify Qwen adherence to tool authority
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from decimal import Decimal, InvalidOperation
+          import hashlib,json,os,pathlib,re
+          facts=json.load(open('facts/TOOL_FACTS.json'))
+          want=facts['facts']; text=pathlib.Path('output.txt').read_text(errors='replace')
+          vals={}
+          keyed=re.compile(r'^\s*([1-8])\s*[\)\.:]?\s*(?:N\s*)?(?:=|:)?\s*(.*?)\s*$',re.I)
+          generic=re.compile(r'^\s*N\s*=\s*(.*?)\s*$',re.I)
+          generic_vals=[]
+          for line in text.splitlines():
+            m=keyed.match(line)
+            if m and m.group(2).strip(): vals[m.group(1)]=m.group(2).strip(); continue
+            g=generic.match(line)
+            if g and g.group(1).strip(): generic_vals.append(g.group(1).strip())
+          if len(vals)<8 and len(generic_vals)>=8:
+            vals={str(i+1):v for i,v in enumerate(generic_vals[-8:])}
+          def norm(s): return s.strip().upper().replace('$','').replace('%','').replace(',','').replace('+','').strip()
+          results={k:norm(vals.get(k,''))==norm(v) for k,v in want.items()}
+          payload={'schema':'musitu.open-model-tool-grounded-result.v1','family':'qwen3','role':'reasoner','repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],'file':os.environ['MODEL_FILE'],'model_sha256':os.environ['MODEL_SHA256'],'tool_facts_sha256':hashlib.sha256(pathlib.Path('facts/TOOL_FACTS.json').read_bytes()).hexdigest(),'observed_values':vals,'case_results':results,'cases_passed':sum(results.values()),'cases_total':8,'verified':all(results.values()),'deterministic_tool_authority':True,'model_override_authorized':False,'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False}
+          pathlib.Path('qwen-tool-result.json').write_text(json.dumps(payload,sort_keys=True,indent=2)+'\n')
+          print(json.dumps(payload,sort_keys=True,indent=2))
+          assert payload['verified'] and payload['cases_passed']==8
+          PY
+      - name: Upload Qwen tool-grounded evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: qwen-tool-grounded-result
+          path: |
+            qwen-tool-result.json
+            output.txt
+            output.sha256
+            stderr.txt
+          retention-days: 30
+
+  phi3-tool-grounded:
+    needs: finance-tool
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: microsoft/Phi-3-mini-4k-instruct-gguf
+      MODEL_REVISION: 8842f87a812f23f981be51e31fbbfbc34e72c16d
+      MODEL_FILE: Phi-3-mini-4k-instruct-q4.gguf
+      MODEL_SHA256: 8a83c7fb9049a9b2e92266fa7ad04933bb53aa1e85136b7b30f1b8000ff2edef
+    steps:
+      - name: Download deterministic facts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: deterministic-finance-tool-facts
+          path: facts
+      - name: Verify deterministic facts
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd facts && sha256sum -c TOOL_FACTS.sha256)
+      - name: Install pinned llama.cpp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama && tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli" && chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+      - name: Download and verify immutable Phi-3 Mini
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          test -s model.gguf
+          echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
+      - name: Execute tool-grounded Phi-3 check
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          f=json.load(open('facts/TOOL_FACTS.json'))['facts']
+          lines='\n'.join(f'{k}={v}' for k,v in f.items())
+          p='<|user|>\nA deterministic finance/risk tool has already computed and verified these authoritative facts. Do NOT recompute or alter them. Repeat exactly eight answer lines in the same order and values.\n'+lines+'\n<|end|>\n<|assistant|>'
+          open('prompt.txt','w').write(p)
+          PY
+          timeout 180s "$LLAMA_CLI" -m model.gguf -f prompt.txt -n 128 -c 1536 --temp 0 --seed 42 --single-turn --no-display-prompt --no-show-timings > output.txt 2> stderr.txt
+          test -s output.txt
+          sha256sum output.txt | tee output.sha256
+      - name: Verify Phi-3 adherence to tool authority
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os,pathlib,re
+          facts=json.load(open('facts/TOOL_FACTS.json')); want=facts['facts']; text=pathlib.Path('output.txt').read_text(errors='replace')
+          vals={}; generic_vals=[]
+          keyed=re.compile(r'^\s*([1-8])\s*[\)\.:]?\s*(?:N\s*)?(?:=|:)?\s*(.*?)\s*$',re.I)
+          generic=re.compile(r'^\s*N\s*=\s*(.*?)\s*$',re.I)
+          for line in text.splitlines():
+            m=keyed.match(line)
+            if m and m.group(2).strip(): vals[m.group(1)]=m.group(2).strip(); continue
+            g=generic.match(line)
+            if g and g.group(1).strip(): generic_vals.append(g.group(1).strip())
+          if len(vals)<8 and len(generic_vals)>=8: vals={str(i+1):v for i,v in enumerate(generic_vals[-8:])}
+          def norm(s): return s.strip().upper().replace('$','').replace('%','').replace(',','').replace('+','').strip()
+          results={k:norm(vals.get(k,''))==norm(v) for k,v in want.items()}
+          payload={'schema':'musitu.open-model-tool-grounded-result.v1','family':'phi3','role':'independent_critic','repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],'file':os.environ['MODEL_FILE'],'model_sha256':os.environ['MODEL_SHA256'],'tool_facts_sha256':hashlib.sha256(pathlib.Path('facts/TOOL_FACTS.json').read_bytes()).hexdigest(),'observed_values':vals,'case_results':results,'cases_passed':sum(results.values()),'cases_total':8,'verified':all(results.values()),'deterministic_tool_authority':True,'model_override_authorized':False,'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False}
+          pathlib.Path('phi3-tool-result.json').write_text(json.dumps(payload,sort_keys=True,indent=2)+'\n')
+          print(json.dumps(payload,sort_keys=True,indent=2))
+          assert payload['verified'] and payload['cases_passed']==8
+          PY
+      - name: Upload Phi-3 tool-grounded evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: phi3-tool-grounded-result
+          path: |
+            phi3-tool-result.json
+            output.txt
+            output.sha256
+            stderr.txt
+          retention-days: 30
+
+  tool-grounded-quorum:
+    needs: [finance-tool, qwen-tool-grounded, phi3-tool-grounded]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download deterministic tool facts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: deterministic-finance-tool-facts
+          path: facts
+      - name: Download Qwen evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: qwen-tool-grounded-result
+          path: qwen
+      - name: Download Phi evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: phi3-tool-grounded-result
+          path: phi
+      - name: Seal tool-grounded council evidence
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          facts=json.load(open('facts/TOOL_FACTS.json')); q=json.load(open('qwen/qwen-tool-result.json')); p=json.load(open('phi/phi3-tool-result.json'))
+          fh=hashlib.sha256(pathlib.Path('facts/TOOL_FACTS.json').read_bytes()).hexdigest()
+          assert facts['deterministic_tool_authority'] is True and facts['model_override_authorized'] is False
+          assert q['verified'] is True and p['verified'] is True and q['cases_passed']==p['cases_passed']==8
+          assert q['tool_facts_sha256']==p['tool_facts_sha256']==fh
+          assert q['family']!=p['family'] and q['provider_spend_usd']==p['provider_spend_usd']==0.0
+          evidence={'schema':'musitu.open-model-tool-grounded-council-evidence.v1','result':'TOOL_GROUNDED_DUAL_FAMILY_VERIFIED','execution_surface':'GITHUB_ACTIONS_PUBLIC_LOCAL_CPU','github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'suite':'PUBLIC_SAFE_FINANCE_RISK_8','deterministic_tool_authority':True,'model_override_authorized':False,'tool_facts_sha256':fh,'cross_family_quorum':2,'independent_model_families':['qwen3','phi3'],'members':[q,p],'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,'production_authority':False,'live_trading_authorized':False,'interpretation':'Numeric finance and risk facts are authoritative only from the deterministic tool. Models may interpret or explain but cannot override tool results.'}
+          raw=(json.dumps(evidence,sort_keys=True,indent=2)+'\n').encode(); pathlib.Path('TOOL_GROUNDED_COUNCIL_EVIDENCE.json').write_bytes(raw); pathlib.Path('TOOL_GROUNDED_COUNCIL_EVIDENCE.sha256').write_text(hashlib.sha256(raw).hexdigest()+'  TOOL_GROUNDED_COUNCIL_EVIDENCE.json\n')
+          print(json.dumps(evidence,sort_keys=True,indent=2)); print('EVIDENCE_SHA256='+hashlib.sha256(raw).hexdigest())
+          PY
+      - name: Upload tool-grounded council evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: tool-grounded-open-model-council-evidence
+          path: |
+            TOOL_GROUNDED_COUNCIL_EVIDENCE.json
+            TOOL_GROUNDED_COUNCIL_EVIDENCE.sha256
+          retention-days: 30
