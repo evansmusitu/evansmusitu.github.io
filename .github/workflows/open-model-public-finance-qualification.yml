@@ -1,0 +1,277 @@
+name: Open Model Public Finance Qualification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/open-model-public-finance-qualification.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qwen-finance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: Qwen/Qwen3-4B-GGUF
+      MODEL_REVISION: bc640142c66e1fdd12af0bd68f40445458f3869b
+      MODEL_FILE: Qwen3-4B-Q4_K_M.gguf
+      MODEL_SHA256: 7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5
+    steps:
+      - name: Install pinned llama.cpp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama && tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli" && chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+          "$cli" --version | tee llama-version.txt
+
+      - name: Download and verify immutable Qwen3-4B
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          test -s model.gguf
+          echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
+          stat -c '%s' model.gguf | tee model.bytes
+
+      - name: Execute public-safe finance qualification
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > prompt.txt <<'EOF'
+          /no_think
+          Solve these eight independent public finance/risk questions. Return one line per item in the exact form N=ANSWER. Do not omit any item.
+          1) A price rises from 100 to 112. Integer percentage return?
+          2) An account is 10000 dollars and the risk limit is 1 percent. Maximum allowed loss in dollars?
+          3) Long entry 50, stop 48, target 56. Reward divided by risk as a scalar?
+          4) Short 10 shares at 50 and cover at 45. Profit in dollars, ignoring fees?
+          5) Prices are 100, 101, 102, 103, 104. Overall direction: UP, DOWN, or FLAT?
+          6) Equity peak 200 and trough 150. Integer drawdown percentage?
+          7) Two equal-weight assets return +10 percent and -10 percent. Portfolio return percentage using the arithmetic weighted average?
+          8) Risk budget is 100 dollars and proposed worst-case loss is 120 dollars. Return ALLOW or BLOCK.
+          EOF
+          timeout 240s "$LLAMA_CLI" \
+            -m model.gguf -f prompt.txt \
+            -n 384 -c 2048 --temp 0 --seed 42 --single-turn \
+            --no-display-prompt --no-show-timings \
+            > output.txt 2> stderr.txt
+          test -s output.txt
+          sha256sum output.txt | tee output.sha256
+          cat output.txt
+
+      - name: Seal Qwen finance evidence before enforcement
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os,pathlib,re
+          text=pathlib.Path('output.txt').read_text(encoding='utf-8',errors='replace')
+          patterns={
+            '1':r'(?mi)^\s*1\s*=\s*12(?:\.0+)?%?\s*$',
+            '2':r'(?mi)^\s*2\s*=\s*\$?100(?:\.0+)?\s*$',
+            '3':r'(?mi)^\s*3\s*=\s*3(?:\.0+)?\s*$',
+            '4':r'(?mi)^\s*4\s*=\s*\+?\$?50(?:\.0+)?\s*$',
+            '5':r'(?mi)^\s*5\s*=\s*UP\s*$',
+            '6':r'(?mi)^\s*6\s*=\s*25(?:\.0+)?%?\s*$',
+            '7':r'(?mi)^\s*7\s*=\s*0(?:\.0+)?%?\s*$',
+            '8':r'(?mi)^\s*8\s*=\s*BLOCK\s*$'
+          }
+          cases={k:bool(re.search(v,text)) for k,v in patterns.items()}
+          p={
+            'schema':'open-model.github-public-runner-finance-qualification.v1',
+            'family':'qwen3','role':'reasoner','repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],
+            'file':os.environ['MODEL_FILE'],'model_sha256':os.environ['MODEL_SHA256'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),
+            'output_sha256':hashlib.sha256(pathlib.Path('output.txt').read_bytes()).hexdigest(),'output_text':text,
+            'suite':'PUBLIC_SAFE_FINANCE_RISK_8','case_results':cases,'cases_passed':sum(cases.values()),'cases_total':8,'verified':all(cases.values()),
+            'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,
+            'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False
+          }
+          pathlib.Path('qwen-finance-result.json').write_text(json.dumps(p,sort_keys=True,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(p,sort_keys=True,indent=2))
+          PY
+
+      - name: Upload Qwen finance evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: qwen-finance-qualification
+          path: |
+            qwen-finance-result.json
+            output.txt
+            output.sha256
+            stderr.txt
+            llama-version.txt
+          retention-days: 30
+
+      - name: Enforce Qwen 8-case gate
+        shell: bash
+        run: python -c "import json; d=json.load(open('qwen-finance-result.json')); assert d['verified'] is True and d['cases_passed']==8"
+
+  phi3-finance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      LLAMA_TAG: b10837
+      LLAMA_SHA256: d0514baaa6e1711eb02cbe2cfa9ca4fee7d8dc6ab50a0f6046eaf91d8a444b7f
+      MODEL_REPO: microsoft/Phi-3-mini-4k-instruct-gguf
+      MODEL_REVISION: 8842f87a812f23f981be51e31fbbfbc34e72c16d
+      MODEL_FILE: Phi-3-mini-4k-instruct-q4.gguf
+      MODEL_SHA256: 8a83c7fb9049a9b2e92266fa7ad04933bb53aa1e85136b7b30f1b8000ff2edef
+    steps:
+      - name: Install pinned llama.cpp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz" -o llama.tar.gz
+          echo "${LLAMA_SHA256}  llama.tar.gz" | sha256sum -c -
+          mkdir llama && tar -xzf llama.tar.gz -C llama
+          cli="$(find llama -type f -name llama-cli -print -quit)"
+          test -n "$cli" && chmod +x "$cli"
+          echo "LLAMA_CLI=$cli" >> "$GITHUB_ENV"
+          "$cli" --version | tee llama-version.txt
+
+      - name: Download and verify immutable Phi-3 Mini
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true" -o model.gguf
+          test -s model.gguf
+          echo "${MODEL_SHA256}  model.gguf" | sha256sum -c -
+          stat -c '%s' model.gguf | tee model.bytes
+
+      - name: Execute public-safe finance qualification
+        shell: bash
+        run: |
+          set -euo pipefail
+          prompt=$'<|user|>\nSolve these eight independent public finance/risk questions. Return one line per item in the exact form N=ANSWER. Do not omit any item.\n1) A price rises from 100 to 112. Integer percentage return?\n2) An account is 10000 dollars and the risk limit is 1 percent. Maximum allowed loss in dollars?\n3) Long entry 50, stop 48, target 56. Reward divided by risk as a scalar?\n4) Short 10 shares at 50 and cover at 45. Profit in dollars, ignoring fees?\n5) Prices are 100, 101, 102, 103, 104. Overall direction: UP, DOWN, or FLAT?\n6) Equity peak 200 and trough 150. Integer drawdown percentage?\n7) Two equal-weight assets return +10 percent and -10 percent. Portfolio return percentage using the arithmetic weighted average?\n8) Risk budget is 100 dollars and proposed worst-case loss is 120 dollars. Return ALLOW or BLOCK.<|end|>\n<|assistant|>'
+          timeout 240s "$LLAMA_CLI" \
+            -m model.gguf -p "$prompt" \
+            -n 384 -c 2048 --temp 0 --seed 42 --single-turn \
+            --no-display-prompt --no-show-timings \
+            > output.txt 2> stderr.txt
+          test -s output.txt
+          sha256sum output.txt | tee output.sha256
+          cat output.txt
+
+      - name: Seal Phi-3 finance evidence before enforcement
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os,pathlib,re
+          text=pathlib.Path('output.txt').read_text(encoding='utf-8',errors='replace')
+          patterns={
+            '1':r'(?mi)^\s*1\s*=\s*12(?:\.0+)?%?\s*$',
+            '2':r'(?mi)^\s*2\s*=\s*\$?100(?:\.0+)?\s*$',
+            '3':r'(?mi)^\s*3\s*=\s*3(?:\.0+)?\s*$',
+            '4':r'(?mi)^\s*4\s*=\s*\+?\$?50(?:\.0+)?\s*$',
+            '5':r'(?mi)^\s*5\s*=\s*UP\s*$',
+            '6':r'(?mi)^\s*6\s*=\s*25(?:\.0+)?%?\s*$',
+            '7':r'(?mi)^\s*7\s*=\s*0(?:\.0+)?%?\s*$',
+            '8':r'(?mi)^\s*8\s*=\s*BLOCK\s*$'
+          }
+          cases={k:bool(re.search(v,text)) for k,v in patterns.items()}
+          p={
+            'schema':'open-model.github-public-runner-finance-qualification.v1',
+            'family':'phi3','role':'independent_critic','repo':os.environ['MODEL_REPO'],'revision':os.environ['MODEL_REVISION'],
+            'file':os.environ['MODEL_FILE'],'model_sha256':os.environ['MODEL_SHA256'],'model_bytes':int(pathlib.Path('model.bytes').read_text()),
+            'output_sha256':hashlib.sha256(pathlib.Path('output.txt').read_bytes()).hexdigest(),'output_text':text,
+            'suite':'PUBLIC_SAFE_FINANCE_RISK_8','case_results':cases,'cases_passed':sum(cases.values()),'cases_total':8,'verified':all(cases.values()),
+            'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,
+            'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'production_authority':False,'live_trading_authorized':False
+          }
+          pathlib.Path('phi3-finance-result.json').write_text(json.dumps(p,sort_keys=True,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(p,sort_keys=True,indent=2))
+          PY
+
+      - name: Upload Phi-3 finance evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: phi3-finance-qualification
+          path: |
+            phi3-finance-result.json
+            output.txt
+            output.sha256
+            stderr.txt
+            llama-version.txt
+          retention-days: 30
+
+      - name: Enforce Phi-3 8-case gate
+        shell: bash
+        run: python -c "import json; d=json.load(open('phi3-finance-result.json')); assert d['verified'] is True and d['cases_passed']==8"
+
+  finance-quorum:
+    needs: [qwen-finance, phi3-finance]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download Qwen finance evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: qwen-finance-qualification
+          path: qwen
+
+      - name: Download Phi-3 finance evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: phi3-finance-qualification
+          path: phi
+
+      - name: Verify 8-case cross-family finance quorum
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          q=json.loads(pathlib.Path('qwen/qwen-finance-result.json').read_text())
+          p=json.loads(pathlib.Path('phi/phi3-finance-result.json').read_text())
+          for x in (q,p):
+            assert x['suite']=='PUBLIC_SAFE_FINANCE_RISK_8'
+            assert x['verified'] is True and x['cases_passed']==x['cases_total']==8
+            assert x['github_run_id']==int(os.environ['RUN_ID'])
+            assert x['provider_api_used'] is False and x['provider_spend_usd']==0.0
+            assert x['foundation_training'] is False and x['weights_modified'] is False
+            assert x['production_authority'] is False and x['live_trading_authorized'] is False
+          assert q['family']=='qwen3' and p['family']=='phi3' and q['family']!=p['family']
+          evidence={
+            'schema':'open-model.github-public-runner-finance-council-evidence.v1',
+            'result':'PUBLIC_SAFE_FINANCE_8_CASE_DUAL_FAMILY_VERIFIED',
+            'execution_surface':'GITHUB_ACTIONS_PUBLIC_LOCAL_CPU',
+            'github_run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],
+            'suite':'PUBLIC_SAFE_FINANCE_RISK_8','cases_total':8,'cross_family_quorum':2,
+            'independent_model_families':['qwen3','phi3'],'members':[q,p],
+            'provider_api_used':False,'provider_spend_usd':0.0,'foundation_training':False,'weights_modified':False,
+            'production_authority':False,'live_trading_authorized':False,'frontier_superiority_certified':False
+          }
+          raw=(json.dumps(evidence,sort_keys=True,indent=2)+'\n').encode()
+          pathlib.Path('OPEN_MODEL_PUBLIC_FINANCE_COUNCIL_EVIDENCE.json').write_bytes(raw)
+          pathlib.Path('OPEN_MODEL_PUBLIC_FINANCE_COUNCIL_EVIDENCE.sha256').write_text(hashlib.sha256(raw).hexdigest()+'  OPEN_MODEL_PUBLIC_FINANCE_COUNCIL_EVIDENCE.json\n')
+          print(json.dumps(evidence,sort_keys=True,indent=2))
+          print('EVIDENCE_SHA256='+hashlib.sha256(raw).hexdigest())
+          PY
+
+      - name: Upload finance council evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: open-model-public-finance-council-evidence
+          path: |
+            OPEN_MODEL_PUBLIC_FINANCE_COUNCIL_EVIDENCE.json
+            OPEN_MODEL_PUBLIC_FINANCE_COUNCIL_EVIDENCE.sha256
+          retention-days: 30
