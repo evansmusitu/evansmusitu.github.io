@@ -95,6 +95,49 @@ try {
   assert.ok(await board.isVisible(),'Checklist can be reopened');
   assert.match(await board.locator('.edge-board-progress').innerText(),/1 of 2 checked/,'State survives collapsing the checklist');
   console.log('SAFE RICH ANSWERS + ACTION CHECKLIST QA PASS');
+
+  // The real second model is qualified by the Cloudflare canary suite.
+  // Test client mode routing with a deterministic response to avoid duplicate paid inference.
+  await page.unroute(worker + '/api/chat');
+  let deepModeRequested = false;
+  await page.route(worker + '/api/chat', async route => {
+    const request = route.request();
+    if (request.method() === 'OPTIONS') {
+      await route.fulfill({status:204,headers:{'access-control-allow-origin':origin,'access-control-allow-methods':'POST,OPTIONS','access-control-allow-headers':'content-type'}});
+      return;
+    }
+    const data = request.postDataJSON();
+    deepModeRequested = data.mode === 'deep';
+    await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':origin},body:JSON.stringify({mode:'deep',model:'@cf/qwen/qwen3-30b-a3b-fp8',reply:'A measured technical conclusion with assumptions and verification steps.'})});
+  });
+  await page.locator('[data-edge-mode="deep"]').click();
+  assert.equal(await page.locator('[data-edge-mode="deep"]').getAttribute('aria-pressed'),'true');
+  await page.locator('#edge-input').fill('Explain the tradeoffs of two database architectures with testing recommendations.');
+  await page.locator('#edge-send').click();
+  await page.getByText('REASONING MODEL RESPONDED').waitFor({timeout:12000});
+  assert.equal(deepModeRequested,true,'UI must request actual deep model route');
+  assert.match(await page.locator('.edge-message.assistant').last().innerText(),/technical conclusion/);
+
+  let expressionSent = null;
+  await page.route(worker + '/api/calculate', async route => {
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({status:204,headers:{'access-control-allow-origin':origin,'access-control-allow-methods':'POST,OPTIONS','access-control-allow-headers':'content-type'}});
+      return;
+    }
+    expressionSent = route.request().postDataJSON().expression;
+    await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':origin},body:JSON.stringify({tool:'calculator',expression:expressionSent,result:36,numericType:'IEEE-754 double precision',verifiedBy:'deterministic parser v1',exact:false})});
+  });
+  await page.locator('[data-edge-mode="calculator"]').click();
+  assert.equal(await page.locator('#edge-input').getAttribute('maxlength'),'140');
+  assert.ok(await page.locator('#edge-calculator-presets').isVisible());
+  await page.locator('[data-calc-expression="(8+4)*sqrt(9)"]').click();
+  assert.equal(await page.locator('#edge-input').inputValue(),'(8+4)*sqrt(9)');
+  await page.locator('#edge-send').click();
+  await page.getByText('VERIFIED CALCULATION').waitFor({timeout:12000});
+  assert.equal(expressionSent,'(8+4)*sqrt(9)','Client must invoke deterministic math tool');
+  assert.match(await page.locator('.edge-message.assistant').last().innerText(),/Result:\s*36/);
+  assert.match(await page.locator('.edge-message.assistant').last().innerText(),/approximate, not exact/);
+  console.log('REASONING MODE + DETERMINISTIC CALCULATOR UI PASS');
   await page.locator('#ai-close').click();
   assert.equal(await page.locator('#ai-dialog').getAttribute('open'),null,'Dialog should close');
   await page.close();
