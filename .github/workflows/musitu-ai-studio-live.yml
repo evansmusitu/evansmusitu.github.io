@@ -1,0 +1,24 @@
+name: MUSITU AI Studio Live Contract
+
+on:
+  push:
+    branches:
+      - main
+      - feature/musitu-ai-studio-integration-20261019
+    paths:
+      - index.html
+      - tests/ai-studio-live.mjs
+      - .github/workflows/musitu-ai-studio-live.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-ai-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate production AI backend from the public internet
+        run: node tests/ai-studio-live.mjs
