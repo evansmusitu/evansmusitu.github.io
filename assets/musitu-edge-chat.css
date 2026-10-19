@@ -36,3 +36,26 @@
   .edge-disclaimer { padding: 8px 11px; font-size: 9px; }
   .edge-counter { font-size: 10px; }
 }
+
+/* AI-generated answers are rendered as safe semantic DOM elements. */
+.edge-reply-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.edge-board-toggle{color:var(--mint);font-weight:800;}
+.edge-rich{white-space:normal;overflow-wrap:anywhere;line-height:1.75;}
+.edge-rich p{margin:0 0 12px;color:inherit;font-size:inherit;line-height:inherit;}
+.edge-rich h4{font-weight:850;font-size:15px;color:var(--text);letter-spacing:-.015em;margin:14px 0 8px;}
+.edge-rich h4:first-child{margin-top:0;}
+.edge-rich ul,.edge-rich ol{margin:0 0 14px 0;padding-left:23px;color:var(--text);}
+.edge-rich li{margin:6px 0;line-height:1.65;}
+.edge-rich strong{color:var(--bright);font-weight:850;}
+.edge-rich code{font:12px/1.6 ui-monospace,Consolas,monospace;border-radius:5px;padding:2px 5px;background:rgba(127,152,221,.14);overflow-wrap:anywhere;}
+.edge-rich pre{max-width:100%;overflow:auto;padding:14px 16px;margin:10px 0 18px;background:var(--bg);border:1px solid var(--line);border-radius:12px;white-space:pre;color:var(--text);}
+.edge-rich pre code{background:transparent;padding:0;white-space:pre;}
+.edge-action-board{margin-top:16px;padding:18px;border:1px solid rgba(114,235,199,.34);border-radius:14px;background:rgba(114,235,199,.06);white-space:normal;}
+.edge-board-title{font-size:10px;letter-spacing:.14em;color:var(--mint);font-weight:900;margin-bottom:3px;}
+.edge-board-progress{color:var(--muted);font-size:12px;margin-bottom:13px;}
+.edge-board-items{display:grid;gap:9px;}
+.edge-board-row{display:flex;align-items:start;gap:10px;cursor:pointer;border-radius:9px;border:1px solid var(--line);background:var(--panel);padding:10px 12px;font-size:12px;line-height:1.5;}
+.edge-board-row input{flex:0 0 auto;accent-color:#67eac5;margin:3px 0 0 0;width:15px;height:15px;}
+.edge-board-row.done span{text-decoration:line-through;opacity:.6;}
+.edge-board-note{font-size:10px!important;color:var(--muted)!important;line-height:1.7!important;margin:14px 0 0!important;}
+@media(max-width:750px){.edge-rich h4{font-size:13px}.edge-rich code{font-size:11px}.edge-action-board{padding:11px}.edge-board-row{padding:9px;font-size:11px}.edge-reply-tools{gap:7px}}
