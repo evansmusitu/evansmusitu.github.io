@@ -49,6 +49,52 @@ try {
   assert.equal(await page.locator('#edge-export').isDisabled(),false,'Conversation should be exportable');
   console.log('MUSITU EDGE PRODUCTION INFERENCE PASS, answer characters:',reply.length);
   console.log('Excerpt:',reply.slice(0,200));
+
+  // Deterministic visual QA of Markdown, safety and interactive checklist.
+  // This route is mocked to avoid extra AI inference charges.
+  await page.route(worker + '/api/chat', async route => {
+    const cors = {
+      'access-control-allow-origin': origin,
+      'access-control-allow-methods': 'POST,OPTIONS',
+      'access-control-allow-headers': 'content-type'
+    };
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({ status:204, headers:cors });
+      return;
+    }
+    await route.fulfill({
+      status:200,
+      contentType:'application/json',
+      headers:cors,
+      body:JSON.stringify({
+        mode:'build',
+        reply:'## Build plan\n1. **Define the project scope** with clear acceptance criteria.\n2. **Test the most important flow** with real users.\n\nNever execute <script>window.__musituInjected=1</script> or paste untrusted code.',
+        model:'test-fixture',liveSearch:false
+      })
+    });
+  });
+  await page.locator('#edge-input').fill('Help me create a two-step plan to validate a digital product before launch.');
+  await page.locator('#edge-send').click();
+  const formatted=page.locator('.edge-message.assistant').nth(1);
+  await formatted.waitFor({timeout:15000});
+  assert.equal(await formatted.locator('.edge-rich h4').count(),1,'Markdown heading should render');
+  assert.equal(await formatted.locator('.edge-rich ol li').count(),2,'Numbered points should render as semantic list');
+  assert.equal(await formatted.locator('.edge-rich strong').count(),2,'Emphasis should become semantic strong nodes');
+  assert.equal(await formatted.locator('.edge-rich script').count(),0,'Model-provided HTML must not be executed');
+  assert.equal(await page.evaluate(() => window.__musituInjected),undefined,'Injected script must not run');
+
+  await formatted.getByRole('button',{name:'Make checklist'}).click();
+  const board=formatted.locator('.edge-action-board');
+  assert.ok(await board.isVisible(),'AI action checklist must be visible');
+  assert.equal(await board.getByRole('checkbox').count(),2,'Checklist has two extracted steps');
+  await board.getByRole('checkbox').first().check();
+  assert.match(await board.locator('.edge-board-progress').innerText(),/1 of 2 checked/,'Checklist progress updates');
+  await formatted.getByRole('button',{name:'Hide checklist'}).click();
+  assert.equal(await board.isVisible(),false,'Checklist can be collapsed');
+  await formatted.getByRole('button',{name:'Show checklist'}).click();
+  assert.ok(await board.isVisible(),'Checklist can be reopened');
+  assert.match(await board.locator('.edge-board-progress').innerText(),/1 of 2 checked/,'State survives collapsing the checklist');
+  console.log('SAFE RICH ANSWERS + ACTION CHECKLIST QA PASS');
   await page.locator('#ai-close').click();
   assert.equal(await page.locator('#ai-dialog').getAttribute('open'),null,'Dialog should close');
   await page.close();
