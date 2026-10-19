@@ -11,11 +11,21 @@
   const exportButton = document.getElementById('edge-export');
   const counter = document.getElementById('edge-counter');
   let mode = 'explore';
+  const presets = document.getElementById('edge-calculator-presets');
+  const inputLabel = document.querySelector('#edge-form label[for="edge-input"]');
   let pending = false;
   let history = [];
 
   function selectMode(next) {
-    mode = ['explore', 'build', 'learn', 'markets'].includes(next) ? next : 'explore';
+    mode = ['explore', 'build', 'learn', 'markets', 'deep', 'calculator'].includes(next) ? next : 'explore';
+    const math = mode === 'calculator';
+    presets.hidden = !math;
+    prompt.maxLength = math ? 140 : 900;
+    prompt.placeholder = math ? 'Enter an expression, e.g. 7*(2+3) or sqrt(81)…' :
+      mode === 'deep' ? 'Ask a complex question for deliberate analysis…' : 'Ask a question in the selected mode…';
+    inputLabel.textContent = math ? 'DETERMINISTIC MATH EXPRESSION' : mode === 'deep' ? 'ASK THE REASONING MODEL' : 'ASK MUSITU AI';
+    send.textContent = math ? 'Calculate ↗' : 'Generate answer ↗';
+    counter.textContent = prompt.value.length + ' / ' + prompt.maxLength + ' · Enter to send';
     document.querySelectorAll('[data-edge-mode]').forEach(button => {
       button.setAttribute('aria-pressed', String(button.dataset.edgeMode === mode));
     });
@@ -250,9 +260,17 @@
     button.addEventListener('click', () => selectMode(button.dataset.edgeMode));
   });
   document.getElementById('ai-close').addEventListener('click', close);
+  document.querySelectorAll('[data-calc-expression]').forEach(button => {
+    button.addEventListener('click', () => {
+      selectMode('calculator');
+      prompt.value = button.dataset.calcExpression || '';
+      prompt.dispatchEvent(new Event('input'));
+      prompt.focus();
+    });
+  });
 
   prompt.addEventListener('input', () => {
-    counter.textContent = prompt.value.length + ' / 900 · Enter to send';
+    counter.textContent = prompt.value.length + ' / ' + prompt.maxLength + ' · Enter to send';
   });
   prompt.addEventListener('keydown', event => {
     if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
@@ -265,56 +283,73 @@
     event.preventDefault();
     if (pending) return;
     const question = prompt.value.trim();
-    if (question.length < 10 || question.length > 900) {
-      displayError('Enter a question between 10 and 900 characters.');
+    const requestedMode = mode;
+    const mathMode = requestedMode === 'calculator';
+    if (question.length < (mathMode ? 1 : 10) || question.length > (mathMode ? 140 : 900)) {
+      displayError(mathMode ? 'Enter an expression between 1 and 140 characters.' :
+        'Enter a question between 10 and 900 characters.');
       prompt.focus();
       return;
     }
+
     pending = true;
     alert.hidden = true;
     send.disabled = true;
-    send.textContent = 'Generating…';
+    send.textContent = mathMode ? 'Calculating…' : 'Generating…';
     const earlier = history.slice(-4);
     appendMessage('user', question);
     prompt.value = '';
-    counter.textContent = '0 / 900 · Enter to send';
+    counter.textContent = '0 / ' + prompt.maxLength + ' · Enter to send';
     const waiting = document.createElement('p');
     waiting.className = 'edge-waiting';
-    waiting.textContent = 'MUSITU AI is thinking…';
+    waiting.textContent = mathMode ? 'Calculating deterministically…' : 'MUSITU AI is generating…';
     thread.append(waiting);
     thread.scrollTop = thread.scrollHeight;
-
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 75000);
     try {
-      const response = await fetch(service + '/api/chat', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ prompt: question, mode, history: earlier }),
-        signal: controller.signal
+      const path = mathMode ? '/api/calculate' : '/api/chat';
+      const payload = mathMode ? { expression: question } :
+        { prompt: question, mode: requestedMode, history: earlier };
+      const response = await fetch(service + path, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload), signal: controller.signal
       });
       const answer = await response.json();
-      if (!response.ok || typeof answer.reply !== 'string' || !answer.reply.trim()) {
-        if (response.status === 429) throw new Error('The AI request limit was reached. Try again shortly.');
-        throw new Error(typeof answer.error === 'string' ? answer.error : 'The AI response was unavailable.');
+      if (!response.ok) {
+        if (response.status === 429) throw new Error('The service is busy. Try again after about a minute.');
+        throw new Error(typeof answer.error === 'string' ? answer.error : 'The operation is unavailable.');
       }
-      history.push({ role: 'user', content: question }, { role: 'assistant', content: answer.reply });
+      let visibleAnswer;
+      if (mathMode) {
+        if (answer.tool !== 'calculator' || typeof answer.result !== 'number' || !Number.isFinite(answer.result))
+          throw new Error('The calculator returned an invalid result.');
+        visibleAnswer = '### Deterministic result\n' +
+          '**Expression:** ' + answer.expression + '\n' +
+          '**Result:** ' + String(answer.result) + '\n' +
+          '**Verified by:** ' + answer.verifiedBy + '\n' +
+          '**Precision:** IEEE-754 double precision (approximate, not exact).';
+        health.textContent = '● VERIFIED CALCULATION';
+      } else {
+        if (typeof answer.reply !== 'string' || !answer.reply.trim()) throw new Error('The AI returned no answer.');
+        visibleAnswer = answer.reply;
+        health.textContent = requestedMode === 'deep' ? '● REASONING MODEL RESPONDED' : '● LIVE AI RESPONSE VERIFIED';
+      }
+      history.push({ role: 'user', content: question }, { role: 'assistant', content: visibleAnswer });
       history = history.slice(-6);
-      appendMessage('assistant', answer.reply);
+      appendMessage('assistant', visibleAnswer);
       exportButton.disabled = false;
-      health.textContent = '● LIVE AI RESPONSE VERIFIED';
-    } catch (error) {
+    } catch (failure) {
       prompt.value = question;
-      counter.textContent = prompt.value.length + ' / 900 · Enter to send';
-      displayError(error && error.name === 'AbortError'
-        ? 'The request timed out. Please try again.'
-        : error instanceof Error ? error.message : 'Network error. Please try again.');
+      counter.textContent = prompt.value.length + ' / ' + prompt.maxLength + ' · Enter to send';
+      displayError(failure && failure.name === 'AbortError' ? 'Request timed out. Try again.' :
+        failure instanceof Error ? failure.message : 'Network error. Try again.');
     } finally {
       waiting.remove();
       clearTimeout(timeout);
       pending = false;
       send.disabled = false;
-      send.textContent = 'Generate answer ↗';
+      send.textContent = mode === 'calculator' ? 'Calculate ↗' : 'Generate answer ↗';
     }
   });
 
