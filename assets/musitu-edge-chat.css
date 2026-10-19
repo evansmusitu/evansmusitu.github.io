@@ -59,3 +59,11 @@
 .edge-board-row.done span{text-decoration:line-through;opacity:.6;}
 .edge-board-note{font-size:10px!important;color:var(--muted)!important;line-height:1.7!important;margin:14px 0 0!important;}
 @media(max-width:750px){.edge-rich h4{font-size:13px}.edge-rich code{font-size:11px}.edge-action-board{padding:11px}.edge-board-row{padding:9px;font-size:11px}.edge-reply-tools{gap:7px}}
+
+/* Actual tool controls, not simulated inference. */
+.edge-calculator-presets{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 20px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
+.edge-calculator-presets button{border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--bright);padding:7px 11px;font-size:11px;font-weight:800}
+.edge-calculator-presets button:hover{border-color:var(--mint)}
+.edge-modes button[data-edge-mode="deep"]{background:linear-gradient(110deg,rgba(141,123,244,.16),rgba(88,118,240,.09))}
+.edge-modes button[data-edge-mode="calculator"]{background:rgba(91,215,188,.09)}
+@media(max-width:750px){.edge-calculator-presets{padding:9px 11px;gap:6px}.edge-calculator-presets button{padding:6px 8px;font-size:10px}}
