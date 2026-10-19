@@ -1,0 +1,31 @@
+name: MUSITU AI Studio Live Contract
+
+on:
+  push:
+    branches:
+      - main
+      - feature/musitu-ai-studio-integration-20261019
+    paths:
+      - index.html
+      - tests/ai-studio-live.mjs
+      - .github/workflows/musitu-ai-studio-live.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-ai-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare browser automation
+        run: |
+          npm install --no-save playwright@1.62.0
+          npx playwright install chromium --with-deps
+      - name: Validate live model answer through production browser SDK
+        run: node tests/ai-studio-live.mjs
