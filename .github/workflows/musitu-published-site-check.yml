@@ -1,0 +1,23 @@
+name: MUSITU Published Site Acceptance
+
+on:
+  workflow_run:
+    workflows: ['MUSITU Website Pages']
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-production:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check public GitHub Pages assets and Cloudflare AI health
+        run: node tests/production-assets.mjs
