@@ -1,14 +1,6 @@
-name: MUSITU AI Studio Live Contract
+name: Legacy AppDeploy AI Studio Manual Check
 
 on:
-  push:
-    branches:
-      - main
-      - feature/musitu-ai-studio-integration-20261019
-    paths:
-      - index.html
-      - tests/ai-studio-live.mjs
-      - .github/workflows/musitu-ai-studio-live.yml
   workflow_dispatch:
 
 permissions:
