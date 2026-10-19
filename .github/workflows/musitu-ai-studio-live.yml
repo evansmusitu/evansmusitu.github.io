@@ -17,8 +17,15 @@ permissions:
 jobs:
   live-ai-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Validate production AI backend from the public internet
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare browser automation
+        run: |
+          npm install --no-save playwright@1.62.0
+          npx playwright install chromium --with-deps
+      - name: Validate live model answer through production browser SDK
         run: node tests/ai-studio-live.mjs
