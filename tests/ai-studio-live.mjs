@@ -1,33 +1,35 @@
 import assert from 'node:assert/strict';
+import { chromium } from 'playwright';
 
-const origin = 'https://musitu-intelligence-studio-ixzlgq.v2.appdeploy.ai';
-const health = await fetch(origin + '/api/_healthcheck', {
-  headers: { accept: 'application/json' },
-  signal: AbortSignal.timeout(25000)
-});
-console.log('AI Health HTTP:', health.status);
-assert.equal(health.status, 200, 'Live backend health endpoint must respond');
-const status = await health.json();
-assert.equal(status.service, 'MUSITU Intelligence Studio');
-assert.equal(status.status, 'ok');
-
-const prompt = 'In three useful sentences, explain why verifying a software product matters before launch.';
-const response = await fetch(origin + '/api/assist', {
-  method: 'POST',
-  headers: { 'content-type': 'application/json', accept: 'application/json' },
-  body: JSON.stringify({ mode: 'build', prompt, history: [] }),
-  signal: AbortSignal.timeout(85000)
-});
-console.log('AI Generate HTTP:', response.status);
-const payload = await response.text();
-let result;
-try { result = JSON.parse(payload); } catch { throw new Error('Non-JSON AI response: ' + payload.slice(0, 200)); }
-if (response.status !== 200) {
-  throw new Error('Live AI generation unavailable: HTTP ' + response.status + ' ' + JSON.stringify(result).slice(0, 600));
-}
-assert.equal(typeof result.reply, 'string');
-assert.ok(result.reply.trim().length > 50, 'Model must return substantive text');
-assert.equal(result.liveSearch, false, 'No false claims about live research');
-assert.equal(result.mode, 'build');
-console.log('AI LIVE GENERATION PASS, reply chars:', result.reply.length);
-console.log('Answer excerpt:', result.reply.slice(0, 190));
+const url = 'https://musitu-intelligence-studio-ixzlgq.v2.appdeploy.ai/?mode=learn';
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
+const errors = [];
+page.on('pageerror', error => errors.push(error.message));
+page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+try {
+  const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  console.log('Frontend HTTP:', response?.status());
+  assert.ok(response?.ok(), 'AI Studio frontend must load');
+  await page.locator('#studio-prompt').waitFor({ timeout: 30000 });
+  const header = await page.locator('.eyebrow').innerText();
+  console.log('Experience mode:', header);
+  assert.match(header, /LEARN/, 'Deep link must select the Learning mode');
+  await page.getByRole('button', { name: /Master a concept/ }).click();
+  const prompt = await page.locator('#studio-prompt').inputValue();
+  assert.ok(prompt.length >= 10, 'Example should populate prompt');
+  await page.getByRole('button', { name: /Generate answer/ }).click();
+  await page.locator('.chat-entry.assistant .chat-bubble').first().waitFor({ timeout: 100000 });
+  const responseText = await page.locator('.chat-entry.assistant .chat-bubble').first().innerText();
+  assert.ok(responseText.length >= 65, 'Real AI answer should be substantive');
+  assert.match(responseText.toLowerCase(), /feedback|control|sensor|signal|system|output|loop/, 'AI answer must relate to the question');
+  console.log('LIVE AI BROWSER TEST PASSED, reply chars:', responseText.length);
+  console.log('Answer excerpt:', responseText.slice(0, 240));
+  if (errors.length) console.log('Browser warnings:', errors.slice(0, 3));
+} catch (error) {
+  console.error('Browser test failure:', String(error));
+  console.error('Visible alerts:', await page.locator('[role="alert"]').allTextContents().catch(() => []));
+  console.error('Status:', await page.locator('[role="status"]').allTextContents().catch(() => []));
+  console.error('Browser errors:', errors.slice(0, 8));
+  throw error;
+} finally { await browser.close(); }
