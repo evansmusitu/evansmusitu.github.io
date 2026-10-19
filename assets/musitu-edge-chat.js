@@ -26,9 +26,150 @@
     alert.hidden = false;
   }
 
+  function writeInline(parent, value) {
+    const pieces = value.split(/(\*\*[^*]{1,160}\*\*|\x60[^\x60]{1,160}\x60)/g);
+    for (const piece of pieces) {
+      if (!piece) continue;
+      if (piece.startsWith('**') && piece.endsWith('**')) {
+        const strong = document.createElement('strong');
+        strong.textContent = piece.slice(2,-2);
+        parent.append(strong);
+      } else if (piece.charCodeAt(0) === 96 && piece.charCodeAt(piece.length - 1) === 96) {
+        const code = document.createElement('code');
+        code.textContent = piece.slice(1,-1);
+        parent.append(code);
+      } else {
+        parent.append(document.createTextNode(piece));
+      }
+    }
+  }
+
+  function renderAnswer(text) {
+    // Construct DOM nodes instead of using innerHTML. Model output is untrusted.
+    const body = document.createElement('div');
+    body.className = 'edge-rich';
+    const lines = text.replace(/\r\n?/g,'\n').split('\n').slice(0,500);
+    let list = null;
+    let pre = null;
+    let code = null;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.charCodeAt(0) === 96 && trimmed.charCodeAt(1) === 96 && trimmed.charCodeAt(2) === 96) {
+        list = null;
+        if (pre) { pre = null; code = null; }
+        else {
+          pre = document.createElement('pre');
+          code = document.createElement('code');
+          pre.append(code);
+          body.append(pre);
+        }
+        continue;
+      }
+      if (pre && code) {
+        code.textContent += line + '\n';
+        continue;
+      }
+      if (!trimmed) { list = null; continue; }
+
+      const heading = trimmed.match(/^#{1,4}\s+(.+)$/);
+      if (heading) {
+        list = null;
+        const h = document.createElement('h4');
+        writeInline(h,heading[1]);
+        body.append(h);
+        continue;
+      }
+      const bullet = trimmed.match(/^([-*]|\d+[.)])\s+(.+)$/);
+      if (bullet) {
+        const ordered = /^\d/.test(bullet[1]);
+        const listTag = ordered ? 'OL' : 'UL';
+        if (!list || list.tagName !== listTag) {
+          list = document.createElement(ordered ? 'ol' : 'ul');
+          body.append(list);
+        }
+        const li = document.createElement('li');
+        writeInline(li,bullet[2]);
+        list.append(li);
+        continue;
+      }
+      list = null;
+      const paragraph = document.createElement('p');
+      writeInline(paragraph,line);
+      body.append(paragraph);
+    }
+    return body;
+  }
+
+  function extractChecklistItems(text) {
+    const items = [];
+    for (const line of text.split(/\r?\n/)) {
+      const match = line.trim().match(/^(?:\d{1,2}[.)]|[-*])\s+(.{9,170})$/);
+      if (!match) continue;
+      const label = match[1].replace(/\*\*/g,'').replace(/\x60/g,'').trim();
+      if (label && !items.includes(label)) items.push(label);
+      if (items.length === 8) break;
+    }
+    return items.length >= 2 ? items : [];
+  }
+
+  function installChecklist(message, heading, items) {
+    const action = document.createElement('button');
+    action.type = 'button';
+    action.className = 'edge-copy edge-board-toggle';
+    action.textContent = 'Make checklist';
+    heading.append(action);
+    let board = null;
+
+    action.addEventListener('click', () => {
+      if (board) {
+        board.hidden = !board.hidden;
+        action.textContent = board.hidden ? 'Show checklist' : 'Hide checklist';
+        return;
+      }
+      board = document.createElement('section');
+      board.className = 'edge-action-board';
+      board.setAttribute('aria-label','Checklist extracted from AI response');
+      const title = document.createElement('div');
+      title.className = 'edge-board-title';
+      title.textContent = 'YOUR ACTION CHECKLIST';
+      const progress = document.createElement('div');
+      progress.className = 'edge-board-progress';
+      progress.setAttribute('role','status');
+      progress.textContent = '0 of ' + items.length + ' checked';
+      const list = document.createElement('div');
+      list.className = 'edge-board-items';
+      const checks = [];
+      items.forEach((labelText,index) => {
+        const row = document.createElement('label');
+        row.className = 'edge-board-row';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.setAttribute('aria-label','Checklist item ' + (index+1));
+        const label = document.createElement('span');
+        label.textContent = labelText;
+        row.append(checkbox,label);
+        list.append(row);
+        checks.push(checkbox);
+        checkbox.addEventListener('change', () => {
+          const done = checks.filter(c => c.checked).length;
+          progress.textContent = done + ' of ' + items.length + ' checked';
+          row.classList.toggle('done',checkbox.checked);
+        });
+      });
+      const note = document.createElement('p');
+      note.className = 'edge-board-note';
+      note.textContent = 'Extracted from AI-generated points. Confirm each item is appropriate before acting.';
+      board.append(title,progress,list,note);
+      message.append(board);
+      action.textContent = 'Hide checklist';
+    });
+  }
+
   function appendMessage(role, text) {
     const welcome = thread.querySelector('.edge-welcome');
     if (welcome) welcome.remove();
+
     const item = document.createElement('article');
     item.className = 'edge-message ' + role;
     const heading = document.createElement('div');
@@ -36,7 +177,12 @@
     const label = document.createElement('span');
     label.textContent = role === 'user' ? 'YOU' : '✦ MUSITU AI';
     heading.append(label);
+
     if (role === 'assistant') {
+      const tools = document.createElement('div');
+      tools.className = 'edge-reply-tools';
+      const checklist = extractChecklistItems(text);
+      if (checklist.length >= 2) installChecklist(item,tools,checklist);
       const copy = document.createElement('button');
       copy.type = 'button';
       copy.className = 'edge-copy';
@@ -49,11 +195,12 @@
           copy.textContent = 'Copy unavailable';
         }
       });
-      heading.append(copy);
+      tools.append(copy);
+      heading.append(tools);
     }
-    const body = document.createElement('div');
-    body.textContent = text; // Never render model output as unsafe HTML.
-    item.append(heading, body);
+    const body = role === 'assistant' ? renderAnswer(text) : document.createElement('div');
+    if (role !== 'assistant') body.textContent = text;
+    item.append(heading,body);
     thread.append(item);
     thread.scrollTop = thread.scrollHeight;
   }
@@ -65,7 +212,16 @@
         cache: 'no-store',
         signal: AbortSignal.timeout(12000)
       });
-      health.textContent = response.ok ? '● EDGE REACHABLE' : '● EDGE LIMITED';
+      if (response.ok) {
+        const details = await response.json();
+        health.textContent = '● EDGE REACHABLE';
+        if (details.rateLimit) {
+          health.title = details.rateLimit.visitorPerMinute + ' requests/minute per visitor · ' +
+            details.rateLimit.regionPerMinute + ' per minute per Cloudflare location';
+        }
+      } else {
+        health.textContent = '● EDGE LIMITED';
+      }
     } catch {
       health.textContent = '● CONNECTION UNAVAILABLE';
     }
