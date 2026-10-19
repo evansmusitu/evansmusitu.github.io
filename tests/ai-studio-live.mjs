@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { createServer } from 'node:http';
+import { readFileSync } from 'node:fs';
 
 const url = 'https://musitu-intelligence-studio-ixzlgq.v2.appdeploy.ai/?mode=learn';
 const browser = await chromium.launch({ headless: true });
@@ -25,6 +27,26 @@ try {
   assert.match(responseText.toLowerCase(), /feedback|control|sensor|signal|system|output|loop/, 'AI answer must relate to the question');
   console.log('LIVE AI BROWSER TEST PASSED, reply chars:', responseText.length);
   console.log('Answer excerpt:', responseText.slice(0, 240));
+  const homepage = readFileSync('index.html', 'utf8');
+  const server = createServer((_request, res) => {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    res.end(homepage);
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    assert.ok(address && typeof address !== 'string');
+    const site = await browser.newPage({ viewport: { width: 1080, height: 840 } });
+    try {
+      await site.goto('http://127.0.0.1:' + address.port + '/', { waitUntil: 'domcontentloaded' });
+      await site.locator('#launch-ai').click();
+      await site.locator('#ai-dialog[open]').waitFor({ timeout: 7000 });
+      await site.frameLocator('#ai-frame').locator('#studio-prompt').waitFor({ timeout: 35000 });
+      console.log('LIVE AI HOMEPAGE EMBED TEST PASSED');
+      await site.locator('#ai-close').click();
+      assert.equal(await site.locator('#ai-dialog').getAttribute('open'), null, 'Studio dialog should close');
+    } finally { await site.close(); }
+  } finally { await new Promise(resolve => server.close(resolve)); }
   if (errors.length) console.log('Browser warnings:', errors.slice(0, 3));
 } catch (error) {
   console.error('Browser test failure:', String(error));
