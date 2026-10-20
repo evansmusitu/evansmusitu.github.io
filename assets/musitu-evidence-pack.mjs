@@ -43,12 +43,27 @@ export async function buildLocalEvidencePack({question,records}={}) {
     valid(meta && typeof meta==='object' && Array.isArray(meta.passages) &&
       meta.passages.length>=1 && meta.passages.length<=7,'Missing local passage provenance.');
     const fingerprintSha=await fingerprint(text);
+    // Optional original-byte fingerprint produced by local, explicit browser analysis.
+    // Legacy evidence records still export honestly with excerpt-only provenance.
+    const integrity=source.sourceIntegrity;
+    if(integrity!==undefined){
+      const suffix=/\.([a-z0-9]+)$/i.exec(source.fileName)?.[1]?.toLowerCase();
+      const maxBytes={txt:65536,md:65536,csv:65536,json:65536,pdf:2097152,docx:1048576}[suffix];
+      valid(integrity&&Number.isInteger(integrity.bytes)&&integrity.bytes>=30&&
+        integrity.bytes<=maxBytes&&typeof integrity.sha256==='string'&&
+        /^[a-f0-9]{64}$/.test(integrity.sha256),'Invalid local original-file fingerprint.');
+    }
     const tick=String.fromCharCode(96);
     const parts=[
       '## [D'+(index+1)+'] '+escapeLabel(source.fileName),
       '',
       '- Selected excerpt characters: '+text.length,
       '- SHA-256 of selected text excerpt (not original full file): '+tick+fingerprintSha+tick,
+      ...(integrity ? [
+        '- Original local file size (bytes): '+integrity.bytes,
+        '- SHA-256 of original local file bytes: '+tick+integrity.sha256+tick,
+        '- Original-file hash confirms byte equality only, not publisher identity or truth.'
+      ] : ['- Original-file SHA-256: not computed for this legacy evidence record.']),
       '- Keyword match found: '+(meta.keywordMatchFound===true?'yes':meta.keywordMatchFound===false?'no (early-document fallback)':'unknown'),
       '- Passages selected: '+meta.passages.length,
       '',
@@ -69,7 +84,7 @@ export async function buildLocalEvidencePack({question,records}={}) {
     '',
     '**Plaintext export.** It contains user-selected document excerpts and may include private information. Keep it private; it is not encrypted.',
     '',
-    '> Scope: browser-local deterministic keyword selection only. Position numbers refer to extracted text, not PDF page coordinates. SHA-256 checks selected excerpt bytes only. This is not a full-file integrity signature, a guarantee of source authenticity, or independent fact verification.',
+    '> Scope: browser-local deterministic keyword selection only. Position numbers refer to extracted text, not PDF page coordinates. The excerpt hash is not a full-file integrity signature. Where an original-file SHA-256 is recorded, it fingerprints the exact local bytes selected during analysis, not source authenticity. Neither fingerprint independently verifies factual claims.',
     '',
     '**Question asked**',
     '',

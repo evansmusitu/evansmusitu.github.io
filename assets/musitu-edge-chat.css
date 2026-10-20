@@ -169,3 +169,7 @@
 .edge-local-evidence-passage summary:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
 .edge-local-evidence-passage pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:160px;overflow-y:auto;margin:0;padding:10px 12px;border-top:1px solid var(--line);color:var(--text);font-size:11px;line-height:1.65;font-family:inherit}
 @media(max-width:750px){.edge-document-evidence-preview{padding:11px}.edge-document-local-actions button{flex:1 1 145px}}
+
+#edge-document-verify-status{font-size:11px;line-height:1.6;color:var(--mint);overflow-wrap:anywhere;margin:10px 0}
+#edge-document-verify-status[hidden]{display:none!important}
+.edge-local-evidence-source small{display:block;color:var(--muted);font-size:10px;line-height:1.65;overflow-wrap:anywhere}

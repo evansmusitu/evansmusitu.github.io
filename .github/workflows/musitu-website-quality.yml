@@ -9,7 +9,11 @@ on:
       - tests/workspace-slots.test.mjs
       - tests/local-evidence.test.mjs
       - tests/evidence-pack.test.mjs
+      - tests/source-integrity.test.mjs
       - assets/musitu-evidence-pack.mjs
+      - assets/musitu-source-integrity.mjs
+      - assets/musitu-edge-chat.js
+      - assets/musitu-edge-chat.css
       - assets/musitu-local-evidence.mjs
       - assets/musitu-workspace-slots.mjs
       - assets/musitu-workspace-vault.mjs
@@ -41,5 +45,7 @@ jobs:
           node --check assets/musitu-workspace-ui.mjs
           node --check assets/musitu-workspace-slots.mjs
           node --check assets/musitu-local-evidence.mjs
-          node --test tests/workspace-vault.test.mjs tests/workspace-slots.test.mjs tests/evidence-pack.test.mjs tests/local-evidence.test.mjs
+          node --check assets/musitu-source-integrity.mjs
+          node --check assets/musitu-edge-chat.js
+          node --test tests/workspace-vault.test.mjs tests/workspace-slots.test.mjs tests/evidence-pack.test.mjs tests/local-evidence.test.mjs tests/source-integrity.test.mjs
           node tests/site.test.mjs

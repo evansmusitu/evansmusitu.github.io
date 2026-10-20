@@ -18,6 +18,8 @@
   const evidencePreview=document.getElementById('edge-document-evidence-preview');
   const evidencePreviewButton=document.getElementById('edge-document-preview');
   const evidenceExportButton=document.getElementById('edge-document-evidence-export');
+  const evidenceVerifyButton=document.getElementById('edge-document-verify');
+  const evidenceVerifyStatus=document.getElementById('edge-document-verify-status');
   const presets = document.getElementById('edge-calculator-presets');
   const inputLabel = document.querySelector('#edge-form label[for="edge-input"]');
   let pending = false;
@@ -69,6 +71,9 @@
     evidenceRevision++;
     evidenceForExport=null;
     evidenceExportButton.disabled=true;
+    evidenceVerifyButton.disabled=true;
+    evidenceVerifyStatus.hidden=true;
+    evidenceVerifyStatus.textContent='';
     evidencePreview.replaceChildren();
     evidencePreview.hidden=true;
   }
@@ -83,19 +88,22 @@
   }
   async function collectLocalEvidence(question){
     const files=selectedDocumentFiles();
-    const [{extractDocumentText,validateDocumentFile},{rankEvidence}]=await Promise.all([
+    const [{extractDocumentText,validateDocumentFile},{rankEvidence},{fingerprintLocalFile}]=await Promise.all([
       import('/assets/musitu-document-extract.mjs'),
-      import('/assets/musitu-local-evidence.mjs')
+      import('/assets/musitu-local-evidence.mjs'),
+      import('/assets/musitu-source-integrity.mjs')
     ]);
     const sourceRecords=[];
     const maxChars=files.length===1?4800:1500;
     for(const file of files){
       validateDocumentFile(file);
+      const sourceIntegrity=await fingerprintLocalFile(file);
       const extracted=await extractDocumentText(file);
       const result=rankEvidence(extracted.text,question,{maxChars,maxPassages:files.length===1?6:2});
       if(result.excerpt.trim().length<30)throw new Error('Insufficient readable evidence in '+file.name+'.');
       sourceRecords.push({
         fileName:file.name,
+        sourceIntegrity,
         excerpt:result.excerpt,
         localMetadata:result
       });
@@ -106,6 +114,7 @@
     evidencePreview.replaceChildren();
     evidenceForExport={question:sourceQuestion,records:sources};
     evidenceExportButton.disabled=false;
+    evidenceVerifyButton.disabled=false;
     const heading=document.createElement('strong');
     heading.textContent=kind==='preview'?'LOCAL EVIDENCE PREVIEW · NO AI REQUEST':'EVIDENCE SELECTED FOR AI · BROWSER-LOCAL RANKING';
     evidencePreview.append(heading);
@@ -119,6 +128,10 @@
       label.textContent='[D'+(index+1)+'] '+source.fileName+' · '+source.excerpt.length+' characters'+
         (source.localMetadata.keywordMatchFound?' · keyword matches':' · no keyword match (fallback)');
       section.append(label);
+      const integrity=document.createElement('small');
+      integrity.textContent='Local original-file SHA-256: '+source.sourceIntegrity.sha256+
+        ' · '+source.sourceIntegrity.bytes+' bytes · not proof of authenticity';
+      section.append(integrity);
       for(const passage of source.localMetadata.passages){
         const detail=document.createElement('details');
         detail.className='edge-local-evidence-passage';
@@ -177,6 +190,33 @@
       displayError(failure instanceof Error?failure.message:'Evidence export failed.');
     } finally {
       evidenceExportButton.disabled=!(evidenceForExport===snapshot && revision===evidenceRevision);
+    }
+  });
+  evidenceVerifyButton.addEventListener('click',async()=>{
+    if(pending||evidenceVerifyButton.disabled||!evidenceForExport)return;
+    const snapshot=evidenceForExport;
+    const revision=evidenceRevision;
+    evidenceVerifyButton.disabled=true;
+    evidenceVerifyStatus.hidden=false;
+    evidenceVerifyStatus.textContent='Verifying selected original file bytes locally…';
+    try{
+      const files=selectedDocumentFiles();
+      if(files.length!==snapshot.records.length)throw new Error('File selection changed. Preview evidence again.');
+      const {verifyLocalFile}=await import('/assets/musitu-source-integrity.mjs');
+      for(let i=0;i<files.length;i++){
+        if(files[i].name!==snapshot.records[i].fileName)throw new Error('Source file names changed. Preview again.');
+        const checked=await verifyLocalFile(files[i],snapshot.records[i].sourceIntegrity);
+        if(!checked.matches)throw new Error('Original file contents changed: '+files[i].name+'. Evidence must be re-previewed.');
+      }
+      if(revision!==evidenceRevision||evidenceForExport!==snapshot)return;
+      evidenceVerifyStatus.textContent='✓ '+files.length+' original local file fingerprint'+(files.length===1?'':'s')+
+        ' match this evidence preview. This checks byte equality, not source authenticity.';
+    }catch(failure){
+      if(revision!==evidenceRevision||evidenceForExport!==snapshot)return;
+      evidenceVerifyStatus.textContent=failure instanceof Error?failure.message:'Local source verification failed.';
+      evidenceExportButton.disabled=true; // fail closed; do not export stale evidence
+    }finally{
+      evidenceVerifyButton.disabled=!(revision===evidenceRevision&&evidenceForExport===snapshot);
     }
   });
   prompt.addEventListener('input',hideEvidencePreview);
