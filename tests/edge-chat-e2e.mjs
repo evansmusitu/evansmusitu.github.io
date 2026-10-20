@@ -18,6 +18,7 @@ async function launch(width, height) {
     if (pathname === '/assets/musitu-edge-chat.js') { path = 'assets/musitu-edge-chat.js'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-edge-chat.css') { path = 'assets/musitu-edge-chat.css'; type = 'text/css'; }
     else if (pathname === '/assets/musitu-document-extract.mjs') { path = 'assets/musitu-document-extract.mjs'; type = 'application/javascript'; }
+    else if (pathname === '/assets/musitu-local-evidence.mjs') { path = 'assets/musitu-local-evidence.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-vault.mjs') { path = 'assets/musitu-workspace-vault.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-ui.mjs') { path = 'assets/musitu-workspace-ui.mjs'; type = 'application/javascript'; }
     else if (pathname.startsWith('/assets/vendor/')) {
@@ -315,6 +316,16 @@ try {
     '\nThe upper hysteresis threshold is exactly 6 volts in the experiment. Lower switching threshold was not specified.\n';
   await page.locator('#edge-document-file').setInputFiles({name:'notes.md',mimeType:'text/markdown',buffer:Buffer.from(localText,'utf8')});
   assert.match(await page.locator('#edge-document-info').innerText(),/1 selected: notes.md/);
+  documentRequest=null;
+  await page.locator('#edge-document-preview').click();
+  const preview=page.locator('#edge-document-evidence-preview');
+  await preview.waitFor({state:'visible',timeout:20000});
+  assert.equal(documentRequest,null,'Local preview must not invoke the backend');
+  assert.match(await preview.innerText(),/NO AI REQUEST/);
+  assert.match(await preview.innerText(),/notes.md/);
+  const passage=preview.locator('details').first();
+  await passage.locator('summary').click();
+  assert.match(await preview.innerText(),/6 volts/,'Deep evidence preview should find the note');
   await page.locator('#edge-send').click();
   await page.getByText('SELECTED EXCERPT ANALYZED').waitFor({timeout:15000});
   assert.equal(documentRequest.mode,'document');
@@ -323,6 +334,8 @@ try {
   assert.ok(documentRequest.excerpt.length<=4800,'Never send the entire file or overlarge excerpt');
   assert.ok(documentRequest.excerpt.includes('6 volts'),'Relevant passage from later in document selected');
   assert.ok(documentRequest.excerpt.length<localText.length,'Only a bounded excerpt may be uploaded');
+  assert.match(await page.locator('#edge-document-evidence-preview').innerText(),/EVIDENCE SELECTED FOR AI/);
+
   assert.match(await page.locator('.edge-message.assistant').last().innerText(),/full file was not analyzed/);
   assert.match(await page.locator('.edge-message.assistant').last().innerText(),/notes.md/);
   await page.locator('#edge-document-clear').click();
@@ -479,6 +492,12 @@ try {
   ]);
   assert.match(await page.locator('#edge-document-info').innerText(),/2 selected:/);
   await page.locator('#edge-input').fill('Compare the two experiments: which threshold was higher and which source documented calibration?');
+  documentRequest=null;
+  await page.locator('#edge-document-preview').click();
+  await page.locator('#edge-document-evidence-preview').waitFor({state:'visible',timeout:20000});
+  assert.equal(documentRequest,null,'Two-document preview must not call the model');
+  assert.equal(await page.locator('#edge-document-evidence-preview .edge-local-evidence-source').count(),2);
+
   const compareReceived=page.waitForResponse(response=>response.url()===worker+'/api/chat'&&response.request().method()==='POST',{timeout:20000});
   await page.locator('#edge-send').click();
   await compareReceived;
@@ -498,6 +517,7 @@ try {
   assert.match(await evidence.innerText(),/Unsupported document citations removed: 9/);
   assert.match(await compared.innerText(),/full file was not analyzed/);
   console.log('TWO-DOCUMENT BOUNDED SOURCE COMPARISON + EVIDENCE LABEL UI QA PASS');
+  assert.ok(await page.locator('#edge-document-evidence-preview').isVisible(),'Exact compared excerpts remain inspectable');
 
   // Three files are accepted; a fourth is rejected before network/model use.
   documentRequest=null;
