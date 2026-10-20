@@ -19,6 +19,7 @@ async function launch(width, height) {
     else if (pathname === '/assets/musitu-edge-chat.css') { path = 'assets/musitu-edge-chat.css'; type = 'text/css'; }
     else if (pathname === '/assets/musitu-document-extract.mjs') { path = 'assets/musitu-document-extract.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-local-evidence.mjs') { path = 'assets/musitu-local-evidence.mjs'; type = 'application/javascript'; }
+    else if (pathname === '/assets/musitu-evidence-pack.mjs') { path = 'assets/musitu-evidence-pack.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-vault.mjs') { path = 'assets/musitu-workspace-vault.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-ui.mjs') { path = 'assets/musitu-workspace-ui.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-slots.mjs') { path = 'assets/musitu-workspace-slots.mjs'; type = 'application/javascript'; }
@@ -326,6 +327,24 @@ try {
   assert.match(await localPreview.innerText(),/notes.md/);
   await localPreview.locator('details').first().locator('summary').click();
   assert.match(await localPreview.innerText(),/6 volts/,'Ranked first passage should find relevant deep document text');
+
+  const localEvidenceExport=page.locator('#edge-document-evidence-export');
+  assert.ok(await localEvidenceExport.isEnabled(),'Plaintext evidence export should require local preview first');
+  const localEvidenceDownload=page.waitForEvent('download');
+  await localEvidenceExport.click();
+  const evidenceFile=await localEvidenceDownload;
+  assert.equal(evidenceFile.suggestedFilename(),'musitu-local-evidence-pack.md');
+  const evidenceText=readFileSync(await evidenceFile.path(),'utf8');
+  assert.match(evidenceText,/MUSITU Local Document Evidence Pack/);
+  assert.match(evidenceText,/Plaintext export/,'Privacy warning must be in the downloaded report');
+  assert.match(evidenceText,/\[D1\] notes\\\.md/,'Source label must be included');
+  assert.match(evidenceText,/upper hysteresis threshold/i);
+  assert.match(evidenceText,/SHA-256 of selected text excerpt/);
+  assert.match(evidenceText,/[a-f0-9]{64}/,'SHA-256 fingerprint must be in the evidence pack');
+  assert.ok(evidenceText.length<15000,'Export only bounded excerpt, not the entire input');
+  assert.equal(documentRequest,null,'Local evidence preview and export must not make an AI call');
+  console.log('LOCAL EVIDENCE PACK DOWNLOAD + SHA-256 + ZERO AI REQUEST QA PASS');
+
   await page.locator('#edge-send').click();
   await page.getByText('SELECTED EXCERPT ANALYZED').waitFor({timeout:15000});
   assert.equal(documentRequest.mode,'document');
