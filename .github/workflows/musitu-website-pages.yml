@@ -66,8 +66,14 @@ jobs:
           test -s _site/assets/musitu-edge-chat.css
           echo 'MUSITU site and all AI client assets packaged'
       - uses: actions/configure-pages@v5
+      # A failed deployment rerun retains its previous artifact in the same
+      # workflow run. Use a unique artifact name per run attempt to avoid
+      # "Multiple artifacts named github-pages" and keep retries recoverable.
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+          name: musitu-pages-${{ github.run_id }}-${{ github.run_attempt }}
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: musitu-pages-${{ github.run_id }}-${{ github.run_attempt }}

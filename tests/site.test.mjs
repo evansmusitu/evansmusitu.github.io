@@ -62,4 +62,12 @@ const script=get(/<script>([\s\S]*?)<\/script>/);
 assert.ok(script,'Script required');
 new vm.Script(script,{filename:'index-inline.js'});
 assert.doesNotMatch(html,/<script[^>]+src="https?:/,'Unexpected remote script');
+
+const publishingWorkflow=readFileSync('.github/workflows/musitu-website-pages.yml','utf8');
+const pagesArtifactName='musitu-pages-' + '${{ github.run_id }}' + '-' + '${{ github.run_attempt }}';
+assert.ok(publishingWorkflow.includes('name: '+pagesArtifactName),
+  'The Pages upload must uniquely name its artifact for the workflow run and attempt.');
+assert.ok(publishingWorkflow.includes('artifact_name: '+pagesArtifactName),
+  'Pages deployment must select the matching unique per-attempt artifact.');
+
 console.log('PASS: Site structure, canonical branding, interaction hooks, accessibility and JS syntax');
