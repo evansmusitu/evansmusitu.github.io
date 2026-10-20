@@ -107,3 +107,16 @@
 .edge-scholar-bibtex{display:inline-flex;align-items:center;justify-content:center;margin:15px 0 0;padding:10px 14px;border-radius:10px;border:1px solid rgba(100,223,184,.45);background:rgba(100,223,184,.07);color:var(--mint);font:inherit;font-size:12px;font-weight:800;cursor:pointer}
 .edge-scholar-bibtex:hover,.edge-scholar-bibtex:focus-visible{background:rgba(100,223,184,.18);border-color:var(--mint)}
 .edge-scholar-bibtex:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+
+
+/* Local document mode never uploads full files: excerpts only on explicit submit. */
+.edge-document-controls{border:1px solid rgba(110,230,196,.28);background:rgba(110,230,196,.045);padding:14px 16px;border-radius:14px;margin:10px 0 16px}
+.edge-document-controls[hidden]{display:none!important}
+.edge-document-controls label{display:block;letter-spacing:.12em;font-size:10px;color:var(--mint);font-weight:850;margin-bottom:9px}
+.edge-document-controls input[type=file]{display:block;width:100%;max-width:100%;font:inherit;font-size:12px;color:var(--text);margin:2px 0 10px}
+.edge-document-controls input[type=file]::file-selector-button{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-right:11px;background:var(--panel);color:var(--text);cursor:pointer}
+.edge-document-controls input[type=file]:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+.edge-document-controls p{font-size:11px;line-height:1.65;color:var(--muted);margin:9px 0 12px;overflow-wrap:anywhere}
+.edge-document-controls button{border:1px solid var(--line);border-radius:8px;color:var(--text);background:var(--panel);padding:8px 12px;font:inherit;font-size:11px;font-weight:750;cursor:pointer}
+.edge-document-controls button:hover,.edge-document-controls button:focus-visible{border-color:var(--mint)}
+@media(max-width:750px){.edge-document-controls{padding:11px 12px}.edge-document-controls input[type=file]{font-size:11px}}

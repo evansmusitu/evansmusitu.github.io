@@ -11,6 +11,10 @@
   const exportButton = document.getElementById('edge-export');
   const counter = document.getElementById('edge-counter');
   let mode = 'explore';
+  const documentControls=document.getElementById('edge-document-controls');
+  const documentFile=document.getElementById('edge-document-file');
+  const documentInfo=document.getElementById('edge-document-info');
+  const documentClear=document.getElementById('edge-document-clear');
   const presets = document.getElementById('edge-calculator-presets');
   const inputLabel = document.querySelector('#edge-form label[for="edge-input"]');
   let pending = false;
@@ -25,25 +29,68 @@
   }
 
   function selectMode(next) {
-    mode = ['explore', 'build', 'learn', 'markets', 'deep', 'calculator', 'image', 'research', 'scholar'].includes(next) ? next : 'explore';
+    mode = ['explore', 'build', 'learn', 'markets', 'deep', 'calculator', 'image', 'research', 'scholar', 'document'].includes(next) ? next : 'explore';
     const math = mode === 'calculator';
     const imageMode = mode === 'image';
     const researchMode = mode === 'research';
     const scholarMode = mode === 'scholar';
+    const documentMode = mode === 'document';
+    documentControls.hidden = !documentMode;
     presets.hidden = !math;
     prompt.maxLength = math ? 140 : imageMode ? 450 : (researchMode || scholarMode) ? 180 : 900;
     prompt.placeholder = math ? 'Enter an expression, e.g. 7*(2+3) or sqrt(81)…' :
       imageMode ? 'Describe an image to generate, including subject, setting and style…' :
       researchMode ? 'Search Wikipedia and Hacker News, e.g. quantum computing in education…' :
       scholarMode ? 'Find DOI-registered papers, e.g. physics robotics feedback control…' :
+      documentMode ? 'Ask a question about the text file you selected…' :
       mode === 'deep' ? 'Ask a complex question for deliberate analysis…' : 'Ask a question in the selected mode…';
-    inputLabel.textContent = math ? 'DETERMINISTIC MATH EXPRESSION' : imageMode ? 'IMAGE DESCRIPTION' : researchMode ? 'LIVE SOURCE-RESEARCH QUERY' : scholarMode ? 'SCHOLARLY DOI RESEARCH QUERY' : mode === 'deep' ? 'ASK THE REASONING MODEL' : 'ASK MUSITU AI';
-    send.textContent = math ? 'Calculate ↗' : imageMode ? 'Generate image ↗' : researchMode ? 'Research sources ↗' : scholarMode ? 'Find academic papers ↗' : 'Generate answer ↗';
+    inputLabel.textContent = math ? 'DETERMINISTIC MATH EXPRESSION' : imageMode ? 'IMAGE DESCRIPTION' : researchMode ? 'LIVE SOURCE-RESEARCH QUERY' : scholarMode ? 'SCHOLARLY DOI RESEARCH QUERY' : documentMode ? 'QUESTION ABOUT THE SELECTED EXCERPT' : mode === 'deep' ? 'ASK THE REASONING MODEL' : 'ASK MUSITU AI';
+    send.textContent = math ? 'Calculate ↗' : imageMode ? 'Generate image ↗' : researchMode ? 'Research sources ↗' : scholarMode ? 'Find academic papers ↗' : documentMode ? 'Analyze excerpt ↗' : 'Generate answer ↗';
     counter.textContent = prompt.value.length + ' / ' + prompt.maxLength + ' · Enter to send';
     document.querySelectorAll('[data-edge-mode]').forEach(button => {
       button.setAttribute('aria-pressed', String(button.dataset.edgeMode === mode));
     });
   }
+
+  // No file bytes are sent before the user explicitly submits a document question.
+  const SUPPORTED=/\.(txt|md|csv|json)$/i;
+  const MAX_FILE_SIZE=64*1024;
+  function selectDocumentExcerpt(content,question) {
+    const normalized=content.replace(/\r\n?/g,'\n').replace(/\u0000/g,'');
+    const words=new Set((question.toLowerCase().match(/[a-z0-9]{3,}/g)||[]).filter(x=>!['the','this','that','from','with','what','does','please','your','about','into','have'].includes(x)));
+    const pieces=[];
+    for(let pos=0;pos<normalized.length;pos+=650){
+      const fragment=normalized.slice(pos,pos+650);
+      const lowered=fragment.toLowerCase();
+      const score=[...words].reduce((total,word)=>total+(lowered.includes(word)?1:0),0);
+      pieces.push({pos,fragment,score:score+(pos===0?0.4:0)});
+    }
+    const winners=pieces.slice().sort((a,b)=>b.score-a.score||a.pos-b.pos).slice(0,6).sort((a,b)=>a.pos-b.pos);
+    let selected='';
+    for(const item of winners){
+      const snippet='[Text excerpt, character '+(item.pos+1)+']\n'+item.fragment+'\n';
+      if(selected.length+snippet.length>4650){
+        selected+=snippet.slice(0,Math.max(0,4650-selected.length));
+        break;
+      }
+      selected+=snippet;
+    }
+    return selected.trim().slice(0,4800);
+  }
+  documentFile.addEventListener('change',()=>{
+    const file=documentFile.files?.[0];
+    if(!file){
+      documentInfo.textContent='Choose a local UTF-8 .txt, .md, .csv or .json file (64 KiB maximum). No file is stored or uploaded until you analyze a selected excerpt.';
+      return;
+    }
+    documentInfo.textContent=SUPPORTED.test(file.name)&&file.size<=MAX_FILE_SIZE&&file.name.length<=100
+      ? 'Selected: '+file.name+' ('+file.size+' bytes). Only a relevance-selected excerpt of up to 4,800 characters will be sent when you press Analyze. The file is not stored by the server.'
+      : 'Unsupported file, invalid filename, or file exceeds 64 KiB. Choose a small UTF-8 text document.';
+  });
+  documentClear.addEventListener('click',()=>{
+    documentFile.value='';
+    documentInfo.textContent='Selection cleared. The website has not saved the file.';
+  });
 
   function displayError(message) {
     alert.textContent = message;
@@ -448,9 +495,10 @@
     const imageMode = requestedMode === 'image';
     const researchMode = requestedMode === 'research';
     const scholarMode = requestedMode === 'scholar';
+    const documentMode = requestedMode === 'document';
     const minimum = mathMode ? 1 : imageMode ? 12 : scholarMode ? 5 : 10;
     const maximum = mathMode ? 140 : imageMode ? 450 : (researchMode || scholarMode) ? 180 : 900;
-    if ((question.length < minimum && !( !mathMode && !imageMode && !researchMode && !scholarMode && isShortArithmetic(question))) || question.length > maximum) {
+    if ((question.length < minimum && !( !mathMode && !imageMode && !researchMode && !scholarMode && !documentMode && isShortArithmetic(question))) || question.length > maximum) {
       displayError(mathMode ? 'Enter an expression between 1 and 140 characters.' :
         imageMode ? 'Describe an image between 12 and 450 characters.' :
         researchMode ? 'Search between 10 and 180 characters.' :
@@ -460,25 +508,42 @@
       return;
     }
 
+    if (documentMode) {
+      const chosen=documentFile.files?.[0];
+      if(!chosen || !SUPPORTED.test(chosen.name) || chosen.name.length>100 || chosen.size<30 || chosen.size>MAX_FILE_SIZE){
+        displayError('Choose a UTF-8 .txt, .md, .csv or .json file between 30 bytes and 64 KiB before analyzing.');
+        documentFile.focus();return;
+      }
+    }
     pending = true;
     alert.hidden = true;
     send.disabled = true;
-    send.textContent = mathMode ? 'Calculating…' : imageMode ? 'Creating image…' : researchMode ? 'Searching sources…' : scholarMode ? 'Searching DOI metadata…' : 'Generating…';
+    send.textContent = mathMode ? 'Calculating…' : imageMode ? 'Creating image…' : researchMode ? 'Searching sources…' : scholarMode ? 'Searching DOI metadata…' : documentMode ? 'Analyzing excerpt…' : 'Generating…';
     const earlier = history.slice(-4);
     appendMessage('user', question);
     prompt.value = '';
     counter.textContent = '0 / ' + prompt.maxLength + ' · Enter to send';
     const waiting = document.createElement('p');
     waiting.className = 'edge-waiting';
-    waiting.textContent = mathMode ? 'Calculating deterministically…' : imageMode ? 'FLUX is creating your image…' : researchMode ? 'Fetching sources and grounding an answer…' : scholarMode ? 'Retrieving Crossref DOI metadata and synthesizing an overview…' : 'MUSITU AI is generating…';
+    waiting.textContent = mathMode ? 'Calculating deterministically…' : imageMode ? 'FLUX is creating your image…' : researchMode ? 'Fetching sources and grounding an answer…' : scholarMode ? 'Retrieving Crossref DOI metadata and synthesizing an overview…' : documentMode ? 'Selecting relevant text locally and analyzing the excerpt with AI…' : 'MUSITU AI is generating…';
     thread.append(waiting);
     thread.scrollTop = thread.scrollHeight;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 75000);
     try {
+      let excerptPayload=null;
+      if(documentMode){
+        const chosen=documentFile.files?.[0];
+        if(!chosen || chosen.size>MAX_FILE_SIZE) throw new Error('Invalid or missing file selection.');
+        const raw=await chosen.text();
+        if(raw.includes('\uFFFD') || /[\u0000-\u0008\u000e-\u001f]/.test(raw)) throw new Error('The file contains binary or undecodable text. Use UTF-8 plain text.');
+        const excerpt=selectDocumentExcerpt(raw,question);
+        if(excerpt.length<30) throw new Error('Not enough readable text to analyze.');
+        excerptPayload={excerpt,fileName:chosen.name};
+      }
       const path = mathMode ? '/api/calculate' : imageMode ? '/api/image' : '/api/chat';
       const payload = mathMode ? { expression: question } : imageMode ? { prompt: question } :
-        { prompt: question, mode: requestedMode, history: earlier };
+        { prompt: question, mode: requestedMode, history: documentMode ? [] : earlier, ...(excerptPayload||{}) };
       const response = await fetch(service + path, {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload), signal: controller.signal
@@ -510,11 +575,11 @@
         verifiedTool = answer.toolUsed === 'deterministic_calculator';
         if (verifiedTool && (typeof answer.result !== 'number' || !Number.isFinite(answer.result)))
           throw new Error('An arithmetic answer was returned without verifiable numeric metadata.');
-        visibleAnswer = answer.reply;
+        visibleAnswer = documentMode ? '### Selected text excerpt analysis\n'+answer.reply+'\n\n**Analyzed:** '+String(answer.documentReview?.analyzedCharacters??'unknown')+' characters from '+String(answer.documentReview?.fileName||'selected text')+'. The full file was not analyzed, and AI output may be inaccurate.' : answer.reply;
         health.textContent = verifiedTool ? '● VERIFIED COMPUTATION · NO MODEL' :
-          requestedMode === 'deep' ? '● REASONING MODEL RESPONDED' : researchMode ? '● REAL SOURCES RETRIEVED' : scholarMode ? '● SCHOLARLY DOI RECORDS RETRIEVED' : '● LIVE AI RESPONSE VERIFIED';
+          requestedMode === 'deep' ? '● REASONING MODEL RESPONDED' : researchMode ? '● REAL SOURCES RETRIEVED' : scholarMode ? '● SCHOLARLY DOI RECORDS RETRIEVED' : documentMode ? '● SELECTED EXCERPT ANALYZED' : '● LIVE AI RESPONSE VERIFIED';
       }
-      if (!verifiedTool && !imageMode) {
+      if (!verifiedTool && !imageMode && !documentMode) {
         history.push({ role: 'user', content: question }, { role: 'assistant', content: visibleAnswer });
         history = history.slice(-6);
       }
@@ -534,7 +599,7 @@
       clearTimeout(timeout);
       pending = false;
       send.disabled = false;
-      send.textContent = mode === 'calculator' ? 'Calculate ↗' : mode === 'image' ? 'Generate image ↗' : mode === 'research' ? 'Research sources ↗' : mode === 'scholar' ? 'Find academic papers ↗' : 'Generate answer ↗';
+      send.textContent = mode === 'calculator' ? 'Calculate ↗' : mode === 'image' ? 'Generate image ↗' : mode === 'research' ? 'Research sources ↗' : mode === 'scholar' ? 'Find academic papers ↗' : mode === 'document' ? 'Analyze excerpt ↗' : 'Generate answer ↗';
     }
   });
 

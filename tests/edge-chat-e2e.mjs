@@ -276,6 +276,47 @@ try {
   assert.equal(bib.suggestedFilename(),'musitu-scholar-references.bib');
   console.log('REAL DOI SOURCE LINKS + BIBTEX EXPORT BROWSER QA PASSED');
 
+  // Deterministic private file-analysis QA: browser selects a relevant bounded excerpt.
+  await page.unroute(worker + '/api/chat');
+  let documentRequest=null;
+  await page.route(worker + '/api/chat',async route=>{
+    if(route.request().method()==='OPTIONS'){
+      await route.fulfill({status:204,headers:{'access-control-allow-origin':origin,'access-control-allow-methods':'POST,OPTIONS','access-control-allow-headers':'content-type'}});return;
+    }
+    documentRequest=route.request().postDataJSON();
+    await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':origin},
+      body:JSON.stringify({reply:'The selected excerpt says the upper hysteresis threshold is 6 volts. I cannot confirm details outside the excerpt.',
+        mode:'document',model:'@cf/meta/llama-3.1-8b-instruct-fp8',liveSearch:false,
+        documentReview:{fileName:documentRequest.fileName,analyzedCharacters:documentRequest.excerpt.length,fullFileAnalyzed:false,storedOnServer:false,modelOutputMayBeInaccurate:true}})
+    });
+  });
+  await page.locator('[data-edge-mode="document"]').click();
+  assert.ok(await page.locator('#edge-document-controls').isVisible());
+  assert.match(await page.locator('#edge-input').getAttribute('placeholder'),/text file/);
+  await page.locator('#edge-input').fill('What is the upper hysteresis threshold according to the selected notes?');
+  await page.locator('#edge-send').click();
+  assert.match(await page.locator('#edge-alert').innerText(),/Choose a UTF-8/);
+  assert.equal(documentRequest,null,'No file may be transmitted before explicit selection');
+  const localText='Background notes only.\n'+('This preliminary document covers several broad study topics.\n'.repeat(200))+
+    '\nThe upper hysteresis threshold is exactly 6 volts in the experiment. Lower switching threshold was not specified.\n';
+  await page.locator('#edge-document-file').setInputFiles({name:'notes.md',mimeType:'text/markdown',buffer:Buffer.from(localText,'utf8')});
+  assert.match(await page.locator('#edge-document-info').innerText(),/Selected: notes.md/);
+  await page.locator('#edge-send').click();
+  await page.getByText('SELECTED EXCERPT ANALYZED').waitFor({timeout:15000});
+  assert.equal(documentRequest.mode,'document');
+  assert.equal(documentRequest.fileName,'notes.md');
+  assert.equal(documentRequest.history.length,0,'Document questions must be isolated from previous chat history');
+  assert.ok(documentRequest.excerpt.length<=4800,'Never send the entire file or overlarge excerpt');
+  assert.ok(documentRequest.excerpt.includes('6 volts'),'Relevant passage from later in document selected');
+  assert.ok(documentRequest.excerpt.length<localText.length,'Only a bounded excerpt may be uploaded');
+  assert.match(await page.locator('.edge-message.assistant').last().innerText(),/full file was not analyzed/);
+  assert.match(await page.locator('.edge-message.assistant').last().innerText(),/notes.md/);
+  await page.locator('#edge-document-clear').click();
+  assert.equal(await page.locator('#edge-document-file').inputValue(),'');
+  assert.match(await page.locator('#edge-document-info').innerText(),/Selection cleared/);
+  console.log('PRIVATE TEXT DOCUMENT EXCERPT + NO FILE STORAGE BROWSER QA PASS');
+
+
 
 
   await page.locator('#ai-close').click();
