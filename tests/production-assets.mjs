@@ -4,7 +4,11 @@ const homepage = 'https://evansmusitu.github.io/';
 const expected = [
   ['home', homepage, ['id="ai-dialog"', 'assets/musitu-edge-chat.js', 'assets/musitu-edge-chat.css']],
   ['script', homepage + 'assets/musitu-edge-chat.js', ['musitu-intelligence-edge-20261019', 'MUSITUEdge', 'textContent = text']],
-  ['style', homepage + 'assets/musitu-edge-chat.css', ['.edge-thread', '.edge-message', '.edge-form']]
+  ['style', homepage + 'assets/musitu-edge-chat.css', ['.edge-thread', '.edge-message', '.edge-form']],
+  ['document module', homepage + 'assets/musitu-document-extract.mjs', ['extractDocumentText','checkZipSafety']],
+  ['self-hosted PDF library', homepage + 'assets/vendor/pdf.mjs', ['getDocument']],
+  ['self-hosted PDF worker', homepage + 'assets/vendor/pdf.worker.mjs', []],
+  ['self-hosted DOCX library', homepage + 'assets/vendor/mammoth.browser.min.js', []]
 ];
 async function check(label, url, snippets) {
   let latestError = 'no response';
@@ -34,4 +38,4 @@ const r = await fetch('https://musitu-intelligence-edge-20261019.mft-education-n
 assert.equal(r.status,200,'Cloudflare AI backend health check must respond HTTP 200');
 const result = await r.json();
 assert.equal(result.service,'MUSITU Intelligence Edge');
-console.log('PUBLIC SITE FULL DEPLOYMENT PASS — HTML, JS, CSS AND BACKEND REACHABLE');
+console.log('PUBLIC SITE FULL DEPLOYMENT PASS — HTML, JS, CSS, LOCAL PDF/DOCX LIBRARIES AND BACKEND REACHABLE');
