@@ -101,7 +101,8 @@ export function rankEvidence(source,query,{maxChars=4800,maxPassages=MAX_PASSAGE
   if(!excerpt||excerpt.length>maxChars)throw new EvidenceRetrievalError('Unable to select bounded evidence passages.');
   return {
     excerpt,
-    passages:ordered.map(p=>({
+    // Preview ranks most relevant passages first; sent excerpt stays in source order.
+    passages:selected.map(p=>({
       start:p.start,end:p.end,text:p.text,matchedTerms:p.matchedTerms,
       relativeRank:Number(p.score.toFixed(5))
     })),
