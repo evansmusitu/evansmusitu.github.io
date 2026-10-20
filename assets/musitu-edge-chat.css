@@ -72,3 +72,21 @@
 .edge-message.tool { background: rgba(95,219,176,.08); border:1px solid rgba(95,219,176,.49); }
 .edge-message.tool .edge-message-title { color: var(--mint); }
 .edge-message.tool .edge-rich p { margin-bottom:8px; }
+
+/* Zero-purchase AI images and attributed public-source research. */
+.edge-modes button[data-edge-mode="image"]{background:linear-gradient(120deg,rgba(177,124,249,.13),rgba(80,136,224,.08))}
+.edge-modes button[data-edge-mode="research"]{background:rgba(97,213,196,.11)}
+.edge-generated-figure{margin:13px 0 2px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:rgba(7,13,25,.4)}
+.edge-generated-figure img{display:block;width:100%;height:auto;max-height:460px;object-fit:contain;background:var(--bg)}
+.edge-generated-figure figcaption{margin:9px 11px;color:var(--muted);font-size:11px;line-height:1.6}
+.edge-download-image{display:inline-flex;margin:0 11px 12px;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--line);background:var(--panel2);border-radius:8px;color:var(--bright);font-weight:800;text-decoration:none;font-size:12px}
+.edge-download-image:hover{border-color:var(--mint)}
+.edge-sources{margin-top:16px;display:grid;gap:9px;border-top:1px solid var(--line);padding-top:15px}
+.edge-sources h4{margin:0 0 4px;color:var(--mint);font-size:10px;letter-spacing:.12em;font-weight:900}
+.edge-source-row{display:grid;gap:4px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(127,147,200,.055)}
+.edge-source-row a{color:var(--bright);font-size:13px;font-weight:800;line-height:1.55;overflow-wrap:anywhere;text-decoration:underline;text-decoration-color:rgba(137,235,208,.4);text-underline-offset:3px}
+.edge-source-row a:hover{color:var(--mint)}
+.edge-source-row small{font-size:10px;color:var(--mint);font-weight:700}
+.edge-source-row p{margin:0;font-size:11px;line-height:1.6;color:var(--muted)}
+.edge-source-note{margin:2px 0 0;color:var(--muted);font-size:10px;line-height:1.6}
+@media(max-width:750px){.edge-generated-figure img{max-height:300px}.edge-source-row{padding:9px}.edge-source-row a{font-size:12px}}

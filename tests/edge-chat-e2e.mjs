@@ -175,6 +175,59 @@ try {
   await page.locator('#edge-send').click();
   await page.locator('.edge-message.assistant').last().getByText('A clear plan starts').waitFor({timeout:12000});
   console.log('AUTO-ROUTED VERIFIED ARITHMETIC + UNCONTAMINATED CHAT QA PASS');
+  // Prevent extra inference expense while verifying the new UI against realistic response shapes.
+  let generatedImagePrompt=null;
+  await page.route(worker + '/api/image',async route=>{
+    if(route.request().method()==='OPTIONS'){
+      await route.fulfill({status:204,headers:{'access-control-allow-origin':origin,'access-control-allow-methods':'POST,OPTIONS','access-control-allow-headers':'content-type'}});return;
+    }
+    generatedImagePrompt=route.request().postDataJSON().prompt;
+    await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':origin},
+      body:JSON.stringify({tool:'image',model:'@cf/black-forest-labs/flux-1-schnell',prompt:generatedImagePrompt,
+        image:'data:image/jpeg;base64,/9j/'+'A'.repeat(2400)})});
+  });
+  await page.locator('[data-edge-mode="image"]').click();
+  assert.equal(await page.locator('#edge-input').getAttribute('maxlength'),'450');
+  assert.match(await page.locator('#edge-input').getAttribute('placeholder'),/Describe an image/);
+  const imagePrompt='A futuristic library above an African hillside under a bright purple moon.';
+  await page.locator('#edge-input').fill(imagePrompt);
+  await page.locator('#edge-send').click();
+  await page.getByText('REAL AI IMAGE GENERATED').waitFor({timeout:15000});
+  assert.equal(generatedImagePrompt,imagePrompt);
+  const picture=page.locator('.edge-generated-figure img').last();
+  assert.equal(await picture.count(),1,'Image preview element must be created. The mocked image bytes are not a valid photograph.');
+  assert.match(await picture.getAttribute('src'),/^data:image\/jpeg;base64,/);
+  assert.equal(await page.locator('.edge-generated-figure a[download="musitu-ai-image.jpg"]').count(),1);
+  console.log('IMAGE PREVIEW + DOWNLOAD BROWSER QA PASSED');
+
+  await page.unroute(worker + '/api/chat');
+  let webQuery=null;
+  await page.route(worker + '/api/chat',async route=>{
+    if(route.request().method()==='OPTIONS'){
+      await route.fulfill({status:204,headers:{'access-control-allow-origin':origin,'access-control-allow-methods':'POST,OPTIONS','access-control-allow-headers':'content-type'}});return;
+    }
+    webQuery=route.request().postDataJSON();
+    await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':origin},
+      body:JSON.stringify({mode:'research',model:'@cf/meta/llama-3.1-8b-instruct-fp8',liveSearch:true,
+        reply:'The source list describes the field. Open the links to verify claims [1].',
+        sourceScope:'English Wikipedia and Hacker News only; NOT general web search',
+        sources:[{title:'Quantum computing',url:'https://en.wikipedia.org/wiki/Quantum_computing',source:'Wikipedia',snippet:'Quantum computing overview'},
+          {title:'Quantum discussion',url:'https://news.ycombinator.com/item?id=123456',source:'Hacker News',snippet:'Technology discussion'}]})});
+  });
+  await page.locator('[data-edge-mode="research"]').click();
+  assert.equal(await page.locator('#edge-input').getAttribute('maxlength'),'180');
+  await page.locator('#edge-input').fill('Research quantum computing for secondary-school education.');
+  await page.locator('#edge-send').click();
+  await page.getByText('REAL SOURCES RETRIEVED').waitFor({timeout:15000});
+  assert.equal(webQuery.mode,'research');
+  const sources=page.locator('.edge-message.assistant').last().locator('.edge-sources');
+  assert.ok(await sources.isVisible());
+  assert.equal(await sources.locator('.edge-source-row a').count(),2);
+  assert.equal(await sources.locator('a[target="_blank"][rel="noopener noreferrer"]').count(),2);
+  assert.match(await sources.locator('.edge-source-note').innerText(),/NOT general web search/);
+  console.log('CLICKABLE ATTRIBUTED WEB RESEARCH BROWSER QA PASSED');
+
+
   await page.locator('#ai-close').click();
   assert.equal(await page.locator('#ai-dialog').getAttribute('open'),null,'Dialog should close');
   await page.close();
