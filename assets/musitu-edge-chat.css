@@ -90,3 +90,14 @@
 .edge-source-row p{margin:0;font-size:11px;line-height:1.6;color:var(--muted)}
 .edge-source-note{margin:2px 0 0;color:var(--muted);font-size:10px;line-height:1.6}
 @media(max-width:750px){.edge-generated-figure img{max-height:300px}.edge-source-row{padding:9px}.edge-source-row a{font-size:12px}}
+
+
+/* Research references are linked to retrieved sources, not fact-checked claims. */
+.edge-citation-report{margin-top:14px;padding:12px 15px;border:1px solid rgba(130,148,177,.38);background:rgba(130,148,177,.075);border-radius:12px}
+.edge-citation-report[data-status="linked"]{border-color:rgba(84,211,174,.38);background:rgba(84,211,174,.06)}
+.edge-citation-report[data-status="warning"]{border-color:rgba(237,174,71,.55);background:rgba(237,174,71,.08)}
+.edge-citation-head{display:block;color:var(--text);font-size:11px;font-weight:850;letter-spacing:.07em;line-height:1.5}
+.edge-citation-report[data-status="linked"] .edge-citation-head{color:var(--mint)}
+.edge-citation-report[data-status="warning"] .edge-citation-head{color:#ffd18b}
+.edge-citation-report p{color:var(--muted);font-size:11px;line-height:1.7;margin:8px 0 0;overflow-wrap:anywhere}
+@media(max-width:750px){.edge-citation-report{padding:11px 12px}.edge-citation-head{font-size:10px}}
