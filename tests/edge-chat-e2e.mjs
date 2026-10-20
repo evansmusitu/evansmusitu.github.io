@@ -18,6 +18,7 @@ async function launch(width, height) {
     if (pathname === '/assets/musitu-edge-chat.js') { path = 'assets/musitu-edge-chat.js'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-edge-chat.css') { path = 'assets/musitu-edge-chat.css'; type = 'text/css'; }
     else if (pathname === '/assets/musitu-document-extract.mjs') { path = 'assets/musitu-document-extract.mjs'; type = 'application/javascript'; }
+    else if (pathname === '/assets/musitu-local-evidence.mjs') { path = 'assets/musitu-local-evidence.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-vault.mjs') { path = 'assets/musitu-workspace-vault.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-ui.mjs') { path = 'assets/musitu-workspace-ui.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-slots.mjs') { path = 'assets/musitu-workspace-slots.mjs'; type = 'application/javascript'; }
@@ -316,6 +317,15 @@ try {
     '\nThe upper hysteresis threshold is exactly 6 volts in the experiment. Lower switching threshold was not specified.\n';
   await page.locator('#edge-document-file').setInputFiles({name:'notes.md',mimeType:'text/markdown',buffer:Buffer.from(localText,'utf8')});
   assert.match(await page.locator('#edge-document-info').innerText(),/1 selected: notes.md/);
+  documentRequest=null;
+  await page.locator('#edge-document-preview').click();
+  const localPreview=page.locator('#edge-document-evidence-preview');
+  await localPreview.waitFor({state:'visible',timeout:20000});
+  assert.equal(documentRequest,null,'Local evidence preview must not send an AI request');
+  assert.match(await localPreview.innerText(),/NO AI REQUEST/);
+  assert.match(await localPreview.innerText(),/notes.md/);
+  await localPreview.locator('details').first().locator('summary').click();
+  assert.match(await localPreview.innerText(),/6 volts/,'Ranked first passage should find relevant deep document text');
   await page.locator('#edge-send').click();
   await page.getByText('SELECTED EXCERPT ANALYZED').waitFor({timeout:15000});
   assert.equal(documentRequest.mode,'document');
@@ -324,6 +334,7 @@ try {
   assert.ok(documentRequest.excerpt.length<=4800,'Never send the entire file or overlarge excerpt');
   assert.ok(documentRequest.excerpt.includes('6 volts'),'Relevant passage from later in document selected');
   assert.ok(documentRequest.excerpt.length<localText.length,'Only a bounded excerpt may be uploaded');
+  assert.match(await page.locator('#edge-document-evidence-preview').innerText(),/EVIDENCE SELECTED FOR AI/);
   assert.match(await page.locator('.edge-message.assistant').last().innerText(),/full file was not analyzed/);
   assert.match(await page.locator('.edge-message.assistant').last().innerText(),/notes.md/);
   await page.locator('#edge-document-clear').click();
@@ -480,6 +491,12 @@ try {
   ]);
   assert.match(await page.locator('#edge-document-info').innerText(),/2 selected:/);
   await page.locator('#edge-input').fill('Compare the two experiments: which threshold was higher and which source documented calibration?');
+  documentRequest=null;
+  await page.locator('#edge-document-preview').click();
+  await page.locator('#edge-document-evidence-preview').waitFor({state:'visible',timeout:20000});
+  assert.equal(documentRequest,null,'Two-document preview must not send AI request');
+  assert.equal(await page.locator('#edge-document-evidence-preview .edge-local-evidence-source').count(),2);
+
   const compareReceived=page.waitForResponse(response=>response.url()===worker+'/api/chat'&&response.request().method()==='POST',{timeout:20000});
   await page.locator('#edge-send').click();
   await compareReceived;
