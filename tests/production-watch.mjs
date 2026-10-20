@@ -161,7 +161,7 @@ await check('Document mode rejects absent text before inference',async()=>{
   return '400; no document text sent and no inference';
 });
 await check('Document mode rejects binary text before inference',async()=>{
-  const response=await jsonPost('/api/chat',{mode:'document',prompt:'Summarize this selected text.',fileName:'my_notes.txt',excerpt:'Random binary content'+'\\u0000'+' and some follow-up text is rejected.'});
+  const response=await jsonPost('/api/chat',{mode:'document',prompt:'Summarize this selected text.',fileName:'my_notes.txt',excerpt:'Random binary content'+String.fromCharCode(0)+' and some follow-up text is rejected.'});
   assert.equal(response.status,400);
   assert.equal((await response.json()).code,'INVALID_DOCUMENT_EXCERPT');
   return '400; invalid text refused before model inference';
