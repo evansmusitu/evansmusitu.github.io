@@ -1,0 +1,38 @@
+name: MUSITU Live Production Reliability Watch
+
+on:
+  pull_request:
+    paths:
+      - tests/production-watch.mjs
+      - .github/workflows/musitu-production-watch.yml
+  push:
+    branches: [main]
+    paths:
+      - tests/production-watch.mjs
+      - .github/workflows/musitu-production-watch.yml
+  schedule:
+    - cron: '11 0,8,16 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: musitu-production-reliability-watch
+  cancel-in-progress: false
+
+jobs:
+  inspect-public-deployment:
+    name: No-inference live reliability checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify public site, AI tool routes and safeguards without inference costs
+        run: |
+          set -euo pipefail
+          node --check tests/production-watch.mjs
+          node tests/production-watch.mjs
