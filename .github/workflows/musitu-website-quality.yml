@@ -6,6 +6,8 @@ on:
       - index.html
       - tests/site.test.mjs
       - tests/workspace-vault.test.mjs
+      - tests/local-evidence.test.mjs
+      - assets/musitu-local-evidence.mjs
       - assets/musitu-workspace-vault.mjs
       - assets/musitu-workspace-ui.mjs
       - assets/musitu-document-extract.mjs
@@ -33,5 +35,6 @@ jobs:
           set -euo pipefail
           node --check assets/musitu-workspace-vault.mjs
           node --check assets/musitu-workspace-ui.mjs
-          node --test tests/workspace-vault.test.mjs
+          node --check assets/musitu-local-evidence.mjs
+          node --test tests/workspace-vault.test.mjs tests/local-evidence.test.mjs
           node tests/site.test.mjs
