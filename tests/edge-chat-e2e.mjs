@@ -23,6 +23,7 @@ async function launch(width, height) {
     else if (pathname === '/assets/musitu-evidence-pack.mjs') { path = 'assets/musitu-evidence-pack.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-source-integrity.mjs') { path = 'assets/musitu-source-integrity.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-portable-receipt.mjs') { path = 'assets/musitu-portable-receipt.mjs'; type = 'application/javascript'; }
+    else if (pathname === '/assets/musitu-evidence-replay.mjs') { path = 'assets/musitu-evidence-replay.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-vault.mjs') { path = 'assets/musitu-workspace-vault.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-ui.mjs') { path = 'assets/musitu-workspace-ui.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-slots.mjs') { path = 'assets/musitu-workspace-slots.mjs'; type = 'application/javascript'; }
@@ -396,6 +397,46 @@ try {
     console.log('PORTABLE ORIGINAL-FILE RECEIPT SAVE/REPLAY/MISMATCH + ZERO AI REQUEST QA PASS');
   console.log('LOCAL EVIDENCE PACK DOWNLOAD + SHA-256 + ZERO AI REQUEST QA PASS');
 
+
+  // Independent chain replay proves passage-selection drift rather than just file equality.
+  const chainDownloadPromise=page.waitForEvent('download');
+  await page.locator('#edge-document-chain-save').click();
+  const chainDownload=await chainDownloadPromise;
+  assert.equal(chainDownload.suggestedFilename(),'musitu-reproducible-evidence-chain.json');
+  const chainBytes=readFileSync(await chainDownload.path());
+  const chain=JSON.parse(chainBytes.toString('utf8'));
+  assert.equal(chain.sources[0].sha256,createHash('sha256').update(localText).digest('hex'));
+  assert.ok(chain.sources[0].passages.length>=1);
+  assert.ok(chain.sources[0].excerptSha256.length===64);
+  assert.ok(!chainBytes.toString('utf8').includes('6 volts'));
+  assert.ok(!chainBytes.toString('utf8').includes(localText));
+  await page.locator('#edge-document-chain-file').setInputFiles({
+    name:'musitu-reproducible-evidence-chain.json',mimeType:'application/json',buffer:chainBytes
+  });
+  await page.waitForFunction(()=>document.getElementById('edge-document-verify-status')?.textContent.includes('Evidence chain reproduced'));
+  assert.equal(documentRequest,null,'Evidence chain verification must not call AI');
+  const falsifiedChain={...chain,sources:[{...chain.sources[0],excerptSha256:'0'.repeat(64)}]};
+  await page.locator('#edge-document-chain-file').setInputFiles({
+    name:'musitu-reproducible-evidence-chain.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(falsifiedChain))
+  });
+  await page.waitForFunction(()=>document.getElementById('edge-document-verify-status')?.textContent.includes('Evidence chain mismatch'));
+  assert.match(await page.locator('#edge-document-verify-status').innerText(),/source excerpts or retrieval coordinates differ/);
+  const replayPage=await launch(390,844);
+  await replayPage.locator('#launch-ai').click();
+  await replayPage.locator('[data-edge-mode="document"]').click();
+  await replayPage.locator('#edge-document-file').setInputFiles({
+    name:'notes.md',mimeType:'text/markdown',buffer:Buffer.from(localText)
+  });
+  assert.ok(await replayPage.locator('#edge-document-chain-save').isDisabled(),
+    'Fresh browser must not pretend an evidence chain was already previewed');
+  await replayPage.locator('#edge-document-chain-file').setInputFiles({
+    name:'musitu-reproducible-evidence-chain.json',mimeType:'application/json',buffer:chainBytes
+  });
+  await replayPage.waitForFunction(()=>document.getElementById('edge-document-verify-status')?.textContent.includes('Evidence chain reproduced'));
+  await replayPage.close();
+  assert.equal(documentRequest,null,'Cross-session evidence-chain replay must remain local');
+  console.log('INDEPENDENT DETERMINISTIC EVIDENCE CHAIN REPLAY + PASSAGE DRIFT + ZERO AI REQUEST QA PASS');
+
   await page.locator('#edge-send').click();
   await page.getByText('SELECTED EXCERPT ANALYZED').waitFor({timeout:15000});
   assert.equal(documentRequest.mode,'document');
@@ -443,6 +484,17 @@ try {
   assert.ok(documentRequest.excerpt.includes('hysteresis threshold'),'Actual PDF text extraction required');
   assert.ok(documentRequest.excerpt.includes('6 volts'),'Selected PDF text must reach the model');
   assert.ok(documentRequest.excerpt.length<=4800,'PDF extracted excerpt must be bounded');
+  await page.waitForFunction(()=>document.getElementById('edge-document-chain-save')?.disabled===false);
+  const pdfChainEvent=page.waitForEvent('download');
+  await page.locator('#edge-document-chain-save').click();
+  const pdfChain=await pdfChainEvent;
+  const pdfChainBytes=readFileSync(await pdfChain.path());
+  assert.equal(JSON.parse(pdfChainBytes.toString('utf8')).sources[0].name,'robotics_notes.pdf');
+  await page.locator('#edge-document-chain-file').setInputFiles({
+    name:'musitu-reproducible-evidence-chain.json',mimeType:'application/json',buffer:pdfChainBytes
+  });
+  await page.waitForFunction(()=>document.getElementById('edge-document-verify-status')?.textContent.includes('Evidence chain reproduced'));
+  console.log('REAL PDF EVIDENCE CHAIN REPRODUCTION QA PASS');
   console.log('REAL PDF.js SELECTABLE PDF LOCAL PARSING QA PASS');
 
   // Real Mammoth browser parser: build a minimal valid Office OpenXML DOCX.
@@ -484,6 +536,17 @@ try {
   assert.ok(documentRequest.excerpt.includes('3 volts'),'Actual DOCX extraction must include the paragraph');
   assert.ok(documentRequest.excerpt.includes('Schmitt trigger'),'DOCX text should include the correct topic');
   assert.ok(documentRequest.excerpt.length<=4800);
+  await page.waitForFunction(()=>document.getElementById('edge-document-chain-save')?.disabled===false);
+  const docxChainEvent=page.waitForEvent('download');
+  await page.locator('#edge-document-chain-save').click();
+  const docxChain=await docxChainEvent;
+  const docxChainBytes=readFileSync(await docxChain.path());
+  assert.equal(JSON.parse(docxChainBytes.toString('utf8')).sources[0].name,'robotics_notes.docx');
+  await page.locator('#edge-document-chain-file').setInputFiles({
+    name:'musitu-reproducible-evidence-chain.json',mimeType:'application/json',buffer:docxChainBytes
+  });
+  await page.waitForFunction(()=>document.getElementById('edge-document-verify-status')?.textContent.includes('Evidence chain reproduced'));
+  console.log('REAL DOCX EVIDENCE CHAIN REPRODUCTION QA PASS');
   console.log('REAL Mammoth DOCX LOCAL TEXT PARSING QA PASS');
 
   // Invalid and scanned PDF: must fail with a clear explanation and no HTTP
