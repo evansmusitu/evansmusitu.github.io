@@ -516,6 +516,7 @@ try {
 
 
 
+  page.on('dialog', async d => d.accept());
   // Opt-in encrypted local workspace: no plaintext session in localStorage.
   const panel=page.locator('#edge-workspace');
   await panel.locator('summary').click();
@@ -558,6 +559,7 @@ try {
   await page.locator('#ai-dialog[open]').waitFor({timeout:10000});
   assert.equal(await page.locator('.edge-message').count(),0,'Reload should not auto-decrypt or auto-restore');
   await page.locator('#edge-workspace summary').click();
+  await page.waitForFunction(()=>document.getElementById('edge-workspace-status')?.textContent.includes('Use a strong passphrase'),{timeout:12000});
   await page.locator('#edge-workspace-passphrase').fill(pw);
   await page.locator('#edge-workspace-unlock').click();
   await page.getByText('Decrypted session restored',{exact:false}).waitFor({timeout:12000});
