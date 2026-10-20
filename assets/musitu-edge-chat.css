@@ -67,3 +67,8 @@
 .edge-modes button[data-edge-mode="deep"]{background:linear-gradient(110deg,rgba(141,123,244,.16),rgba(88,118,240,.09))}
 .edge-modes button[data-edge-mode="calculator"]{background:rgba(91,215,188,.09)}
 @media(max-width:750px){.edge-calculator-presets{padding:9px 11px;gap:6px}.edge-calculator-presets button{padding:6px 8px;font-size:10px}}
+
+/* Server-attested arithmetic must be visually distinct from model-generated answers. */
+.edge-message.tool { background: rgba(95,219,176,.08); border:1px solid rgba(95,219,176,.49); }
+.edge-message.tool .edge-message-title { color: var(--mint); }
+.edge-message.tool .edge-rich p { margin-bottom:8px; }

@@ -135,9 +135,46 @@ try {
   await page.locator('#edge-send').click();
   await page.getByText('VERIFIED CALCULATION').waitFor({timeout:12000});
   assert.equal(expressionSent,'(8+4)*sqrt(9)','Client must invoke deterministic math tool');
-  assert.match(await page.locator('.edge-message.assistant').last().innerText(),/Result:\s*36/);
-  assert.match(await page.locator('.edge-message.assistant').last().innerText(),/approximate, not exact/);
+  assert.match(await page.locator('.edge-message.tool').last().innerText(),/Result:\s*36/);
+  assert.match(await page.locator('.edge-message.tool').last().innerText(),/approximate, not exact/);
   console.log('REASONING MODE + DETERMINISTIC CALCULATOR UI PASS');
+  // Natural arithmetic in an ordinary AI mode is also verified by the same safe calculator.
+  let sawToolPayload = false;
+  await page.route(worker + '/api/chat', async route => {
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({status:204,headers:{
+        'access-control-allow-origin':origin,'access-control-allow-methods':'POST,OPTIONS',
+        'access-control-allow-headers':'content-type'
+      }});
+      return;
+    }
+    const posted=route.request().postDataJSON();
+    if (posted.prompt === '40+2') {
+      sawToolPayload = true;
+      await route.fulfill({status:200,contentType:'application/json',
+        headers:{'access-control-allow-origin':origin},
+        body:JSON.stringify({reply:'**Deterministically verified arithmetic**\\nResult: 42',
+          toolUsed:'deterministic_calculator',result:42,model:null,mode:posted.mode,liveSearch:false})});
+    } else {
+      assert.equal(posted.history.some(item => item.content.includes('40+2')),false,
+        'Calculator output must not pollute model conversation memory');
+      await route.fulfill({status:200,contentType:'application/json',
+        headers:{'access-control-allow-origin':origin},
+        body:JSON.stringify({reply:'A clear plan starts by identifying the user problem.',mode:posted.mode,model:'mock',liveSearch:false})});
+    }
+  });
+  await page.locator('[data-edge-mode="explore"]').click();
+  await page.locator('#edge-input').fill('40+2');
+  await page.locator('#edge-send').click();
+  await page.getByText('VERIFIED COMPUTATION · NO MODEL').waitFor({timeout:12000});
+  assert.ok(sawToolPayload,'Short arithmetic must pass client validation');
+  const verified=page.locator('.edge-message.tool').last();
+  assert.match(await verified.innerText(),/42/);
+  assert.match(await verified.locator('.edge-message-title').innerText(),/VERIFIED COMPUTATION/);
+  await page.locator('#edge-input').fill('Explain two key testing steps before launching a website.');
+  await page.locator('#edge-send').click();
+  await page.locator('.edge-message.assistant').last().getByText('A clear plan starts').waitFor({timeout:12000});
+  console.log('AUTO-ROUTED VERIFIED ARITHMETIC + UNCONTAMINATED CHAT QA PASS');
   await page.locator('#ai-close').click();
   assert.equal(await page.locator('#ai-dialog').getAttribute('open'),null,'Dialog should close');
   await page.close();
