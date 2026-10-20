@@ -6,6 +6,8 @@ on:
     paths:
       - index.html
       - 'assets/**'
+      - package.json
+      - scripts/prepare-document-vendors.sh
       - .github/workflows/musitu-website-pages.yml
   workflow_dispatch:
 
@@ -27,6 +29,13 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned local document parsers
+        run: |
+          npm install --omit=dev --ignore-scripts --no-fund --no-audit --package-lock=false
+          bash scripts/prepare-document-vendors.sh
       - name: Prepare static website
         run: |
           set -euo pipefail
@@ -34,6 +43,15 @@ jobs:
           cp index.html _site/index.html
           cp assets/musitu-edge-chat.js _site/assets/musitu-edge-chat.js
           cp assets/musitu-edge-chat.css _site/assets/musitu-edge-chat.css
+          mkdir -p _site/assets/vendor
+          cp assets/musitu-document-extract.mjs _site/assets/musitu-document-extract.mjs
+          cp assets/vendor/pdf.mjs _site/assets/vendor/pdf.mjs
+          cp assets/vendor/pdf.worker.mjs _site/assets/vendor/pdf.worker.mjs
+          cp assets/vendor/mammoth.browser.min.js _site/assets/vendor/mammoth.browser.min.js
+          test -s _site/assets/musitu-document-extract.mjs
+          test -s _site/assets/vendor/pdf.mjs
+          test -s _site/assets/vendor/pdf.worker.mjs
+          test -s _site/assets/vendor/mammoth.browser.min.js
           touch _site/.nojekyll
           test -s _site/index.html
           test -s _site/assets/musitu-edge-chat.js
