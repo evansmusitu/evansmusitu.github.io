@@ -101,3 +101,9 @@
 .edge-citation-report[data-status="warning"] .edge-citation-head{color:#ffd18b}
 .edge-citation-report p{color:var(--muted);font-size:11px;line-height:1.7;margin:8px 0 0;overflow-wrap:anywhere}
 @media(max-width:750px){.edge-citation-report{padding:11px 12px}.edge-citation-head{font-size:10px}}
+
+
+/* Crossref DOI bibliography cards and export control. */
+.edge-scholar-bibtex{display:inline-flex;align-items:center;justify-content:center;margin:15px 0 0;padding:10px 14px;border-radius:10px;border:1px solid rgba(100,223,184,.45);background:rgba(100,223,184,.07);color:var(--mint);font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.edge-scholar-bibtex:hover,.edge-scholar-bibtex:focus-visible{background:rgba(100,223,184,.18);border-color:var(--mint)}
+.edge-scholar-bibtex:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
