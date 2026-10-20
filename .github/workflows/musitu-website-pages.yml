@@ -52,6 +52,8 @@ jobs:
           mkdir -p _site/assets/vendor
           cp assets/musitu-document-extract.mjs _site/assets/musitu-document-extract.mjs
           cp assets/musitu-local-evidence.mjs _site/assets/musitu-local-evidence.mjs
+          cp assets/musitu-evidence-pack.mjs _site/assets/musitu-evidence-pack.mjs
+          test -s _site/assets/musitu-evidence-pack.mjs
           test -s _site/assets/musitu-local-evidence.mjs
           cp assets/vendor/pdf.mjs _site/assets/vendor/pdf.mjs
           cp assets/vendor/pdf.worker.mjs _site/assets/vendor/pdf.worker.mjs

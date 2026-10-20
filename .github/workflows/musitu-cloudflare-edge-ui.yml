@@ -6,6 +6,8 @@ on:
       - index.html
       - assets/musitu-edge-chat.js
       - assets/musitu-local-evidence.mjs
+      - assets/musitu-evidence-pack.mjs
+      - tests/evidence-pack.test.mjs
       - assets/musitu-workspace-vault.mjs
       - assets/musitu-workspace-ui.mjs
       - assets/musitu-workspace-slots.mjs
