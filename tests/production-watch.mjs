@@ -1,5 +1,5 @@
 /**
- * Non-billable synthetic production monitor.
+ * No-model-inference synthetic production monitor.
  * Checks published website, browser CORS, input validation and deterministic calculator.
  * DOES NOT call text/image inference: a healthy GET is not proof model inference is available.
  */
@@ -165,7 +165,7 @@ const safe = value => String(value).replace(/\|/g,'\\|').replace(/[\r\n]/g,' ').
 const summary = [
   '## MUSITU live production watch',
   '',
-  '**Run:** '+started+' UTC · **Result:** '+(failed.length===0?'PASS':'FAIL')+' · **Non-billable:** no model inference called',
+  '**Run:** '+started+' UTC · **Result:** '+(failed.length===0?'PASS':'FAIL')+' · **No AI inference:** no model generation calls were made; standard Worker requests still count as usage.',
   '',
   '| Live capability | Result | Duration | Detail |',
   '|---|---|---:|---|',
