@@ -130,3 +130,21 @@
 .edge-document-evidence p{font-size:11px;line-height:1.65;margin:9px 0 0;color:var(--muted)}
 .edge-document-evidence .edge-document-warning{color:#ffd18b}
 @media(max-width:750px){.edge-document-evidence{padding:11px}.edge-document-evidence li{font-size:11px}}
+
+
+/* Passphrase-encrypted local-only workspace. No login or remote account claims. */
+.edge-workspace{margin:11px 0 15px;border:1px solid rgba(109,219,186,.3);border-radius:13px;background:rgba(109,219,186,.04)}
+.edge-workspace summary{display:list-item;cursor:pointer;padding:12px 16px;color:var(--mint);font-weight:850;font-size:12px;line-height:1.55}
+.edge-workspace summary:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+.edge-workspace-panel{padding:4px 14px 15px;border-top:1px solid var(--line)}
+.edge-workspace-panel label{display:block;margin:10px 0 8px;color:var(--muted);font-size:10px;font-weight:850;letter-spacing:.12em}
+.edge-workspace-panel input[type=password]{display:block;width:100%;min-width:0;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:12px 13px;font-size:14px;line-height:1.5}
+.edge-workspace-panel input[type=password]:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+.edge-workspace-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:11px}
+.edge-workspace-actions button{padding:9px 11px;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:8px;font:inherit;font-size:11px;font-weight:750;line-height:1.45}
+.edge-workspace-actions button:hover,.edge-workspace-actions button:focus-visible{border-color:var(--mint);color:var(--mint)}
+.edge-workspace-actions button:disabled{opacity:.5;cursor:wait}
+#edge-workspace-note{font-size:11px;line-height:1.7;color:var(--muted);margin:13px 0 8px}
+#edge-workspace-status{font-size:11px;line-height:1.65;color:var(--mint);font-weight:750;margin:10px 0 0;overflow-wrap:anywhere}
+#edge-workspace-status[data-state=error]{color:#ffbc90}
+@media(max-width:750px){.edge-workspace-panel{padding:4px 11px 12px}.edge-workspace summary{font-size:11px;padding:11px 12px}.edge-workspace-actions button{font-size:10px;min-height:37px;padding:8px}}
