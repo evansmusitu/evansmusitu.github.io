@@ -484,6 +484,17 @@ try {
   assert.ok(documentRequest.excerpt.includes('hysteresis threshold'),'Actual PDF text extraction required');
   assert.ok(documentRequest.excerpt.includes('6 volts'),'Selected PDF text must reach the model');
   assert.ok(documentRequest.excerpt.length<=4800,'PDF extracted excerpt must be bounded');
+  await page.waitForFunction(()=>document.getElementById('edge-document-chain-save')?.disabled===false);
+  const pdfChainEvent=page.waitForEvent('download');
+  await page.locator('#edge-document-chain-save').click();
+  const pdfChain=await pdfChainEvent;
+  const pdfChainBytes=readFileSync(await pdfChain.path());
+  assert.equal(JSON.parse(pdfChainBytes.toString('utf8')).sources[0].name,'robotics_notes.pdf');
+  await page.locator('#edge-document-chain-file').setInputFiles({
+    name:'musitu-reproducible-evidence-chain.json',mimeType:'application/json',buffer:pdfChainBytes
+  });
+  await page.waitForFunction(()=>document.getElementById('edge-document-verify-status')?.textContent.includes('Evidence chain reproduced'));
+  console.log('REAL PDF EVIDENCE CHAIN REPRODUCTION QA PASS');
   console.log('REAL PDF.js SELECTABLE PDF LOCAL PARSING QA PASS');
 
   // Real Mammoth browser parser: build a minimal valid Office OpenXML DOCX.
@@ -525,6 +536,17 @@ try {
   assert.ok(documentRequest.excerpt.includes('3 volts'),'Actual DOCX extraction must include the paragraph');
   assert.ok(documentRequest.excerpt.includes('Schmitt trigger'),'DOCX text should include the correct topic');
   assert.ok(documentRequest.excerpt.length<=4800);
+  await page.waitForFunction(()=>document.getElementById('edge-document-chain-save')?.disabled===false);
+  const docxChainEvent=page.waitForEvent('download');
+  await page.locator('#edge-document-chain-save').click();
+  const docxChain=await docxChainEvent;
+  const docxChainBytes=readFileSync(await docxChain.path());
+  assert.equal(JSON.parse(docxChainBytes.toString('utf8')).sources[0].name,'robotics_notes.docx');
+  await page.locator('#edge-document-chain-file').setInputFiles({
+    name:'musitu-reproducible-evidence-chain.json',mimeType:'application/json',buffer:docxChainBytes
+  });
+  await page.waitForFunction(()=>document.getElementById('edge-document-verify-status')?.textContent.includes('Evidence chain reproduced'));
+  console.log('REAL DOCX EVIDENCE CHAIN REPRODUCTION QA PASS');
   console.log('REAL Mammoth DOCX LOCAL TEXT PARSING QA PASS');
 
   // Invalid and scanned PDF: must fail with a clear explanation and no HTTP
