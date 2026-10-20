@@ -42,10 +42,10 @@
       imageMode ? 'Describe an image to generate, including subject, setting and style…' :
       researchMode ? 'Search Wikipedia and Hacker News, e.g. quantum computing in education…' :
       scholarMode ? 'Find DOI-registered papers, e.g. physics robotics feedback control…' :
-      documentMode ? 'Ask a question about the text file you selected…' :
+      documentMode ? 'Ask what changed across one to three selected files…' :
       mode === 'deep' ? 'Ask a complex question for deliberate analysis…' : 'Ask a question in the selected mode…';
     inputLabel.textContent = math ? 'DETERMINISTIC MATH EXPRESSION' : imageMode ? 'IMAGE DESCRIPTION' : researchMode ? 'LIVE SOURCE-RESEARCH QUERY' : scholarMode ? 'SCHOLARLY DOI RESEARCH QUERY' : documentMode ? 'QUESTION ABOUT THE SELECTED EXCERPT' : mode === 'deep' ? 'ASK THE REASONING MODEL' : 'ASK MUSITU AI';
-    send.textContent = math ? 'Calculate ↗' : imageMode ? 'Generate image ↗' : researchMode ? 'Research sources ↗' : scholarMode ? 'Find academic papers ↗' : documentMode ? 'Analyze excerpt ↗' : 'Generate answer ↗';
+    send.textContent = math ? 'Calculate ↗' : imageMode ? 'Generate image ↗' : researchMode ? 'Research sources ↗' : scholarMode ? 'Find academic papers ↗' : documentMode ? 'Analyze / Compare ↗' : 'Generate answer ↗';
     counter.textContent = prompt.value.length + ' / ' + prompt.maxLength + ' · Enter to send';
     document.querySelectorAll('[data-edge-mode]').forEach(button => {
       button.setAttribute('aria-pressed', String(button.dataset.edgeMode === mode));
@@ -60,7 +60,7 @@
     if(file.name.length<5||file.name.length>100||/[/\\\u0000-\u001f]/.test(file.name))return 0;
     return FILE_LIMITS[kind];
   }
-  function selectDocumentExcerpt(content,question) {
+  function selectDocumentExcerpt(content,question,maxChars=4800) {
     const normalized=content.replace(/\r\n?/g,'\n').replace(/\u0000/g,'');
     const words=new Set((question.toLowerCase().match(/[a-z0-9]{3,}/g)||[]).filter(x=>!['the','this','that','from','with','what','does','please','your','about','into','have'].includes(x)));
     const pieces=[];
@@ -70,27 +70,32 @@
       const score=[...words].reduce((total,word)=>total+(lowered.includes(word)?1:0),0);
       pieces.push({pos,fragment,score:score+(pos===0?0.4:0)});
     }
-    const winners=pieces.slice().sort((a,b)=>b.score-a.score||a.pos-b.pos).slice(0,6).sort((a,b)=>a.pos-b.pos);
+    const winners=pieces.slice().sort((a,b)=>b.score-a.score||a.pos-b.pos).slice(0,maxChars<=1500?2:6).sort((a,b)=>a.pos-b.pos);
     let selected='';
     for(const item of winners){
       const snippet='[Text excerpt, character '+(item.pos+1)+']\n'+item.fragment+'\n';
-      if(selected.length+snippet.length>4650){
-        selected+=snippet.slice(0,Math.max(0,4650-selected.length));
+      const effectiveBudget=maxChars===4800?4650:maxChars;
+      if(selected.length+snippet.length>effectiveBudget){
+        selected+=snippet.slice(0,Math.max(0,effectiveBudget-selected.length));
         break;
       }
       selected+=snippet;
     }
-    return selected.trim().slice(0,4800);
+    return selected.trim().slice(0,maxChars);
   }
   documentFile.addEventListener('change',()=>{
-    const file=documentFile.files?.[0];
-    if(!file){
-      documentInfo.textContent='Choose TXT, MD, CSV, JSON (64 KiB), PDF (2 MiB, 20 pages), or DOCX (1 MiB). No full-file upload occurs.';
+    const files=Array.from(documentFile.files||[]);
+    if(!files.length){
+      documentInfo.textContent='Select up to 3 TXT, MD, CSV, JSON, PDF or DOCX files. No bytes are uploaded until you analyze an excerpt.';
       return;
     }
-    documentInfo.textContent=selectedFileLimit(file)>0&&file.size>=30&&file.size<=selectedFileLimit(file)
-      ? 'Selected: '+file.name+' ('+file.size+' bytes). Text will be extracted locally; only a relevant excerpt of up to 4,800 characters is transmitted on Analyze. No full-file upload.'
-      : 'Unsupported or oversized file: text files 64 KiB; DOCX 1 MiB; searchable PDF 2 MiB and up to 20 pages.';
+    const valid=files.length<=3 && new Set(files.map(f=>f.name.toLowerCase())).size===files.length &&
+      files.every(f=>selectedFileLimit(f)>0 && f.size>=30 && f.size<=selectedFileLimit(f));
+    documentInfo.textContent=valid
+      ? files.length+' selected: '+files.map(f=>f.name).join(' · ')+'. '+
+        (files.length===1?'Up to 4,800 characters will be sent.':'Up to 1,500 characters per file will be sent for comparison.')+
+        ' Files remain on your device until you explicitly analyze the selected excerpts.'
+      : 'Choose 1–3 distinct supported files within the listed size limits.';
   });
   documentClear.addEventListener('click',()=>{
     documentFile.value='';
@@ -306,6 +311,34 @@
     thread.scrollTop = thread.scrollHeight;
   }
 
+  function attachDocumentReferences(review,audit) {
+    const latest=thread.querySelector('.edge-message:last-of-type');
+    if(!latest || !Array.isArray(review?.comparedDocuments))return;
+    const section=document.createElement('section');
+    section.className='edge-document-evidence';
+    section.setAttribute('aria-label','Compared document source references');
+    const heading=document.createElement('strong');
+    heading.textContent='COMPARED SOURCE EXCERPTS — NOT FULL FILES';
+    section.append(heading);
+    const list=document.createElement('ul');
+    for(const source of review.comparedDocuments.slice(0,3)){
+      const li=document.createElement('li');
+      li.textContent='['+source.label+'] '+source.fileName+' · '+source.analyzedCharacters+' characters analyzed';
+      list.append(li);
+    }
+    section.append(list);
+    const note=document.createElement('p');
+    note.textContent='Source labels identify which excerpts were supplied, not whether the AI interpretation is correct. Files were not saved by the website backend.';
+    section.append(note);
+    if(audit?.status==='invalid-document-indices-removed'){
+      const warn=document.createElement('p');
+      warn.className='edge-document-warning';
+      warn.textContent='Unsupported document citations removed: '+(audit.invalidSourceNumbersRemoved||[]).join(', ');
+      section.append(warn);
+    }
+    latest.append(section);
+  }
+
   function makeBibliography(records) {
     const escape = value => String(value ?? '').slice(0,220)
       .replace(/\\/g,'\\textbackslash{}')
@@ -514,16 +547,17 @@
     }
 
     if (documentMode) {
-      const chosen=documentFile.files?.[0];
-      if(!chosen || !selectedFileLimit(chosen) || chosen.size<30 || chosen.size>selectedFileLimit(chosen)){
-        displayError('Choose TXT/MD/CSV/JSON (64 KiB), DOCX (1 MiB), or searchable PDF (2 MiB / 20 pages).');
+      const chosen=Array.from(documentFile.files||[]);
+      if(!chosen.length || chosen.length>3 || new Set(chosen.map(file=>file.name.toLowerCase())).size!==chosen.length ||
+        chosen.some(file=>!selectedFileLimit(file) || file.size<30 || file.size>selectedFileLimit(file))){
+        displayError('Choose 1–3 distinct files: TXT/MD/CSV/JSON (64 KiB), DOCX (1 MiB), or searchable PDF (2 MiB / 20 pages).');
         documentFile.focus();return;
       }
     }
     pending = true;
     alert.hidden = true;
     send.disabled = true;
-    send.textContent = mathMode ? 'Calculating…' : imageMode ? 'Creating image…' : researchMode ? 'Searching sources…' : scholarMode ? 'Searching DOI metadata…' : documentMode ? 'Analyzing excerpt…' : 'Generating…';
+    send.textContent = mathMode ? 'Calculating…' : imageMode ? 'Creating image…' : researchMode ? 'Searching sources…' : scholarMode ? 'Searching DOI metadata…' : documentMode ? 'Comparing selected excerpts…' : 'Generating…';
     const earlier = history.slice(-4);
     appendMessage('user', question);
     prompt.value = '';
@@ -538,19 +572,22 @@
     try {
       let excerptPayload=null;
       if(documentMode){
-        const chosen=documentFile.files?.[0];
-        if(!chosen) throw new Error('Choose a document before submitting.');
-        // Self-hosted, lazy-loaded extraction; source bytes remain in this browser.
+        const chosen=Array.from(documentFile.files||[]);
+        if(!chosen.length || chosen.length>3)throw new Error('Choose one to three files before analyzing.');
         const {extractDocumentText,validateDocumentFile}=await import('/assets/musitu-document-extract.mjs');
-        validateDocumentFile(chosen);
-        const extracted=await extractDocumentText(chosen);
-        const excerpt=selectDocumentExcerpt(extracted.text,question);
-        if(excerpt.length<30)throw new Error('Not enough readable text in the selected pages or document.');
-        excerptPayload={excerpt,fileName:chosen.name};
+        const docs=[];
+        for(const file of chosen){
+          validateDocumentFile(file);
+          const extracted=await extractDocumentText(file);
+          const excerpt=selectDocumentExcerpt(extracted.text,question,chosen.length===1?4800:1500);
+          if(excerpt.length<30)throw new Error('Insufficient readable text in '+file.name+'.');
+          docs.push({fileName:file.name,excerpt});
+        }
+        excerptPayload=docs.length===1 ? {...docs[0]} : {documents:docs};
       }
       const path = mathMode ? '/api/calculate' : imageMode ? '/api/image' : '/api/chat';
       const payload = mathMode ? { expression: question } : imageMode ? { prompt: question } :
-        { prompt: question, mode: requestedMode, history: documentMode ? [] : earlier, ...(excerptPayload||{}) };
+        { prompt: question, mode: documentMode && excerptPayload?.documents ? 'compare' : requestedMode, history: documentMode ? [] : earlier, ...(excerptPayload||{}) };
       const response = await fetch(service + path, {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload), signal: controller.signal
@@ -582,9 +619,17 @@
         verifiedTool = answer.toolUsed === 'deterministic_calculator';
         if (verifiedTool && (typeof answer.result !== 'number' || !Number.isFinite(answer.result)))
           throw new Error('An arithmetic answer was returned without verifiable numeric metadata.');
-        visibleAnswer = documentMode ? '### Selected text excerpt analysis\n'+answer.reply+'\n\n**Analyzed:** '+String(answer.documentReview?.analyzedCharacters??'unknown')+' characters from '+String(answer.documentReview?.fileName||'selected text')+'. The full file was not analyzed, and AI output may be inaccurate.' : answer.reply;
+        visibleAnswer = documentMode
+          ? '### '+(answer.mode==='compare'?'Multi-document comparison':'Selected text excerpt analysis')+
+            '\n'+answer.reply+'\n\n**Analyzed:** '+
+            String(answer.documentReview?.analyzedCharacters??'unknown')+
+            ' characters from '+(answer.mode==='compare'
+              ? String(answer.documentReview?.comparedDocuments?.length||'multiple')+' selected source excerpts'
+              : String(answer.documentReview?.fileName||'selected text'))+
+            '. Entire files were not analyzed, and the AI may misinterpret their contents.'
+          : answer.reply;
         health.textContent = verifiedTool ? '● VERIFIED COMPUTATION · NO MODEL' :
-          requestedMode === 'deep' ? '● REASONING MODEL RESPONDED' : researchMode ? '● REAL SOURCES RETRIEVED' : scholarMode ? '● SCHOLARLY DOI RECORDS RETRIEVED' : documentMode ? '● SELECTED EXCERPT ANALYZED' : '● LIVE AI RESPONSE VERIFIED';
+          requestedMode === 'deep' ? '● REASONING MODEL RESPONDED' : researchMode ? '● REAL SOURCES RETRIEVED' : scholarMode ? '● SCHOLARLY DOI RECORDS RETRIEVED' : documentMode ? (answer.mode==='compare'?'● DOCUMENT EXCERPTS COMPARED':'● SELECTED EXCERPT ANALYZED') : '● LIVE AI RESPONSE VERIFIED';
       }
       if (!verifiedTool && !imageMode && !documentMode) {
         history.push({ role: 'user', content: question }, { role: 'assistant', content: visibleAnswer });
@@ -595,6 +640,7 @@
       appendMessage(verifiedTool ? 'tool' : 'assistant', visibleAnswer);
       if (imageMode) attachGeneratedImage(answer);
       if (researchMode || scholarMode) attachSources(answer.sources,answer.sourceScope,answer.citationAudit);
+      if (documentMode && answer.mode==='compare') attachDocumentReferences(answer.documentReview,answer.citationAudit);
       exportButton.disabled = false;
     } catch (failure) {
       prompt.value = question;
@@ -606,7 +652,7 @@
       clearTimeout(timeout);
       pending = false;
       send.disabled = false;
-      send.textContent = mode === 'calculator' ? 'Calculate ↗' : mode === 'image' ? 'Generate image ↗' : mode === 'research' ? 'Research sources ↗' : mode === 'scholar' ? 'Find academic papers ↗' : mode === 'document' ? 'Analyze excerpt ↗' : 'Generate answer ↗';
+      send.textContent = mode === 'calculator' ? 'Calculate ↗' : mode === 'image' ? 'Generate image ↗' : mode === 'research' ? 'Research sources ↗' : mode === 'scholar' ? 'Find academic papers ↗' : mode === 'document' ? 'Analyze / Compare ↗' : 'Generate answer ↗';
     }
   });
 
