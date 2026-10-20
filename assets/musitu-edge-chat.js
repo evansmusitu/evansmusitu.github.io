@@ -23,6 +23,9 @@
   const evidenceReceiptDownload=document.getElementById('edge-document-receipt-export');
   const evidenceReceiptUpload=document.getElementById('edge-document-receipt-verify');
   const evidenceReceiptFile=document.getElementById('edge-document-receipt-file');
+  const chainSave=document.getElementById('edge-document-chain-save');
+  const chainVerify=document.getElementById('edge-document-chain-verify');
+  const chainInput=document.getElementById('edge-document-chain-file');
   const presets = document.getElementById('edge-calculator-presets');
   const inputLabel = document.querySelector('#edge-form label[for="edge-input"]');
   let pending = false;
@@ -76,6 +79,7 @@
     evidenceExportButton.disabled=true;
     evidenceVerifyButton.disabled=true;
     evidenceReceiptDownload.disabled=true;
+    chainSave.disabled=true;
     evidenceVerifyStatus.hidden=true;
     evidenceVerifyStatus.textContent='';
     evidencePreview.replaceChildren();
@@ -120,6 +124,7 @@
     evidenceExportButton.disabled=false;
     evidenceVerifyButton.disabled=false;
     evidenceReceiptDownload.disabled=false;
+    chainSave.disabled=false;
     const heading=document.createElement('strong');
     heading.textContent=kind==='preview'?'LOCAL EVIDENCE PREVIEW · NO AI REQUEST':'EVIDENCE SELECTED FOR AI · BROWSER-LOCAL RANKING';
     evidencePreview.append(heading);
@@ -277,6 +282,77 @@
       evidenceVerifyStatus.textContent=failure instanceof Error?failure.message:'Local receipt verification failed.';
     }finally{
       evidenceReceiptUpload.disabled=false;
+    }
+  });
+
+  chainSave.addEventListener('click',async()=>{
+    if(pending||chainSave.disabled||!evidenceForExport)return;
+    const snapshot=evidenceForExport,revision=evidenceRevision;
+    chainSave.disabled=true;
+    evidenceVerifyStatus.hidden=false;
+    evidenceVerifyStatus.textContent='Rebuilding source evidence locally for independent replay…';
+    try{
+      const files=selectedDocumentFiles();
+      if(files.length!==snapshot.records.length||
+        files.some((f,i)=>f.name!==snapshot.records[i].fileName)){
+        throw new Error('The selected original files changed; preview evidence again.');
+      }
+      const {createEvidenceReplayBundle,parseEvidenceReplayBundle}=
+        await import('/assets/musitu-evidence-replay.mjs');
+      const receipt=await createEvidenceReplayBundle(snapshot.question,files);
+      const parsed=parseEvidenceReplayBundle(receipt);
+      if(parsed.sources.some((s,i)=>s.sha256!==snapshot.records[i].sourceIntegrity.sha256||
+        s.bytes!==snapshot.records[i].sourceIntegrity.bytes)){
+        throw new Error('Source bytes changed since preview; preview evidence again.');
+      }
+      if(revision!==evidenceRevision||snapshot!==evidenceForExport)return;
+      const blobURL=URL.createObjectURL(new Blob([receipt],{type:'application/json'}));
+      const anchor=document.createElement('a');
+      anchor.href=blobURL;
+      anchor.download='musitu-reproducible-evidence-chain.json';
+      anchor.click();
+      setTimeout(()=>URL.revokeObjectURL(blobURL),1200);
+      evidenceVerifyStatus.textContent='✓ Reproducible evidence-chain receipt saved (plaintext question and file metadata, no excerpts). Not signed.';
+    }catch(failure){
+      if(revision!==evidenceRevision||snapshot!==evidenceForExport)return;
+      evidenceVerifyStatus.textContent=failure instanceof Error?failure.message:'Evidence-chain export failed.';
+    }finally{
+      chainSave.disabled=!(revision===evidenceRevision&&snapshot===evidenceForExport);
+    }
+  });
+  chainVerify.addEventListener('click',()=>{
+    if(pending||chainVerify.disabled)return;
+    try{selectedDocumentFiles();chainInput.click();}
+    catch(failure){
+      evidenceVerifyStatus.hidden=false;
+      evidenceVerifyStatus.textContent=failure instanceof Error?failure.message:'Select the original local files first.';
+    }
+  });
+  chainInput.addEventListener('change',async()=>{
+    const receiptFile=chainInput.files?.[0];
+    chainInput.value='';
+    if(!receiptFile)return;
+    const revision=evidenceRevision;
+    chainVerify.disabled=true;
+    evidenceVerifyStatus.hidden=false;
+    evidenceVerifyStatus.textContent='Verifying original bytes and independently reproducing evidence selection locally…';
+    try{
+      if(!/\.json$/i.test(receiptFile.name)||receiptFile.size<60||receiptFile.size>24000){
+        throw new Error('Choose a reproducible evidence-chain JSON receipt of 24 KiB or less.');
+      }
+      const originals=selectedDocumentFiles();
+      const {verifyEvidenceReplayBundle}=await import('/assets/musitu-evidence-replay.mjs');
+      const outcome=await verifyEvidenceReplayBundle(await receiptFile.text(),originals);
+      if(revision!==evidenceRevision)return;
+      evidenceVerifyStatus.textContent=outcome.allMatch
+        ? '✓ Evidence chain reproduced: original SHA-256, selected excerpt hashes and passage coordinates all match. This is NOT independent fact-checking or a signature.'
+        : '✕ Evidence chain mismatch: '+(outcome.sourceBytesMatch?'source excerpts or retrieval coordinates differ':'original file bytes differ')+
+          '. Do not rely on this evidence bundle.';
+    }catch(failure){
+      if(revision!==evidenceRevision)return;
+      evidenceVerifyStatus.textContent=failure instanceof Error?failure.message:'Evidence-chain verification failed.';
+    }finally{
+      chainVerify.disabled=false;
     }
   });
   prompt.addEventListener('input',hideEvidencePreview);

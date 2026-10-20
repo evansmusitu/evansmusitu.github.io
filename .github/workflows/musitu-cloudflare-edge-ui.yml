@@ -9,6 +9,8 @@ on:
       - assets/musitu-evidence-pack.mjs
       - assets/musitu-source-integrity.mjs
       - assets/musitu-portable-receipt.mjs
+      - assets/musitu-evidence-replay.mjs
+      - tests/evidence-replay.test.mjs
       - tests/portable-receipt.test.mjs
       - tests/source-integrity.test.mjs
       - tests/evidence-pack.test.mjs

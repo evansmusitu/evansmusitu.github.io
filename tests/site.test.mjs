@@ -81,6 +81,13 @@ for(const id of ['edge-document-receipt-export','edge-document-receipt-verify','
 const receiptModule=readFileSync('assets/musitu-portable-receipt.mjs','utf8');
 assert.ok(!receiptModule.includes('fetch('),'Portable receipt must operate entirely offline');
 assert.match(receiptModule,/verifyLocalFile/,'Portable verifier must hash and compare source bytes');
+for(const id of ['edge-document-chain-save','edge-document-chain-verify','edge-document-chain-file']){
+  assert.ok(html.includes('id="'+id+'"'),'Missing evidence-chain control '+id);
+}
+const chainSource=readFileSync('assets/musitu-evidence-replay.mjs','utf8');
+assert.ok(!chainSource.includes('fetch('),'Chain replay must perform no remote requests');
+assert.match(chainSource,/rankEvidence/,'Reproducible chain must independently rerank passages');
+assert.match(chainSource,/verifyLocalFile/,'Chain replay must first match original source bytes');
 const integrityClient=readFileSync('assets/musitu-edge-chat.js','utf8');
 assert.match(integrityClient,/verifyLocalFile/,'Original-byte verifier must be wired to user action');
 assert.match(integrityClient,/sourceIntegrity/,'Original-file evidence provenance must be retained locally');
@@ -88,3 +95,4 @@ assert.match(integrityClient,/sourceIntegrity/,'Original-file evidence provenanc
 const pagesRelease=readFileSync('.github/workflows/musitu-website-pages.yml','utf8');
 assert.match(pagesRelease,/cp assets\/musitu-source-integrity\.mjs _site\/assets\/musitu-source-integrity\.mjs/,'Production Pages must bundle integrity verifier');
 assert.match(pagesRelease,/cp assets\/musitu-portable-receipt\.mjs _site\/assets\/musitu-portable-receipt\.mjs/,'Production must package portable receipt verifier');
+assert.ok(pagesRelease.includes('cp assets/musitu-evidence-replay.mjs _site/assets/musitu-evidence-replay.mjs'),'Production must package independent evidence-chain replay');
