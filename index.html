@@ -84,8 +84,9 @@
     <div id="edge-document-controls" class="edge-document-controls" hidden>
       <label for="edge-document-file">SELECT 1–3 LOCAL DOCUMENTS — TEXT, PDF OR WORD</label>
       <input id="edge-document-file" type="file" multiple accept=".txt,.md,.csv,.json,.pdf,.docx,text/plain,text/markdown,text/csv,application/json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" aria-describedby="edge-document-info">
-      <p id="edge-document-info" role="status">Select 1–3 documents. TXT/MD/CSV/JSON: 64 KiB each; searchable PDF: 2 MiB / 20 pages; DOCX: 1 MiB. Extraction runs on this device. One document sends up to 4,800 characters; comparisons send up to 1,500 per file (maximum 4,500 combined). Only after you press Analyze. Scanned PDFs and encrypted files cannot be analyzed. Do not select secrets or sensitive files.</p>
-      <button type="button" id="edge-document-clear" class="edge-export">Clear selected file</button>
+      <p id="edge-document-info" role="status">Select 1–3 documents. TXT/MD/CSV/JSON: 64 KiB each; searchable PDF: 2 MiB / 20 pages; DOCX: 1 MiB. Extraction and keyword evidence ranking run on this device. You can preview exactly which excerpts will be selected before asking AI. One document sends up to 4,800 characters; comparisons send up to 1,500 per file (maximum 4,500 combined). Only after you press Analyze. Scanned PDFs and encrypted files cannot be analyzed. Do not select secrets or sensitive files.</p>
+      <div class="edge-document-local-actions"><button type="button" id="edge-document-preview" class="edge-export">⊞ Preview local evidence · no AI request</button><button type="button" id="edge-document-clear" class="edge-export">Clear selected files</button></div>
+      <div id="edge-document-evidence-preview" class="edge-document-evidence-preview" role="region" aria-label="Local evidence preview" aria-live="polite" hidden></div>
     </div>
     <details id="edge-workspace" class="edge-workspace">
       <summary>🔒 Private encrypted workspace · Save / Unlock</summary>
