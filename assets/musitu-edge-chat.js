@@ -15,6 +15,8 @@
   const documentFile=document.getElementById('edge-document-file');
   const documentInfo=document.getElementById('edge-document-info');
   const documentClear=document.getElementById('edge-document-clear');
+  const evidencePreview=document.getElementById('edge-document-evidence-preview');
+  const evidencePreviewButton=document.getElementById('edge-document-preview');
   const presets = document.getElementById('edge-calculator-presets');
   const inputLabel = document.querySelector('#edge-form label[for="edge-input"]');
   let pending = false;
@@ -60,30 +62,97 @@
     if(file.name.length<5||file.name.length>100||/[/\\\u0000-\u001f]/.test(file.name))return 0;
     return FILE_LIMITS[kind];
   }
-  function selectDocumentExcerpt(content,question,maxChars=4800) {
-    const normalized=content.replace(/\r\n?/g,'\n').replace(/\u0000/g,'');
-    const words=new Set((question.toLowerCase().match(/[a-z0-9]{3,}/g)||[]).filter(x=>!['the','this','that','from','with','what','does','please','your','about','into','have'].includes(x)));
-    const pieces=[];
-    for(let pos=0;pos<normalized.length;pos+=650){
-      const fragment=normalized.slice(pos,pos+650);
-      const lowered=fragment.toLowerCase();
-      const score=[...words].reduce((total,word)=>total+(lowered.includes(word)?1:0),0);
-      pieces.push({pos,fragment,score:score+(pos===0?0.4:0)});
-    }
-    const winners=pieces.slice().sort((a,b)=>b.score-a.score||a.pos-b.pos).slice(0,maxChars<=1500?2:6).sort((a,b)=>a.pos-b.pos);
-    let selected='';
-    for(const item of winners){
-      const snippet='[Text excerpt, character '+(item.pos+1)+']\n'+item.fragment+'\n';
-      const effectiveBudget=maxChars===4800?4650:maxChars;
-      if(selected.length+snippet.length>effectiveBudget){
-        selected+=snippet.slice(0,Math.max(0,effectiveBudget-selected.length));
-        break;
-      }
-      selected+=snippet;
-    }
-    return selected.trim().slice(0,maxChars);
+  let evidenceRevision=0;
+  function hideEvidencePreview(){
+    evidenceRevision++;
+    evidencePreview.replaceChildren();
+    evidencePreview.hidden=true;
   }
+  function selectedDocumentFiles(){
+    const files=Array.from(documentFile.files||[]);
+    if(!files.length||files.length>3||
+       new Set(files.map(f=>f.name.toLowerCase())).size!==files.length ||
+       files.some(f=>!selectedFileLimit(f)||f.size<30||f.size>selectedFileLimit(f))){
+      throw new Error('Choose 1–3 distinct files within the listed PDF, DOCX or text-file limits.');
+    }
+    return files;
+  }
+  async function collectLocalEvidence(question){
+    const files=selectedDocumentFiles();
+    const [{extractDocumentText,validateDocumentFile},{rankEvidence}]=await Promise.all([
+      import('/assets/musitu-document-extract.mjs'),
+      import('/assets/musitu-local-evidence.mjs')
+    ]);
+    const sourceRecords=[];
+    const maxChars=files.length===1?4800:1500;
+    for(const file of files){
+      validateDocumentFile(file);
+      const extracted=await extractDocumentText(file);
+      const result=rankEvidence(extracted.text,question,{maxChars,maxPassages:files.length===1?6:2});
+      if(result.excerpt.trim().length<30)throw new Error('Insufficient readable evidence in '+file.name+'.');
+      sourceRecords.push({
+        fileName:file.name,
+        excerpt:result.excerpt,
+        localMetadata:result
+      });
+    }
+    return sourceRecords;
+  }
+  function showEvidencePreview(sources,kind='preview'){
+    evidencePreview.replaceChildren();
+    const heading=document.createElement('strong');
+    heading.textContent=kind==='preview'?'LOCAL EVIDENCE PREVIEW · NO AI REQUEST':'EVIDENCE SELECTED FOR AI · BROWSER-LOCAL RANKING';
+    evidencePreview.append(heading);
+    const summary=document.createElement('p');
+    summary.textContent='Deterministic keyword matching, not semantic retrieval or proof of factual accuracy. Only these selected text excerpts are used for the AI request. No document file is saved by the backend.';
+    evidencePreview.append(summary);
+    sources.forEach((source,index)=>{
+      const section=document.createElement('section');
+      section.className='edge-local-evidence-source';
+      const label=document.createElement('h4');
+      label.textContent='[D'+(index+1)+'] '+source.fileName+' · '+source.excerpt.length+' characters'+
+        (source.localMetadata.keywordMatchFound?' · keyword matches':' · no keyword match (fallback)');
+      section.append(label);
+      for(const passage of source.localMetadata.passages){
+        const detail=document.createElement('details');
+        detail.className='edge-local-evidence-passage';
+        const title=document.createElement('summary');
+        title.textContent='Passage at character '+(passage.start+1)+' · '+passage.text.length+' characters';
+        const code=document.createElement('pre');
+        code.textContent=passage.text;
+        detail.append(title,code);
+        section.append(detail);
+      }
+      evidencePreview.append(section);
+    });
+    evidencePreview.hidden=false;
+  }
+  evidencePreviewButton.addEventListener('click',async()=>{
+    if(pending||evidencePreviewButton.disabled)return;
+    const question=prompt.value.trim();
+    if(question.length<10||question.length>900){
+      displayError('Enter a document question of 10–900 characters before previewing local evidence.');
+      return;
+    }
+    evidencePreviewButton.disabled=true;
+    evidencePreviewButton.textContent='Extracting text locally…';
+    hideEvidencePreview();
+    const revision=evidenceRevision;
+    try {
+      const records=await collectLocalEvidence(question);
+      if(revision!==evidenceRevision)return; // selection/question changed while parsing
+      showEvidencePreview(records,'preview');
+      alert.hidden=true;
+    }catch(failure){
+      displayError(failure instanceof Error?failure.message:'Unable to preview selected document text.');
+    }finally{
+      evidencePreviewButton.disabled=false;
+      evidencePreviewButton.textContent='⊞ Preview local evidence · no AI request';
+    }
+  });
+  prompt.addEventListener('input',hideEvidencePreview);
   documentFile.addEventListener('change',()=>{
+    hideEvidencePreview();
     const files=Array.from(documentFile.files||[]);
     if(!files.length){
       documentInfo.textContent='Select up to 3 TXT, MD, CSV, JSON, PDF or DOCX files. No bytes are uploaded until you analyze an excerpt.';
@@ -98,6 +167,7 @@
       : 'Choose 1–3 distinct supported files within the listed size limits.';
   });
   documentClear.addEventListener('click',()=>{
+    hideEvidencePreview();
     documentFile.value='';
     documentInfo.textContent='Selection cleared. The website has not saved the file.';
   });
@@ -571,18 +641,10 @@
     const timeout = setTimeout(() => controller.abort(), 75000);
     try {
       let excerptPayload=null;
+      let localEvidence=null;
       if(documentMode){
-        const chosen=Array.from(documentFile.files||[]);
-        if(!chosen.length || chosen.length>3)throw new Error('Choose one to three files before analyzing.');
-        const {extractDocumentText,validateDocumentFile}=await import('/assets/musitu-document-extract.mjs');
-        const docs=[];
-        for(const file of chosen){
-          validateDocumentFile(file);
-          const extracted=await extractDocumentText(file);
-          const excerpt=selectDocumentExcerpt(extracted.text,question,chosen.length===1?4800:1500);
-          if(excerpt.length<30)throw new Error('Insufficient readable text in '+file.name+'.');
-          docs.push({fileName:file.name,excerpt});
-        }
+        localEvidence=await collectLocalEvidence(question);
+        const docs=localEvidence.map(({fileName,excerpt})=>({fileName,excerpt}));
         excerptPayload=docs.length===1 ? {...docs[0]} : {documents:docs};
       }
       const path = mathMode ? '/api/calculate' : imageMode ? '/api/image' : '/api/chat';
@@ -641,6 +703,7 @@
       if (imageMode) attachGeneratedImage(answer);
       if (researchMode || scholarMode) attachSources(answer.sources,answer.sourceScope,answer.citationAudit);
       if (documentMode && answer.mode==='compare') attachDocumentReferences(answer.documentReview,answer.citationAudit);
+      if (documentMode && localEvidence) showEvidencePreview(localEvidence,'sent');
       exportButton.disabled = false;
     } catch (failure) {
       prompt.value = question;
@@ -681,6 +744,7 @@
         thread.replaceChildren();
         for(const m of transcript)appendMessage(m.role,m.content);
         documentFile.value='';
+        hideEvidencePreview();
         documentInfo.textContent='Previously selected file bytes were not stored. Select a new local document to analyze.';
         prompt.value='';
         counter.textContent='0 / '+prompt.maxLength+' · Enter to send';
@@ -699,6 +763,7 @@
         note.append(title,hint);
         thread.append(note);
         documentFile.value='';
+        hideEvidencePreview();
         documentInfo.textContent='Selected documents cleared. No file bytes were stored by the workspace.';
         prompt.value='';
         counter.textContent='0 / '+prompt.maxLength+' · Enter to send';
