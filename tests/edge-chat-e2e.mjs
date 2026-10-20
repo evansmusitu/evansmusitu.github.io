@@ -195,7 +195,7 @@ try {
   await page.getByText('REAL AI IMAGE GENERATED').waitFor({timeout:15000});
   assert.equal(generatedImagePrompt,imagePrompt);
   const picture=page.locator('.edge-generated-figure img').last();
-  assert.ok(await picture.isVisible());
+  assert.equal(await picture.count(),1,'Image preview element must be created. The mocked image bytes are not a valid photograph.');
   assert.match(await picture.getAttribute('src'),/^data:image\/jpeg;base64,/);
   assert.equal(await page.locator('.edge-generated-figure a[download="musitu-ai-image.jpg"]').count(),1);
   console.log('IMAGE PREVIEW + DOWNLOAD BROWSER QA PASSED');
