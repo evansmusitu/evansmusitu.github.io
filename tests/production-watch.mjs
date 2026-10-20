@@ -85,6 +85,22 @@ await check('Published responsive AI stylesheet',async()=>{
   }
   return 'stylesheet '+css.length+' chars';
 });
+for (const [label,path,marker,minLength] of [
+  ['Local PDF/DOCX extractor','assets/musitu-document-extract.mjs','extractDocumentText',3000],
+  ['Self-hosted PDF.js browser module','assets/vendor/pdf.mjs','getDocument',100000],
+  ['Self-hosted PDF.js worker','assets/vendor/pdf.worker.mjs',null,100000],
+  ['Self-hosted Word document parser','assets/vendor/mammoth.browser.min.js',null,100000]
+]) {
+  await check('Published '+label,async()=>{
+    const response=await fetchWithRetry(HOME+path);
+    assert.equal(response.status,200);
+    assert.match(response.headers.get('content-type')||'',/javascript|text\/plain|octet-stream/i);
+    const code=await response.text();
+    assert.ok(code.length>=minLength,'Extracted library unexpectedly small or missing');
+    if(marker)assert.ok(code.includes(marker),'Missing expected parser function');
+    return 'asset '+code.length+' chars; no user files transmitted';
+  });
+}
 await check('Cloudflare backend advertised capabilities',async()=>{
   const response=await fetchWithRetry(EDGE+'/api/health',{headers:{origin:SITE}});
   assert.equal(response.status,200);
