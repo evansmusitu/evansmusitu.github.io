@@ -674,7 +674,7 @@
       busy:()=>pending,
       hasSession:()=>transcript.length>0,
       snapshot:()=>({transcript:transcript.map(m=>({role:m.role,content:m.content})),
-        history:history.map(m=>({role:m.role,content:m.content}))}),
+        history:history.filter(m=>m.content.length<=950).slice(-6).map(m=>({role:m.role,content:m.content}))}),
       restore:({transcript:oldTranscript,history:oldHistory})=>{
         history=oldHistory.map(m=>({role:m.role,content:m.content}));
         transcript=oldTranscript.map(m=>({role:m.role,content:m.content}));
