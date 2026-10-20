@@ -15,6 +15,14 @@
   const inputLabel = document.querySelector('#edge-form label[for="edge-input"]');
   let pending = false;
   let history = [];
+  let transcript = []; // Display/export only; tool results are not inserted as model memories.
+
+  function isShortArithmetic(value) {
+    const text = value.trim();
+    if (!text || text.length > 140 || !/\d/.test(text)) return false;
+    if (/^[0-9eE.+\-*/^%()\s]+$/.test(text) && /[+\-*/^%()]/.test(text)) return true;
+    return /^(?:sqrt|abs|floor|ceil|round)\(\d+(?:\.\d+)?\)$/i.test(text);
+  }
 
   function selectMode(next) {
     mode = ['explore', 'build', 'learn', 'markets', 'deep', 'calculator'].includes(next) ? next : 'explore';
@@ -185,13 +193,13 @@
     const heading = document.createElement('div');
     heading.className = 'edge-message-title';
     const label = document.createElement('span');
-    label.textContent = role === 'user' ? 'YOU' : '✦ MUSITU AI';
+    label.textContent = role === 'user' ? 'YOU' : role === 'tool' ? '✓ VERIFIED COMPUTATION' : '✦ MUSITU AI';
     heading.append(label);
 
-    if (role === 'assistant') {
+    if (role !== 'user') {
       const tools = document.createElement('div');
       tools.className = 'edge-reply-tools';
-      const checklist = extractChecklistItems(text);
+      const checklist = role === 'assistant' ? extractChecklistItems(text) : [];
       if (checklist.length >= 2) installChecklist(item,tools,checklist);
       const copy = document.createElement('button');
       copy.type = 'button';
@@ -208,8 +216,8 @@
       tools.append(copy);
       heading.append(tools);
     }
-    const body = role === 'assistant' ? renderAnswer(text) : document.createElement('div');
-    if (role !== 'assistant') body.textContent = text;
+    const body = role !== 'user' ? renderAnswer(text) : document.createElement('div');
+    if (role === 'user') body.textContent = text;
     item.append(heading,body);
     thread.append(item);
     thread.scrollTop = thread.scrollHeight;
@@ -285,7 +293,7 @@
     const question = prompt.value.trim();
     const requestedMode = mode;
     const mathMode = requestedMode === 'calculator';
-    if (question.length < (mathMode ? 1 : 10) || question.length > (mathMode ? 140 : 900)) {
+    if ((question.length < (mathMode ? 1 : 10) && !( !mathMode && isShortArithmetic(question))) || question.length > (mathMode ? 140 : 900)) {
       displayError(mathMode ? 'Enter an expression between 1 and 140 characters.' :
         'Enter a question between 10 and 900 characters.');
       prompt.focus();
@@ -321,6 +329,7 @@
         throw new Error(typeof answer.error === 'string' ? answer.error : 'The operation is unavailable.');
       }
       let visibleAnswer;
+      let verifiedTool = mathMode;
       if (mathMode) {
         if (answer.tool !== 'calculator' || typeof answer.result !== 'number' || !Number.isFinite(answer.result))
           throw new Error('The calculator returned an invalid result.');
@@ -331,13 +340,21 @@
           '**Precision:** IEEE-754 double precision (approximate, not exact).';
         health.textContent = '● VERIFIED CALCULATION';
       } else {
-        if (typeof answer.reply !== 'string' || !answer.reply.trim()) throw new Error('The AI returned no answer.');
+        if (typeof answer.reply !== 'string' || !answer.reply.trim()) throw new Error('The service returned no answer.');
+        verifiedTool = answer.toolUsed === 'deterministic_calculator';
+        if (verifiedTool && (typeof answer.result !== 'number' || !Number.isFinite(answer.result)))
+          throw new Error('An arithmetic answer was returned without verifiable numeric metadata.');
         visibleAnswer = answer.reply;
-        health.textContent = requestedMode === 'deep' ? '● REASONING MODEL RESPONDED' : '● LIVE AI RESPONSE VERIFIED';
+        health.textContent = verifiedTool ? '● VERIFIED COMPUTATION · NO MODEL' :
+          requestedMode === 'deep' ? '● REASONING MODEL RESPONDED' : '● LIVE AI RESPONSE VERIFIED';
       }
-      history.push({ role: 'user', content: question }, { role: 'assistant', content: visibleAnswer });
-      history = history.slice(-6);
-      appendMessage('assistant', visibleAnswer);
+      if (!verifiedTool) {
+        history.push({ role: 'user', content: question }, { role: 'assistant', content: visibleAnswer });
+        history = history.slice(-6);
+      }
+      transcript.push({role:'user',content:question},{role:verifiedTool?'tool':'assistant',content:visibleAnswer});
+      transcript=transcript.slice(-80);
+      appendMessage(verifiedTool ? 'tool' : 'assistant', visibleAnswer);
       exportButton.disabled = false;
     } catch (failure) {
       prompt.value = question;
@@ -354,9 +371,9 @@
   });
 
   exportButton.addEventListener('click', () => {
-    if (!history.length) return;
-    const transcript = history.map(item => item.role.toUpperCase() + '\n' + item.content).join('\n\n──────\n\n');
-    const blob = new Blob(['MUSITU Intelligence Edge\nModel-generated content may be inaccurate.\n\n' + transcript], {type: 'text/plain'});
+    if (!transcript.length) return;
+    const plainText = transcript.map(item => item.role.toUpperCase() + '\n' + item.content).join('\n\n──────\n\n');
+    const blob = new Blob(['MUSITU Intelligence Edge\nModel-generated content may be inaccurate; deterministic calculations use IEEE-754 floating point.\n\n' + plainText], {type: 'text/plain'});
     const fileURL = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = fileURL;
