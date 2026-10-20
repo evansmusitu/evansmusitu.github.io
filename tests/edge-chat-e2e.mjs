@@ -20,6 +20,7 @@ async function launch(width, height) {
     else if (pathname === '/assets/musitu-document-extract.mjs') { path = 'assets/musitu-document-extract.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-vault.mjs') { path = 'assets/musitu-workspace-vault.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-ui.mjs') { path = 'assets/musitu-workspace-ui.mjs'; type = 'application/javascript'; }
+    else if (pathname === '/assets/musitu-workspace-slots.mjs') { path = 'assets/musitu-workspace-slots.mjs'; type = 'application/javascript'; }
     else if (pathname.startsWith('/assets/vendor/')) {
       path = pathname.slice(1);
       type = 'application/javascript';
