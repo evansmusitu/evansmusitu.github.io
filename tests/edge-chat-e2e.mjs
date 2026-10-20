@@ -344,8 +344,12 @@ try {
   });
   assert.match(await page.locator('#edge-document-info').innerText(),/Selected: robotics_notes.pdf/);
   await page.locator('#edge-input').fill('What is the hysteresis threshold in this PDF robotics experiment?');
+  const pdfRequest=page.waitForResponse(
+    response => response.url()===worker+'/api/chat' && response.request().method()==='POST',
+    {timeout:25000}
+  );
   await page.locator('#edge-send').click();
-  await page.locator('.edge-message.assistant').last().getByText('selected excerpt says',{exact:false}).waitFor({timeout:25000});
+  await pdfRequest;
   assert.equal(documentRequest.fileName,'robotics_notes.pdf','PDF file must be analyzed by existing document endpoint');
   assert.ok(documentRequest.excerpt.includes('hysteresis threshold'),'Actual PDF text extraction required');
   assert.ok(documentRequest.excerpt.includes('6 volts'),'Selected PDF text must reach the model');
@@ -381,8 +385,12 @@ try {
     buffer:docxBytes
   });
   await page.locator('#edge-input').fill('What does this Word document state about the lower Schmitt trigger threshold?');
+  const docxRequest=page.waitForResponse(
+    response => response.url()===worker+'/api/chat' && response.request().method()==='POST',
+    {timeout:25000}
+  );
   await page.locator('#edge-send').click();
-  await page.locator('.edge-message.assistant').last().getByText('selected excerpt says',{exact:false}).waitFor({timeout:25000});
+  await docxRequest;
   assert.equal(documentRequest.fileName,'robotics_notes.docx');
   assert.ok(documentRequest.excerpt.includes('3 volts'),'Actual DOCX extraction must include the paragraph');
   assert.ok(documentRequest.excerpt.includes('Schmitt trigger'),'DOCX text should include the correct topic');
