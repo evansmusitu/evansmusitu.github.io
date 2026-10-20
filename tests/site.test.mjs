@@ -37,6 +37,11 @@ assert.doesNotMatch(vaultModule,/fetch\(/,'Vault module must not initiate networ
 
 assert.match(html,/maximum 4,500 combined/,'Aggregate excerpt privacy bound required');
 assert.match(html,/type="file" multiple accept=/,'Multi-document local selection required');
+assert.match(html,/id="edge-document-preview"/,'No-AI evidence preview control required');
+assert.match(html,/id="edge-document-evidence-preview"/,'Browser-local evidence inspection region required');
+const evidenceModule=readFileSync('assets/musitu-local-evidence.mjs','utf8');
+assert.match(evidenceModule,/rankEvidence/,'Deterministic evidence retrieval required');
+assert.doesNotMatch(evidenceModule,/fetch\(/,'Local evidence must not use network requests');
 const documentModule=readFileSync('assets/musitu-document-extract.mjs','utf8');
 assert.match(documentModule,/checkZipSafety/,'DOCX ZIP safety preflight required');
 assert.match(documentModule,/MAX_PAGES=20/,'Page bounds required');
