@@ -1,0 +1,41 @@
+name: MUSITU One-Time Vendor Source Capture
+
+on:
+  push:
+    branches: [feature/musitu-committed-document-vendors-20261020]
+    paths:
+      - .github/workflows/musitu-one-time-document-vendor-capture.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture-pinned-vendors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install exact pinned document extraction dependencies
+        run: |
+          set -euo pipefail
+          npm install --omit=dev --ignore-scripts --no-audit --no-fund --package-lock=false
+          bash scripts/prepare-document-vendors.sh
+          test -s assets/vendor/pdf.mjs
+          test -s assets/vendor/pdf.worker.mjs
+          test -s assets/vendor/mammoth.browser.min.js
+      - name: Commit the exact self-hosted libraries on the isolated branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f assets/vendor/pdf.mjs assets/vendor/pdf.worker.mjs assets/vendor/mammoth.browser.min.js
+          git diff --cached --stat
+          git diff --cached --quiet && { echo 'No missing vendor assets to commit'; exit 1; }
+          git commit -m "vendor(documents): version PDF.js and Mammoth parsers for both Pages publishing paths"
+          git push origin HEAD:feature/musitu-committed-document-vendors-20261020
