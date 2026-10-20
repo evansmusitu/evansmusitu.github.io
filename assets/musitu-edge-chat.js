@@ -740,6 +740,7 @@
         thread.replaceChildren();
         for(const m of transcript)appendMessage(m.role,m.content);
         documentFile.value='';
+        hideEvidencePreview();
         documentInfo.textContent='Previously selected file bytes were not stored. Select a new local document to analyze.';
         prompt.value='';
         counter.textContent='0 / '+prompt.maxLength+' · Enter to send';
@@ -758,6 +759,7 @@
         note.append(title,hint);
         thread.append(note);
         documentFile.value='';
+        hideEvidencePreview();
         documentInfo.textContent='Selected documents cleared. No file bytes were stored by the workspace.';
         prompt.value='';
         counter.textContent='0 / '+prompt.maxLength+' · Enter to send';
