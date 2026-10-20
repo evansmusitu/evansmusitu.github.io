@@ -82,9 +82,9 @@
     <div id="edge-alert" class="edge-alert" role="alert" hidden></div>
     <div id="edge-calculator-presets" class="edge-calculator-presets" hidden><span>Try:</span><button type="button" data-calc-expression="(8+4)*sqrt(9)">(8+4)×√9</button><button type="button" data-calc-expression="2^8+12/3">2⁸ + 12/3</button><button type="button" data-calc-expression="round(3.7)+abs(-5)">round(3.7) + |−5|</button></div>
     <div id="edge-document-controls" class="edge-document-controls" hidden>
-      <label for="edge-document-file">SELECT A LOCAL TEXT DOCUMENT</label>
-      <input id="edge-document-file" type="file" accept=".txt,.md,.csv,.json,text/plain,text/markdown,text/csv,application/json" aria-describedby="edge-document-info">
-      <p id="edge-document-info" role="status">Supported: .txt, .md, .csv, .json. Maximum 64 KiB, UTF-8 text only. Only a selected excerpt (up to 4,800 characters) is sent when you press Analyze. The file stays in this browser session; do not upload secrets or sensitive data.</p>
+      <label for="edge-document-file">SELECT A LOCAL DOCUMENT — TEXT, PDF OR WORD</label>
+      <input id="edge-document-file" type="file" accept=".txt,.md,.csv,.json,.pdf,.docx,text/plain,text/markdown,text/csv,application/json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" aria-describedby="edge-document-info">
+      <p id="edge-document-info" role="status">Supported: TXT/MD/CSV/JSON (64 KiB), searchable PDF (2 MiB, up to 20 pages), and DOCX (1 MiB). Files are parsed on this device. Only a selected text excerpt of up to 4,800 characters is sent when you press Analyze. Scanned PDFs, password-protected files, and images require other tools. Do not submit secrets or sensitive material.</p>
       <button type="button" id="edge-document-clear" class="edge-export">Clear selected file</button>
     </div>
     <form id="edge-form" class="edge-form">
@@ -92,7 +92,7 @@
       <textarea id="edge-input" maxlength="900" rows="3" placeholder="Ask a question in the selected mode…"></textarea>
       <div class="edge-form-actions"><span id="edge-counter" class="edge-counter">0 / 900 · Enter to send</span><div class="edge-actions"><button type="button" id="edge-export" class="edge-export" disabled>↓ Export</button><button type="submit" class="button primary" id="edge-send">Generate answer ↗</button></div></div>
     </form>
-    <div class="edge-disclaimer">Two AI models · Verified math · Live FLUX image creation · Public web research: Wikipedia / Hacker News · Scholar metadata: Crossref DOIs (not full papers or peer-review verification) · Documents: selected text excerpt only, no whole-file upload or storage · No unrestricted browsing or live trading feeds · Free allowances and rate limits apply.</div>
+    <div class="edge-disclaimer">Two AI models · Verified math · Live FLUX image creation · Public web research: Wikipedia / Hacker News · Scholar metadata: Crossref DOIs (not full papers or peer-review verification) · Documents: browser-local PDF/Word/text extraction; only selected text excerpt sent to AI, no whole-file upload or storage · No unrestricted browsing or live trading feeds · Free allowances and rate limits apply.</div>
   </div>
 </dialog>
 <dialog class="detail-dialog" id="product-modal" aria-labelledby="detail-title"><div class="detail-content"><div class="detail-head"><div class="detail-tag" id="detail-category"></div><button class="detail-close" id="detail-close" aria-label="Close product details">×</button></div><h2 id="detail-title"></h2><p id="detail-description"></p><div class="detail-focus"><b>Explore the direction</b><span id="detail-focus"></span></div><a class="button primary" id="detail-action" href="#contact">Discuss this area ↗</a></div></dialog><div class="toast" id="toast" hidden role="status"></div>
