@@ -252,7 +252,7 @@
     thread.scrollTop = thread.scrollHeight;
   }
 
-  function attachSources(items, scope) {
+  function attachSources(items, scope, citationAudit) {
     const item = thread.lastElementChild;
     if (!item || !item.classList.contains('assistant') || !Array.isArray(items)) return;
     const section = document.createElement('section');
@@ -260,7 +260,7 @@
     const title = document.createElement('h4');
     title.textContent = 'LIVE SOURCES · LINKS YOU CAN VERIFY';
     section.append(title);
-    for (const source of items.slice(0,7)) {
+    for (const [index, source] of items.slice(0,7).entries()) {
       if (!source || typeof source.url !== 'string') continue;
       let url;
       try { url = new URL(source.url); } catch { continue; }
@@ -274,7 +274,7 @@
       link.href = url.href;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
-      link.textContent = String(source.title || 'View original source').slice(0,150) + ' ↗';
+      link.textContent = '[' + (index+1) + '] ' + String(source.title || 'View original source').slice(0,150) + ' ↗';
       const provider = document.createElement('small');
       provider.textContent = String(source.source || 'Public website').slice(0,45);
       const summary = document.createElement('p');
@@ -286,6 +286,36 @@
     disclaimer.className = 'edge-source-note';
     disclaimer.textContent = scope || 'Results are restricted to identified public providers and may be incomplete.';
     section.append(disclaimer);
+
+    if (citationAudit && typeof citationAudit === 'object') {
+      const report=document.createElement('div');
+      report.className='edge-citation-report';
+      const heading=document.createElement('strong');
+      heading.className='edge-citation-head';
+      const status=String(citationAudit.status || '');
+      if (status === 'invalid-indices-removed') {
+        heading.textContent='⚠ UNSUPPORTED REFERENCE NUMBERS REMOVED';
+        report.dataset.status='warning';
+      } else if (status === 'indices-linked') {
+        heading.textContent='✓ SOURCE NUMBERS MATCHED';
+        report.dataset.status='linked';
+      } else {
+        heading.textContent='○ NO NUMBERED SOURCE REFERENCES IN ANSWER';
+        report.dataset.status='uncited';
+      }
+      report.append(heading);
+
+      if (status === 'invalid-indices-removed' && Array.isArray(citationAudit.invalidSourceNumbersRemoved)) {
+        const removed=document.createElement('p');
+        removed.textContent='Unlinked indices: ' + citationAudit.invalidSourceNumbersRemoved.slice(0,8).join(', ') +
+          '. These were removed from the AI reply rather than presented as sources.';
+        report.append(removed);
+      }
+      const explanation=document.createElement('p');
+      explanation.textContent='Reference numbers were checked against retrieved links ONLY. AI claims and source reliability are NOT fact-checked.';
+      report.append(explanation);
+      section.append(report);
+    }
     item.append(section);
     thread.scrollTop = thread.scrollHeight;
   }
@@ -435,7 +465,7 @@
       transcript=transcript.slice(-80);
       appendMessage(verifiedTool ? 'tool' : 'assistant', visibleAnswer);
       if (imageMode) attachGeneratedImage(answer);
-      if (researchMode) attachSources(answer.sources,answer.sourceScope);
+      if (researchMode) attachSources(answer.sources,answer.sourceScope,answer.citationAudit);
       exportButton.disabled = false;
     } catch (failure) {
       prompt.value = question;

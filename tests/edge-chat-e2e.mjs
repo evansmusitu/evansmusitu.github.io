@@ -209,7 +209,8 @@ try {
     webQuery=route.request().postDataJSON();
     await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':origin},
       body:JSON.stringify({mode:'research',model:'@cf/meta/llama-3.1-8b-instruct-fp8',liveSearch:true,
-        reply:'The source list describes the field. Open the links to verify claims [1].',
+        reply:'The source list describes the field [1]. An unsupported claim [unlinked reference] was not linked.',
+        citationAudit:{status:'invalid-indices-removed',retrievedSourceCount:2,linkedSourceNumbers:[1],invalidSourceNumbersRemoved:[8],adjustedCitationGroups:1},
         sourceScope:'English Wikipedia and Hacker News only; NOT general web search',
         sources:[{title:'Quantum computing',url:'https://en.wikipedia.org/wiki/Quantum_computing',source:'Wikipedia',snippet:'Quantum computing overview'},
           {title:'Quantum discussion',url:'https://news.ycombinator.com/item?id=123456',source:'Hacker News',snippet:'Technology discussion'}]})});
@@ -223,6 +224,13 @@ try {
   const sources=page.locator('.edge-message.assistant').last().locator('.edge-sources');
   assert.ok(await sources.isVisible());
   assert.equal(await sources.locator('.edge-source-row a').count(),2);
+  assert.match(await sources.locator('.edge-source-row a').first().innerText(),/^\[1\] Quantum computing/,'Source number is mapped visibly to the source card');
+  const audit=sources.locator('.edge-citation-report');
+  assert.ok(await audit.isVisible(),'Research provenance audit is visible');
+  assert.equal(await audit.getAttribute('data-status'),'warning','Unsupported source IDs must produce a caution state');
+  assert.match(await audit.innerText(),/UNSUPPORTED REFERENCE NUMBERS REMOVED/);
+  assert.match(await audit.innerText(),/Unlinked indices: 8/);
+  assert.match(await audit.innerText(),/NOT fact-checked/,'Index validation must not be mistaken for factual verification');
   assert.equal(await sources.locator('a[target="_blank"][rel="noopener noreferrer"]').count(),2);
   assert.match(await sources.locator('.edge-source-note').innerText(),/NOT general web search/);
   console.log('CLICKABLE ATTRIBUTED WEB RESEARCH BROWSER QA PASSED');
