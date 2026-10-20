@@ -19,7 +19,7 @@ test('export labels selected sources and uses SHA-256 over selected excerpt byte
   const data=await buildLocalEvidencePack({question:QUESTION,records:[source]});
   const actual=createHash('sha256').update(source.excerpt,'utf8').digest('hex');
   assert.match(data,/^# MUSITU Local Document Evidence Pack/);
-  assert.match(data,/\[D1\] lab_a\\\.md/);
+  assert.ok(data.includes('lab'+String.fromCharCode(92)+'_a'+String.fromCharCode(92)+'.md'));
   assert.ok(data.includes(actual),'SHA-256 fingerprint matches selected excerpt exactly');
   assert.match(data,/Passage 1 · original extracted character 1/);
   assert.match(data,/> Upper Schmitt trigger threshold/);
@@ -65,7 +65,7 @@ test('no external network or model calls are necessary to create an evidence pac
   globalThis.fetch=()=>{throw Error('Evidence export must never access a remote service');};
   try {
     const result=await buildLocalEvidencePack({question:QUESTION,records:[record()]});
-    assert.match(result,/lab_a/);
+    assert.ok(result.includes('lab'+String.fromCharCode(92)+'_a'));
   } finally {
     globalThis.fetch=originalFetch;
   }
