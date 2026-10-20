@@ -5,6 +5,8 @@ on:
     paths:
       - index.html
       - tests/site.test.mjs
+      - assets/musitu-document-extract.mjs
+      - package.json
       - .github/workflows/musitu-website-quality.yml
   push:
     branches: [main]
