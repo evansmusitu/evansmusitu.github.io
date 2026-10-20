@@ -20,6 +20,9 @@
   const evidenceExportButton=document.getElementById('edge-document-evidence-export');
   const evidenceVerifyButton=document.getElementById('edge-document-verify');
   const evidenceVerifyStatus=document.getElementById('edge-document-verify-status');
+  const evidenceReceiptDownload=document.getElementById('edge-document-receipt-export');
+  const evidenceReceiptUpload=document.getElementById('edge-document-receipt-verify');
+  const evidenceReceiptFile=document.getElementById('edge-document-receipt-file');
   const presets = document.getElementById('edge-calculator-presets');
   const inputLabel = document.querySelector('#edge-form label[for="edge-input"]');
   let pending = false;
@@ -72,6 +75,7 @@
     evidenceForExport=null;
     evidenceExportButton.disabled=true;
     evidenceVerifyButton.disabled=true;
+    evidenceReceiptDownload.disabled=true;
     evidenceVerifyStatus.hidden=true;
     evidenceVerifyStatus.textContent='';
     evidencePreview.replaceChildren();
@@ -115,6 +119,7 @@
     evidenceForExport={question:sourceQuestion,records:sources};
     evidenceExportButton.disabled=false;
     evidenceVerifyButton.disabled=false;
+    evidenceReceiptDownload.disabled=false;
     const heading=document.createElement('strong');
     heading.textContent=kind==='preview'?'LOCAL EVIDENCE PREVIEW · NO AI REQUEST':'EVIDENCE SELECTED FOR AI · BROWSER-LOCAL RANKING';
     evidencePreview.append(heading);
@@ -217,6 +222,61 @@
       evidenceExportButton.disabled=true; // fail closed; do not export stale evidence
     }finally{
       evidenceVerifyButton.disabled=!(revision===evidenceRevision&&evidenceForExport===snapshot);
+    }
+  });
+  evidenceReceiptDownload.addEventListener('click',async()=>{
+    if(pending||evidenceReceiptDownload.disabled||!evidenceForExport)return;
+    const snapshot=evidenceForExport,revision=evidenceRevision;
+    evidenceReceiptDownload.disabled=true;
+    try{
+      const {createPortableReceipt}=await import('/assets/musitu-portable-receipt.mjs');
+      const receipt=createPortableReceipt(snapshot.records);
+      if(revision!==evidenceRevision||evidenceForExport!==snapshot)return;
+      const blobURL=URL.createObjectURL(new Blob([receipt],{type:'application/json'}));
+      const anchor=document.createElement('a');
+      anchor.href=blobURL;
+      anchor.download='musitu-source-fingerprint-receipt.json';
+      anchor.click();
+      setTimeout(()=>URL.revokeObjectURL(blobURL),1200);
+      evidenceVerifyStatus.hidden=false;
+      evidenceVerifyStatus.textContent='Saved an unencrypted source-fingerprint receipt without excerpts. It does NOT prove publisher identity.';
+    }catch(failure){
+      displayError(failure instanceof Error?failure.message:'Local source receipt could not be exported.');
+    }finally{
+      evidenceReceiptDownload.disabled=!(revision===evidenceRevision&&evidenceForExport===snapshot);
+    }
+  });
+  evidenceReceiptUpload.addEventListener('click',()=>{
+    if(pending)return;
+    try{selectedDocumentFiles();evidenceReceiptFile.click();}
+    catch(failure){
+      evidenceVerifyStatus.hidden=false;
+      evidenceVerifyStatus.textContent=failure instanceof Error?failure.message:'Select original files first.';
+    }
+  });
+  evidenceReceiptFile.addEventListener('change',async()=>{
+    const receiptFile=evidenceReceiptFile.files?.[0];
+    evidenceReceiptFile.value='';
+    if(!receiptFile)return;
+    const revision=evidenceRevision;
+    evidenceVerifyStatus.hidden=false;
+    evidenceVerifyStatus.textContent='Checking saved receipt against selected local originals…';
+    evidenceReceiptUpload.disabled=true;
+    try{
+      if(!/\.json$/i.test(receiptFile.name)||receiptFile.size<20||receiptFile.size>8192||
+        typeof receiptFile.text!=='function')throw new Error('Select a JSON source receipt of 8 KiB or less.');
+      const originals=selectedDocumentFiles();
+      const {verifyPortableReceipt}=await import('/assets/musitu-portable-receipt.mjs');
+      const result=await verifyPortableReceipt(await receiptFile.text(),originals);
+      if(revision!==evidenceRevision)return;
+      evidenceVerifyStatus.textContent=result.allMatch
+        ? '✓ Saved receipt verified: '+result.checked.length+' local original file'+(result.checked.length===1?'':'s')+' match. This is NOT proof of publisher identity.'
+        : '✕ Saved receipt mismatch: '+result.checked.filter(x=>!x.matches).map(x=>x.name).join(', ')+'. Original bytes are different; do not rely on the receipt.';
+    }catch(failure){
+      if(revision!==evidenceRevision)return;
+      evidenceVerifyStatus.textContent=failure instanceof Error?failure.message:'Local receipt verification failed.';
+    }finally{
+      evidenceReceiptUpload.disabled=false;
     }
   });
   prompt.addEventListener('input',hideEvidencePreview);
