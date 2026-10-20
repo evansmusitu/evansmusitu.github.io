@@ -116,6 +116,15 @@ for(const [name,path,marker] of [
 }
 }
 else console.log('PR watch: new static workspace modules are tested by CI and checked on production only after merge.');
+if (process.env.GITHUB_EVENT_NAME !== 'pull_request') {
+  await check('Published offline evidence retrieval module',async()=>{
+    const response=await fetchWithRetry(HOME+'assets/musitu-local-evidence.mjs');
+    assert.equal(response.status,200);
+    const body=await response.text();
+    assert.ok(body.includes('rankEvidence') && body.includes('BM25') && body.length>3000);
+    return 'self-hosted offline retrieval '+body.length+' chars';
+  });
+}
 await check('Cloudflare backend advertised capabilities',async()=>{
   const response=await fetchWithRetry(EDGE+'/api/health',{headers:{origin:SITE}});
   assert.equal(response.status,200);
