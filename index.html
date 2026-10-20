@@ -88,8 +88,17 @@
       <button type="button" id="edge-document-clear" class="edge-export">Clear selected file</button>
     </div>
     <details id="edge-workspace" class="edge-workspace">
-      <summary>🔒 Private encrypted workspace · Save / Unlock</summary>
+      <summary>🔒 Five private encrypted workspaces · Save / Unlock</summary>
       <div class="edge-workspace-panel">
+        <label for="edge-workspace-slot">SELECT PRIVATE WORKSPACE SLOT</label>
+        <select id="edge-workspace-slot" aria-describedby="edge-workspace-slot-status">
+          <option value="1">Workspace 1 (existing saved conversation)</option>
+          <option value="2">Workspace 2</option>
+          <option value="3">Workspace 3</option>
+          <option value="4">Workspace 4</option>
+          <option value="5">Workspace 5</option>
+        </select>
+        <p id="edge-workspace-slot-status" role="status">Workspace 1 selected · Checking encrypted local copy…</p>
         <label for="edge-workspace-passphrase">WORKSPACE PASSPHRASE (12+ CHARACTERS)</label>
         <input id="edge-workspace-passphrase" type="password" maxlength="256" minlength="12" autocomplete="new-password" spellcheck="false" placeholder="Enter your private passphrase" aria-describedby="edge-workspace-note">
         <div class="edge-workspace-actions">
@@ -101,7 +110,7 @@
           <button id="edge-workspace-clear" type="button">Lock / clear current chat</button>
           <button id="edge-workspace-delete" type="button">Delete locally saved copy</button>
         </div>
-        <p id="edge-workspace-note">Optional, manual save only. AES-256-GCM encrypts text conversation history in this browser with a key derived from your passphrase. No account or cloud synchronization. Your passphrase cannot be recovered. Attachments, generated images, source cards and document files are not saved. A compromised browser or unlocked session is not protected. Avoid storing secrets or sensitive information.</p>
+        <p id="edge-workspace-note">Optional, manual save only. Five independent encrypted workspace slots; Workspace 1 preserves your existing saved conversation. You must explicitly select a slot and save—switching slots does not automatically load, save or clear conversations. Slot occupancy is visible but private titles are not stored. AES-256-GCM encryption with a passphrase-derived key; no account or cloud synchronization. Lost passphrases cannot be recovered. Attachments, generated images, source cards and document files are not saved. An unlocked or compromised browser is not protected. Avoid secrets or sensitive information.</p>
         <p id="edge-workspace-status" role="status" aria-live="polite">Nothing is saved automatically. Save again after new messages.</p>
       </div>
     </details>
