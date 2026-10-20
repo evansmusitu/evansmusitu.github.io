@@ -536,6 +536,7 @@ try {
   await page.locator('#edge-workspace-export').click();
   const encryptedBackup=await exportPromise;
   assert.equal(encryptedBackup.suggestedFilename(),'musitu-encrypted-workspace.json');
+  const backupBytes=readFileSync(await encryptedBackup.path());
   await page.locator('#edge-workspace-clear').click();
   await page.getByText('Visible session cleared',{exact:false}).waitFor({timeout:10000});
   assert.equal(await page.locator('.edge-message').count(),0);
@@ -568,6 +569,27 @@ try {
   await page.getByText('Local encrypted copy removed',{exact:false}).waitFor({timeout:10000});
   assert.equal(await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.v1')),null,'Delete should remove only workspace key');
   assert.ok(await page.locator('.edge-message').count()>2,'Deleting saved copy does not silently destroy unlocked chat');
+  // Restore an encrypted portable backup. A wrong secret must not mutate either
+  // the current conversation or browser storage; correct passphrase can recover.
+  await page.locator('#edge-workspace-clear').click();
+  await page.getByText('Visible session cleared',{exact:false}).waitFor({timeout:12000});
+  assert.equal(await page.locator('.edge-message').count(),0);
+  await page.locator('#edge-workspace-passphrase').fill('An incorrect recovery passphrase!');
+  await page.locator('#edge-workspace-import').setInputFiles({
+    name:'musitu-encrypted-workspace.json',mimeType:'application/json',buffer:backupBytes
+  });
+  await page.getByText('Unable to unlock',{exact:false}).waitFor({timeout:12000});
+  assert.equal(await page.locator('.edge-message').count(),0);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.v1')),null);
+  await page.locator('#edge-workspace-passphrase').fill(pw);
+  await page.locator('#edge-workspace-import').setInputFiles({
+    name:'musitu-encrypted-workspace.json',mimeType:'application/json',buffer:backupBytes
+  });
+  await page.getByText('Encrypted backup verified',{exact:false}).waitFor({timeout:12000});
+  assert.ok(await page.locator('.edge-message').count()>2,'Portable encrypted backup must restore conversations');
+  assert.ok((await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.v1')))?.includes('AES-256-GCM'));
+  assert.equal(await page.locator('#edge-workspace-passphrase').inputValue(),'','Backup restore must clear secret');
+  console.log('PORTABLE ENCRYPTED BACKUP WRONG-PASSWORD AND VERIFIED RESTORE QA PASS');
   console.log('AES-GCM OPT-IN LOCAL SAVE, WRONG PASSWORD, RESTORE, RELOAD AND DELETE BROWSER QA PASS');
 
   await page.locator('#ai-close').click();
