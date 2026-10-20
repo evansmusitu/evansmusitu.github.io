@@ -27,14 +27,11 @@ function windows(text){
   const size=620,overlap=105,step=size-overlap;
   for(let start=0;start<text.length;start+=step){
     let end=Math.min(start+size,text.length);
-    // Prefer whitespace to avoid chopping a word. Never lose trailing fragments:
-    // overlap with the following window is intentionally maintained.
-    if(end<text.length){
-      const split=text.lastIndexOf(' ',end);
-      if(split>start+450)end=split+1;
-    }
-    const content=text.slice(start,end).trim();
-    if(content.length>=15)chunks.push({start,end,content});
+    // Fixed overlapping windows ensure no characters disappear at boundaries.
+    const raw=text.slice(start,end);
+    const left=raw.length-raw.trimStart().length;
+    const content=raw.trim();
+    if(content.length>=15)chunks.push({start:start+left,end:start+left+content.length,content});
   }
   return chunks;
 }
