@@ -87,6 +87,11 @@ function readEnvelope(value) {
   if(salt.length!==16||iv.length!==12||encrypted.length<17)fail('Malformed encrypted workspace.','INVALID_ENVELOPE');
   return {salt,iv,encrypted};
 }
+/** Validate encrypted envelope without attempting to unlock or exposing metadata. */
+export function validateEncryptedEnvelope(encoded) {
+  readEnvelope(encoded);
+  return true;
+}
 async function keyFor(secret,salt){
   const imported=await crypto.subtle.importKey('raw',new TextEncoder().encode(passphrase(secret)),
     {name:'PBKDF2'},false,['deriveKey']);
