@@ -62,7 +62,7 @@ await check('Public homepage and AI launcher',async()=>{
   assert.equal(response.status,200);
   assert.match(response.headers.get('content-type') || '',/text\/html/i);
   const html=await response.text();
-  for(const item of ['id="ai-dialog"','assets/musitu-edge-chat.js','assets/musitu-edge-chat.css','data-edge-mode="deep"','data-edge-mode="research"','data-edge-mode="image"']) {
+  for(const item of ['id="ai-dialog"','assets/musitu-edge-chat.js','assets/musitu-edge-chat.css','data-edge-mode="deep"','data-edge-mode="research"','data-edge-mode="image"','data-edge-mode="document"','id="edge-document-file"']) {
     assert.ok(html.includes(item),'Missing site capability: '+item);
   }
   return 'page '+html.length+' chars';
@@ -97,10 +97,11 @@ await check('Cloudflare backend advertised capabilities',async()=>{
   assert.equal(health.curatedLiveSources,true);
   assert.equal(health.availableModels.standard,'@cf/meta/llama-3.1-8b-instruct-fp8');
   assert.equal(health.availableModels.deeperAnalysis,'@cf/qwen/qwen3-30b-a3b-fp8');
-  for(const tool of ['calculator','image','research']) {
+  for(const tool of ['calculator','image','research','document']) {
     assert.ok(health.tools.some(t=>t.id===tool),'Backend missing tool '+tool);
   }
   assert.match(health.rateLimit.scope,/location/i);
+  assert.equal(health.tools.find(x=>x.id==='document').maxExcerptCharacters,4800);
   return 'service metadata available; inference intentionally not tested';
 });
 for(const path of paths) {
@@ -152,6 +153,18 @@ await check('Image endpoint rejects malformed requests before inference',async()
   assert.equal(response.status,400);
   assert.equal((await response.json()).code,'INVALID_IMAGE_PROMPT');
   return '400; zero image inference';
+});
+await check('Document mode rejects absent text before inference',async()=>{
+  const response=await jsonPost('/api/chat',{mode:'document',prompt:'Summarize this selected text.',fileName:'my_notes.txt'});
+  assert.equal(response.status,400);
+  assert.equal((await response.json()).code,'INVALID_DOCUMENT_EXCERPT');
+  return '400; no document text sent and no inference';
+});
+await check('Document mode rejects binary text before inference',async()=>{
+  const response=await jsonPost('/api/chat',{mode:'document',prompt:'Summarize this selected text.',fileName:'my_notes.txt',excerpt:'Random binary content'+String.fromCharCode(0)+' and some follow-up text is rejected.'});
+  assert.equal(response.status,400);
+  assert.equal((await response.json()).code,'INVALID_DOCUMENT_EXCERPT');
+  return '400; invalid text refused before model inference';
 });
 await check('Chat endpoint rejects malformed requests before inference',async()=>{
   const response=await jsonPost('/api/chat',{mode:'research',prompt:'short'});
