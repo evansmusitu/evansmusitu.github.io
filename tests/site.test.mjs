@@ -73,3 +73,12 @@ assert.ok(publishingWorkflow.includes('artifact_name: '+pagesArtifactName),
   'Pages deployment must select the matching unique per-attempt artifact.');
 
 console.log('PASS: Site structure, canonical branding, interaction hooks, accessibility and JS syntax');
+
+assert.match(html,/id="edge-document-verify"/,'Original-file verification action required');
+assert.match(html,/id="edge-document-verify-status"/,'Local hash verification status required');
+const integrityClient=readFileSync('assets/musitu-edge-chat.js','utf8');
+assert.match(integrityClient,/verifyLocalFile/,'Original-byte verifier must be wired to user action');
+assert.match(integrityClient,/sourceIntegrity/,'Original-file evidence provenance must be retained locally');
+
+const pagesRelease=readFileSync('.github/workflows/musitu-website-pages.yml','utf8');
+assert.match(pagesRelease,/cp assets\/musitu-source-integrity\.mjs _site\/assets\/musitu-source-integrity\.mjs/,'Production Pages must bundle integrity verifier');

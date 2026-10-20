@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import JSZip from 'jszip';
@@ -20,6 +21,7 @@ async function launch(width, height) {
     else if (pathname === '/assets/musitu-document-extract.mjs') { path = 'assets/musitu-document-extract.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-local-evidence.mjs') { path = 'assets/musitu-local-evidence.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-evidence-pack.mjs') { path = 'assets/musitu-evidence-pack.mjs'; type = 'application/javascript'; }
+    else if (pathname === '/assets/musitu-source-integrity.mjs') { path = 'assets/musitu-source-integrity.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-vault.mjs') { path = 'assets/musitu-workspace-vault.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-ui.mjs') { path = 'assets/musitu-workspace-ui.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-slots.mjs') { path = 'assets/musitu-workspace-slots.mjs'; type = 'application/javascript'; }
@@ -323,6 +325,13 @@ try {
   const localPreview=page.locator('#edge-document-evidence-preview');
   await localPreview.waitFor({state:'visible',timeout:20000});
   assert.equal(documentRequest,null,'Local evidence preview must not send an AI request');
+  const verifyOriginals=page.locator('#edge-document-verify');
+  assert.ok(await verifyOriginals.isEnabled(),'Original-byte verification requires a successful preview');
+  await verifyOriginals.click();
+  await page.waitForFunction(()=>document.getElementById('edge-document-verify-status')?.textContent.includes('match this evidence preview'),{timeout:10000});
+  assert.match(await page.locator('#edge-document-verify-status').innerText(),/match this evidence preview/);
+  assert.match(await localPreview.innerText(),new RegExp(createHash('sha256').update(localText,'utf8').digest('hex')));
+  assert.equal(documentRequest,null,'Local SHA-256 verification must never invoke external AI');
   assert.match(await localPreview.innerText(),/NO AI REQUEST/);
   assert.match(await localPreview.innerText(),/notes.md/);
   await localPreview.locator('details').first().locator('summary').click();
@@ -340,6 +349,8 @@ try {
   assert.match(evidenceText,/\[D1\] notes\\\.md/,'Source label must be included');
   assert.match(evidenceText,/upper hysteresis threshold/i);
   assert.match(evidenceText,/SHA-256 of selected text excerpt/);
+  assert.ok(evidenceText.includes(createHash('sha256').update(localText,'utf8').digest('hex')),
+    'Export must bind evidence to exact original local file bytes');
   assert.match(evidenceText,/[a-f0-9]{64}/,'SHA-256 fingerprint must be in the evidence pack');
   assert.ok(evidenceText.length<15000,'Export only bounded excerpt, not the entire input');
   assert.equal(documentRequest,null,'Local evidence preview and export must not make an AI call');
