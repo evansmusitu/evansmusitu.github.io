@@ -415,6 +415,56 @@ try {
 
 
 
+  // Image-only PDF: reject without claiming OCR or sending an empty excerpt.
+  const scanned=await PDFDocument.create();
+  scanned.addPage([612,792]);
+  documentRequest=null;
+  await page.locator('#edge-document-file').setInputFiles({
+    name:'image_only.pdf',mimeType:'application/pdf',buffer:Buffer.from(await scanned.save())
+  });
+  await page.locator('#edge-input').fill('Can you summarize this image-only scanned PDF file?');
+  await page.locator('#edge-send').click();
+  await page.locator('#edge-alert').waitFor({state:'visible'});
+  assert.match(await page.locator('#edge-alert').innerText(),/Scanned\/image-only PDFs need OCR/);
+  assert.equal(documentRequest,null,'Image-only PDF must not send a model request without OCR');
+
+  // Bound page counts independently of file size.
+  const longPdf=await PDFDocument.create();
+  for(let index=0;index<21;index++){
+    const pg=longPdf.addPage([400,400]);
+    pg.drawText('Page '+(index+1)+' of this oversized sample.',{x:35,y:340,size:13});
+  }
+  documentRequest=null;
+  await page.locator('#edge-document-file').setInputFiles({
+    name:'too_many_pages.pdf',mimeType:'application/pdf',buffer:Buffer.from(await longPdf.save())
+  });
+  await page.locator('#edge-input').fill('Give a summary of every page of this long PDF file.');
+  await page.locator('#edge-send').click();
+  await page.locator('#edge-alert').waitFor({state:'visible'});
+  assert.match(await page.locator('#edge-alert').innerText(),/PDF exceeds 20 pages/);
+  assert.equal(documentRequest,null,'Overlong PDF must not reach the model');
+
+  // ZIP-bomb preflight: tiny compressed DOCX with unsafe uncompressed entry.
+  const bomb=new JSZip();
+  bomb.file('[Content_Types].xml','<Types/>');
+  bomb.file('word/document.xml','x'.repeat(2400000));
+  const compressedBomb=await bomb.generateAsync({type:'nodebuffer',compression:'DEFLATE',compressionOptions:{level:9}});
+  assert.ok(compressedBomb.length<1048576,'Fixture must fit DOCX compressed-size bound');
+  documentRequest=null;
+  await page.locator('#edge-document-file').setInputFiles({
+    name:'compressed_bomb.docx',
+    mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    buffer:compressedBomb
+  });
+  await page.locator('#edge-input').fill('Can you extract this Word file and explain it?');
+  await page.locator('#edge-send').click();
+  await page.locator('#edge-alert').waitFor({state:'visible'});
+  assert.match(await page.locator('#edge-alert').innerText(),/unsafe ZIP data|expansion limit/);
+  assert.equal(documentRequest,null,'DOCX ZIP expansion bomb must not reach the model');
+  await page.locator('#edge-document-clear').click();
+  console.log('SCANNED PDF + PAGE-COUNT + DOCX ZIP BOMB REJECTION QA PASS');
+
+
   await page.locator('#ai-close').click();
   assert.equal(await page.locator('#ai-dialog').getAttribute('open'),null,'Dialog should close');
   await page.close();
