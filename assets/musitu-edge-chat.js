@@ -25,18 +25,20 @@
   }
 
   function selectMode(next) {
-    mode = ['explore', 'build', 'learn', 'markets', 'deep', 'calculator', 'image', 'research'].includes(next) ? next : 'explore';
+    mode = ['explore', 'build', 'learn', 'markets', 'deep', 'calculator', 'image', 'research', 'scholar'].includes(next) ? next : 'explore';
     const math = mode === 'calculator';
     const imageMode = mode === 'image';
     const researchMode = mode === 'research';
+    const scholarMode = mode === 'scholar';
     presets.hidden = !math;
-    prompt.maxLength = math ? 140 : imageMode ? 450 : researchMode ? 180 : 900;
+    prompt.maxLength = math ? 140 : imageMode ? 450 : (researchMode || scholarMode) ? 180 : 900;
     prompt.placeholder = math ? 'Enter an expression, e.g. 7*(2+3) or sqrt(81)…' :
       imageMode ? 'Describe an image to generate, including subject, setting and style…' :
       researchMode ? 'Search Wikipedia and Hacker News, e.g. quantum computing in education…' :
+      scholarMode ? 'Find DOI-registered papers, e.g. physics robotics feedback control…' :
       mode === 'deep' ? 'Ask a complex question for deliberate analysis…' : 'Ask a question in the selected mode…';
-    inputLabel.textContent = math ? 'DETERMINISTIC MATH EXPRESSION' : imageMode ? 'IMAGE DESCRIPTION' : researchMode ? 'LIVE SOURCE-RESEARCH QUERY' : mode === 'deep' ? 'ASK THE REASONING MODEL' : 'ASK MUSITU AI';
-    send.textContent = math ? 'Calculate ↗' : imageMode ? 'Generate image ↗' : researchMode ? 'Research sources ↗' : 'Generate answer ↗';
+    inputLabel.textContent = math ? 'DETERMINISTIC MATH EXPRESSION' : imageMode ? 'IMAGE DESCRIPTION' : researchMode ? 'LIVE SOURCE-RESEARCH QUERY' : scholarMode ? 'SCHOLARLY DOI RESEARCH QUERY' : mode === 'deep' ? 'ASK THE REASONING MODEL' : 'ASK MUSITU AI';
+    send.textContent = math ? 'Calculate ↗' : imageMode ? 'Generate image ↗' : researchMode ? 'Research sources ↗' : scholarMode ? 'Find academic papers ↗' : 'Generate answer ↗';
     counter.textContent = prompt.value.length + ' / ' + prompt.maxLength + ' · Enter to send';
     document.querySelectorAll('[data-edge-mode]').forEach(button => {
       button.setAttribute('aria-pressed', String(button.dataset.edgeMode === mode));
@@ -252,13 +254,42 @@
     thread.scrollTop = thread.scrollHeight;
   }
 
+  function makeBibliography(records) {
+    const escape = value => String(value ?? '').slice(0,220)
+      .replace(/\\/g,'\\textbackslash{}')
+      .replace(/[{}%$#&_]/g,character=>'\\'+character)
+      .replace(/\^/g,'\\^{}').replace(/~/g,'\\~{}')
+      .replace(/[\u0000-\u001f\u007f]/g,' ').trim();
+    const blocks=[];
+    const known=new Set();
+    for (const source of records.slice(0,7)) {
+      if (source?.source !== 'Crossref' || typeof source.doi !== 'string') continue;
+      const doi=source.doi.trim().toLowerCase();
+      if(!/^10\.\d{4,9}\/[a-z0-9\-._;()/:]+$/i.test(doi) || known.has(doi))continue;
+      known.add(doi);
+      const key='musitu_'+doi.replace(/[^a-z0-9]/gi,'_').slice(0,75);
+      const type=source.workType==='journal-article'?'article':source.workType==='book'?'book':'misc';
+      const fields=[
+        ['title',source.title],['doi',doi],['url','https://doi.org/'+doi],
+        ['year',Number.isInteger(source.year)?String(source.year):''],
+        ['author',Array.isArray(source.authors)?source.authors.slice(0,6).join(' and '):''],
+        ['journal',type==='article'?source.journal:''],
+        ['publisher',type==='book'?source.publisher:'']
+      ];
+      blocks.push('@'+type+'{'+key+',\n'+fields.filter(([,value])=>value!==''&&value!==null&&value!==undefined)
+        .map(([name,value])=>'  '+name+' = {'+escape(value)+'}').join(',\n')+'\n}');
+    }
+    return blocks.join('\n\n')+'\n';
+  }
+
   function attachSources(items, scope, citationAudit) {
     const item = thread.lastElementChild;
     if (!item || !item.classList.contains('assistant') || !Array.isArray(items)) return;
     const section = document.createElement('section');
     section.className = 'edge-sources';
     const title = document.createElement('h4');
-    title.textContent = 'LIVE SOURCES · LINKS YOU CAN VERIFY';
+    const isScholar=items.some(source=>source?.source==='Crossref');
+    title.textContent = isScholar ? 'CROSSREF · DOI-REGISTERED PUBLICATIONS' : 'LIVE SOURCES · LINKS YOU CAN VERIFY';
     section.append(title);
     for (const [index, source] of items.slice(0,7).entries()) {
       if (!source || typeof source.url !== 'string') continue;
@@ -267,7 +298,8 @@
       if (url.protocol !== 'https:') continue;
       const wikipedia = url.hostname === 'en.wikipedia.org' && url.pathname.startsWith('/wiki/');
       const hackerNews = url.hostname === 'news.ycombinator.com' && url.pathname === '/item';
-      if (!wikipedia && !hackerNews) continue;
+      const scholar = url.hostname === 'doi.org' && /^\/10\.\d{4,9}\//i.test(url.pathname) && source.source === 'Crossref';
+      if (!wikipedia && !hackerNews && !scholar) continue;
       const row = document.createElement('div');
       row.className = 'edge-source-row';
       const link = document.createElement('a');
@@ -281,6 +313,29 @@
       summary.textContent = String(source.snippet || '').slice(0,300);
       row.append(link,provider,summary);
       section.append(row);
+    }
+    if (isScholar) {
+      const entries=makeBibliography(items);
+      if(entries.trim()) {
+        const button=document.createElement('button');
+        button.type='button';
+        button.className='edge-export edge-scholar-bibtex';
+        button.textContent='↓ Download references (.bib)';
+        button.setAttribute('aria-label','Download scholarly references as BibTeX');
+        button.addEventListener('click',()=>{
+          const blob=new Blob([
+            '% Crossref bibliographic metadata only. Not verified full-text findings or confirmed peer review.\n',
+            entries
+          ],{type:'text/plain;charset=utf-8'});
+          const downloadURL=URL.createObjectURL(blob);
+          const link=document.createElement('a');
+          link.href=downloadURL;
+          link.download='musitu-scholar-references.bib';
+          link.click();
+          setTimeout(()=>URL.revokeObjectURL(downloadURL),1000);
+        });
+        section.append(button);
+      }
     }
     const disclaimer = document.createElement('p');
     disclaimer.className = 'edge-source-note';
@@ -392,12 +447,14 @@
     const mathMode = requestedMode === 'calculator';
     const imageMode = requestedMode === 'image';
     const researchMode = requestedMode === 'research';
-    const minimum = mathMode ? 1 : imageMode ? 12 : 10;
-    const maximum = mathMode ? 140 : imageMode ? 450 : researchMode ? 180 : 900;
-    if ((question.length < minimum && !( !mathMode && !imageMode && !researchMode && isShortArithmetic(question))) || question.length > maximum) {
+    const scholarMode = requestedMode === 'scholar';
+    const minimum = mathMode ? 1 : imageMode ? 12 : scholarMode ? 5 : 10;
+    const maximum = mathMode ? 140 : imageMode ? 450 : (researchMode || scholarMode) ? 180 : 900;
+    if ((question.length < minimum && !( !mathMode && !imageMode && !researchMode && !scholarMode && isShortArithmetic(question))) || question.length > maximum) {
       displayError(mathMode ? 'Enter an expression between 1 and 140 characters.' :
         imageMode ? 'Describe an image between 12 and 450 characters.' :
         researchMode ? 'Search between 10 and 180 characters.' :
+        scholarMode ? 'Search scholarly metadata with a 5–180 character topic or title.' :
         'Enter a question between 10 and 900 characters.');
       prompt.focus();
       return;
@@ -406,14 +463,14 @@
     pending = true;
     alert.hidden = true;
     send.disabled = true;
-    send.textContent = mathMode ? 'Calculating…' : imageMode ? 'Creating image…' : researchMode ? 'Searching sources…' : 'Generating…';
+    send.textContent = mathMode ? 'Calculating…' : imageMode ? 'Creating image…' : researchMode ? 'Searching sources…' : scholarMode ? 'Searching DOI metadata…' : 'Generating…';
     const earlier = history.slice(-4);
     appendMessage('user', question);
     prompt.value = '';
     counter.textContent = '0 / ' + prompt.maxLength + ' · Enter to send';
     const waiting = document.createElement('p');
     waiting.className = 'edge-waiting';
-    waiting.textContent = mathMode ? 'Calculating deterministically…' : imageMode ? 'FLUX is creating your image…' : researchMode ? 'Fetching sources and grounding an answer…' : 'MUSITU AI is generating…';
+    waiting.textContent = mathMode ? 'Calculating deterministically…' : imageMode ? 'FLUX is creating your image…' : researchMode ? 'Fetching sources and grounding an answer…' : scholarMode ? 'Retrieving Crossref DOI metadata and synthesizing an overview…' : 'MUSITU AI is generating…';
     thread.append(waiting);
     thread.scrollTop = thread.scrollHeight;
     const controller = new AbortController();
@@ -455,7 +512,7 @@
           throw new Error('An arithmetic answer was returned without verifiable numeric metadata.');
         visibleAnswer = answer.reply;
         health.textContent = verifiedTool ? '● VERIFIED COMPUTATION · NO MODEL' :
-          requestedMode === 'deep' ? '● REASONING MODEL RESPONDED' : researchMode ? '● REAL SOURCES RETRIEVED' : '● LIVE AI RESPONSE VERIFIED';
+          requestedMode === 'deep' ? '● REASONING MODEL RESPONDED' : researchMode ? '● REAL SOURCES RETRIEVED' : scholarMode ? '● SCHOLARLY DOI RECORDS RETRIEVED' : '● LIVE AI RESPONSE VERIFIED';
       }
       if (!verifiedTool && !imageMode) {
         history.push({ role: 'user', content: question }, { role: 'assistant', content: visibleAnswer });
@@ -465,7 +522,7 @@
       transcript=transcript.slice(-80);
       appendMessage(verifiedTool ? 'tool' : 'assistant', visibleAnswer);
       if (imageMode) attachGeneratedImage(answer);
-      if (researchMode) attachSources(answer.sources,answer.sourceScope,answer.citationAudit);
+      if (researchMode || scholarMode) attachSources(answer.sources,answer.sourceScope,answer.citationAudit);
       exportButton.disabled = false;
     } catch (failure) {
       prompt.value = question;
@@ -477,7 +534,7 @@
       clearTimeout(timeout);
       pending = false;
       send.disabled = false;
-      send.textContent = mode === 'calculator' ? 'Calculate ↗' : mode === 'image' ? 'Generate image ↗' : mode === 'research' ? 'Research sources ↗' : 'Generate answer ↗';
+      send.textContent = mode === 'calculator' ? 'Calculate ↗' : mode === 'image' ? 'Generate image ↗' : mode === 'research' ? 'Research sources ↗' : mode === 'scholar' ? 'Find academic papers ↗' : 'Generate answer ↗';
     }
   });
 
