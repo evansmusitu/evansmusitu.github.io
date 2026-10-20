@@ -328,6 +328,7 @@ try {
   const verifyOriginals=page.locator('#edge-document-verify');
   assert.ok(await verifyOriginals.isEnabled(),'Original-byte verification requires a successful preview');
   await verifyOriginals.click();
+  await page.waitForFunction(()=>document.getElementById('edge-document-verify-status')?.textContent.includes('match this evidence preview'),{timeout:10000});
   assert.match(await page.locator('#edge-document-verify-status').innerText(),/match this evidence preview/);
   assert.match(await localPreview.innerText(),new RegExp(createHash('sha256').update(localText,'utf8').digest('hex')));
   assert.equal(documentRequest,null,'Local SHA-256 verification must never invoke external AI');
