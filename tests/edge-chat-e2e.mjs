@@ -235,6 +235,48 @@ try {
   assert.match(await sources.locator('.edge-source-note').innerText(),/NOT general web search/);
   console.log('CLICKABLE ATTRIBUTED WEB RESEARCH BROWSER QA PASSED');
 
+  await page.unroute(worker + '/api/chat');
+  let observedScholar=null;
+  await page.route(worker + '/api/chat',async route=>{
+    if(route.request().method()==='OPTIONS'){
+      await route.fulfill({status:204,headers:{'access-control-allow-origin':origin,'access-control-allow-methods':'POST,OPTIONS','access-control-allow-headers':'content-type'}});return;
+    }
+    observedScholar=route.request().postDataJSON();
+    await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':origin},
+      body:JSON.stringify({
+        mode:'scholar',model:'@cf/meta/llama-3.1-8b-instruct-fp8',liveSearch:true,
+        reply:'Crossref metadata identifies the following records [1], [2]. Their results were NOT independently checked.',
+        sourceScope:'Crossref DOI registration metadata only. Not full text, peer-review verification, or a complete literature review.',
+        sources:[
+          {title:'Robotics learning evaluation',doi:'10.1234/robotics.2025',url:'https://doi.org/10.1234/robotics.2025',source:'Crossref',year:2025,workType:'journal-article',authors:['Jane Doe','Sam Ncube'],journal:'Teaching Review',snippet:'Published 2025 · Teaching Review · Authors: Jane Doe, Sam Ncube · DOI 10.1234/robotics.2025'},
+          {title:'Feedback system design',doi:'10.5678/feedback.2024',url:'https://doi.org/10.5678/feedback.2024',source:'Crossref',year:2024,workType:'journal-article',authors:['Amina Ali'],journal:'Engineering Review',snippet:'Published 2024 · Engineering Review · Authors: Amina Ali · DOI 10.5678/feedback.2024'}
+        ],
+        citationAudit:{status:'indices-linked',retrievedSourceCount:2,linkedSourceNumbers:[1,2],invalidSourceNumbersRemoved:[],adjustedCitationGroups:0}
+      })
+    });
+  });
+  await page.locator('[data-edge-mode="scholar"]').click();
+  assert.equal(await page.locator('[data-edge-mode="scholar"]').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('#edge-input').getAttribute('maxlength'),'180');
+  assert.match(await page.locator('#edge-input').getAttribute('placeholder'),/DOI-registered/);
+  await page.locator('#edge-input').fill('robotics education');
+  await page.locator('#edge-send').click();
+  await page.getByText('SCHOLARLY DOI RECORDS RETRIEVED').waitFor({timeout:15000});
+  assert.equal(observedScholar.mode,'scholar');
+  const scholars=page.locator('.edge-message.assistant').last().locator('.edge-sources');
+  assert.ok(await scholars.isVisible());
+  assert.match(await scholars.locator('h4').innerText(),/CROSSREF/);
+  assert.equal(await scholars.locator('.edge-source-row a').count(),2);
+  assert.equal(await scholars.locator('a[href^="https://doi.org/"]').count(),2);
+  assert.equal(await scholars.locator('.edge-citation-report').getAttribute('data-status'),'linked');
+  assert.match(await scholars.locator('.edge-source-note').innerText(),/Not full text/);
+  const save=scholars.getByRole('button',{name:'Download scholarly references as BibTeX'});
+  assert.ok(await save.isVisible());
+  const [bib]=await Promise.all([page.waitForEvent('download'),save.click()]);
+  assert.equal(bib.suggestedFilename(),'musitu-scholar-references.bib');
+  console.log('REAL DOI SOURCE LINKS + BIBTEX EXPORT BROWSER QA PASSED');
+
+
 
   await page.locator('#ai-close').click();
   assert.equal(await page.locator('#ai-dialog').getAttribute('open'),null,'Dialog should close');
