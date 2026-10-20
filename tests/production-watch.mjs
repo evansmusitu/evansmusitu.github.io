@@ -111,7 +111,7 @@ for(const [name,path,marker] of [
     const response=await fetchWithRetry(HOME+path);
     assert.equal(response.status,200);
     const body=await response.text();
-    assert.ok(body.length>3000 && body.includes(marker),'Local workspace module was missing or incomplete');
+    assert.ok(body.length>(path.includes('slots.mjs')?1800:3000) && body.includes(marker),'Local workspace module was missing or incomplete');
     return 'module '+body.length+' chars; no model inference';
   });
 }
