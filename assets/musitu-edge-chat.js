@@ -53,8 +53,13 @@
   }
 
   // No file bytes are sent before the user explicitly submits a document question.
-  const SUPPORTED=/\.(txt|md|csv|json)$/i;
-  const MAX_FILE_SIZE=64*1024;
+  const FILE_LIMITS=Object.freeze({txt:65536,md:65536,csv:65536,json:65536,pdf:2097152,docx:1048576});
+  function selectedFileLimit(file) {
+    const kind=/\.([a-z0-9]+)$/i.exec(String(file?.name||''))?.[1]?.toLowerCase();
+    if(!kind||!Object.hasOwn(FILE_LIMITS,kind))return 0;
+    if(file.name.length<5||file.name.length>100||/[/\\\u0000-\u001f]/.test(file.name))return 0;
+    return FILE_LIMITS[kind];
+  }
   function selectDocumentExcerpt(content,question) {
     const normalized=content.replace(/\r\n?/g,'\n').replace(/\u0000/g,'');
     const words=new Set((question.toLowerCase().match(/[a-z0-9]{3,}/g)||[]).filter(x=>!['the','this','that','from','with','what','does','please','your','about','into','have'].includes(x)));
@@ -80,12 +85,12 @@
   documentFile.addEventListener('change',()=>{
     const file=documentFile.files?.[0];
     if(!file){
-      documentInfo.textContent='Choose a local UTF-8 .txt, .md, .csv or .json file (64 KiB maximum). No file is stored or uploaded until you analyze a selected excerpt.';
+      documentInfo.textContent='Choose TXT, MD, CSV, JSON (64 KiB), PDF (2 MiB, 20 pages), or DOCX (1 MiB). No full-file upload occurs.';
       return;
     }
-    documentInfo.textContent=SUPPORTED.test(file.name)&&file.size<=MAX_FILE_SIZE&&file.name.length<=100
-      ? 'Selected: '+file.name+' ('+file.size+' bytes). Only a relevance-selected excerpt of up to 4,800 characters will be sent when you press Analyze. The file is not stored by the server.'
-      : 'Unsupported file, invalid filename, or file exceeds 64 KiB. Choose a small UTF-8 text document.';
+    documentInfo.textContent=selectedFileLimit(file)>0&&file.size>=30&&file.size<=selectedFileLimit(file)
+      ? 'Selected: '+file.name+' ('+file.size+' bytes). Text will be extracted locally; only a relevant excerpt of up to 4,800 characters is transmitted on Analyze. No full-file upload.'
+      : 'Unsupported or oversized file: text files 64 KiB; DOCX 1 MiB; searchable PDF 2 MiB and up to 20 pages.';
   });
   documentClear.addEventListener('click',()=>{
     documentFile.value='';
@@ -510,8 +515,8 @@
 
     if (documentMode) {
       const chosen=documentFile.files?.[0];
-      if(!chosen || !SUPPORTED.test(chosen.name) || chosen.name.length>100 || chosen.size<30 || chosen.size>MAX_FILE_SIZE){
-        displayError('Choose a UTF-8 .txt, .md, .csv or .json file between 30 bytes and 64 KiB before analyzing.');
+      if(!chosen || !selectedFileLimit(chosen) || chosen.size<30 || chosen.size>selectedFileLimit(chosen)){
+        displayError('Choose TXT/MD/CSV/JSON (64 KiB), DOCX (1 MiB), or searchable PDF (2 MiB / 20 pages).');
         documentFile.focus();return;
       }
     }
@@ -534,11 +539,13 @@
       let excerptPayload=null;
       if(documentMode){
         const chosen=documentFile.files?.[0];
-        if(!chosen || chosen.size>MAX_FILE_SIZE) throw new Error('Invalid or missing file selection.');
-        const raw=await chosen.text();
-        if(raw.includes('\uFFFD') || /[\u0000-\u0008\u000e-\u001f]/.test(raw)) throw new Error('The file contains binary or undecodable text. Use UTF-8 plain text.');
-        const excerpt=selectDocumentExcerpt(raw,question);
-        if(excerpt.length<30) throw new Error('Not enough readable text to analyze.');
+        if(!chosen) throw new Error('Choose a document before submitting.');
+        // Self-hosted, lazy-loaded extraction; source bytes remain in this browser.
+        const {extractDocumentText,validateDocumentFile}=await import('/assets/musitu-document-extract.mjs');
+        validateDocumentFile(chosen);
+        const extracted=await extractDocumentText(chosen);
+        const excerpt=selectDocumentExcerpt(extracted.text,question);
+        if(excerpt.length<30)throw new Error('Not enough readable text in the selected pages or document.');
         excerptPayload={excerpt,fileName:chosen.name};
       }
       const path = mathMode ? '/api/calculate' : imageMode ? '/api/image' : '/api/chat';
