@@ -6,6 +6,9 @@ on:
       - index.html
       - assets/musitu-edge-chat.js
       - assets/musitu-edge-chat.css
+      - assets/musitu-document-extract.mjs
+      - package.json
+      - scripts/prepare-document-vendors.sh
       - tests/edge-chat-e2e.mjs
       - .github/workflows/musitu-cloudflare-edge-ui.yml
   push:
@@ -32,7 +35,8 @@ jobs:
           node-version: '22'
       - name: Install browser testing tools
         run: |
-          npm install --no-save playwright@1.62.0
+          npm install --ignore-scripts --no-fund --no-audit --package-lock=false
+          bash scripts/prepare-document-vendors.sh
           npx playwright install chromium --with-deps
       - name: Verify native homepage AI with live Cloudflare Workers inference
         run: node tests/edge-chat-e2e.mjs
