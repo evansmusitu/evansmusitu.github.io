@@ -126,6 +126,15 @@ if(process.env.GITHUB_EVENT_NAME!=='pull_request') {
     return 'keyword module '+body.length+' chars; no inference';
   });
 }
+if(process.env.GITHUB_EVENT_NAME!=='pull_request'){
+  await check('Published local evidence export module',async()=>{
+    const res=await fetchWithRetry(HOME+'assets/musitu-evidence-pack.mjs');
+    assert.equal(res.status,200);
+    const code=await res.text();
+    assert.ok(code.includes('buildLocalEvidencePack') && code.includes('SHA-256'));
+    return 'source-only evidence export available; no AI requests';
+  });
+}
 await check('Cloudflare backend advertised capabilities',async()=>{
   const response=await fetchWithRetry(EDGE+'/api/health',{headers:{origin:SITE}});
   assert.equal(response.status,200);
