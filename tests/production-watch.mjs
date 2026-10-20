@@ -113,11 +113,13 @@ await check('Cloudflare backend advertised capabilities',async()=>{
   assert.equal(health.curatedLiveSources,true);
   assert.equal(health.availableModels.standard,'@cf/meta/llama-3.1-8b-instruct-fp8');
   assert.equal(health.availableModels.deeperAnalysis,'@cf/qwen/qwen3-30b-a3b-fp8');
-  for(const tool of ['calculator','image','research','document']) {
+  for(const tool of ['calculator','image','research','document','multidocument']) {
     assert.ok(health.tools.some(t=>t.id===tool),'Backend missing tool '+tool);
   }
   assert.match(health.rateLimit.scope,/location/i);
   assert.equal(health.tools.find(x=>x.id==='document').maxExcerptCharacters,4800);
+  assert.equal(health.tools.find(x=>x.id==='multidocument').maximumDocuments,3);
+  assert.equal(health.tools.find(x=>x.id==='multidocument').maxCombinedExcerptCharacters,4800);
   return 'service metadata available; inference intentionally not tested';
 });
 for(const path of paths) {
@@ -169,6 +171,24 @@ await check('Image endpoint rejects malformed requests before inference',async()
   assert.equal(response.status,400);
   assert.equal((await response.json()).code,'INVALID_IMAGE_PROMPT');
   return '400; zero image inference';
+});
+await check('Multi-document mode rejects absent sources without model inference',async()=>{
+ const response=await jsonPost('/api/chat',{mode:'compare',prompt:'Compare the reported switching thresholds in these reports.',documents:[]});
+ assert.equal(response.status,400);
+ assert.equal((await response.json()).code,'INVALID_DOCUMENT_COLLECTION');
+ return '400; no model inference';
+});
+await check('Multi-document mode rejects unsupported source names before inference',async()=>{
+ const response=await jsonPost('/api/chat',{
+   mode:'compare',prompt:'Compare these two excerpts without any external data.',
+   documents:[
+    {fileName:'one.pdf',excerpt:'The first report contains a measurement of six volts.'},
+    {fileName:'malware.exe',excerpt:'The second report contains a measurement of eight volts.'}
+   ]
+ });
+ assert.equal(response.status,400);
+ assert.equal((await response.json()).code,'INVALID_DOCUMENT_NAME');
+ return '400; no external code or AI inference';
 });
 await check('Document mode rejects absent text before inference',async()=>{
   const response=await jsonPost('/api/chat',{mode:'document',prompt:'Summarize this selected text.',fileName:'my_notes.txt'});
