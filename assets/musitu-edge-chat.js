@@ -65,7 +65,7 @@
       const score=[...words].reduce((total,word)=>total+(lowered.includes(word)?1:0),0);
       pieces.push({pos,fragment,score:score+(pos===0?0.4:0)});
     }
-    const winners=pieces.slice().sort((a,b)=>b.score-a.score||a.pos-b.pos).slice(0,7).sort((a,b)=>a.pos-b.pos);
+    const winners=pieces.slice().sort((a,b)=>b.score-a.score||a.pos-b.pos).slice(0,6).sort((a,b)=>a.pos-b.pos);
     let selected='';
     for(const item of winners){
       const snippet='[Text excerpt, character '+(item.pos+1)+']\n'+item.fragment+'\n';
