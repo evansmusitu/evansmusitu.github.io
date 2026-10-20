@@ -5,6 +5,9 @@ on:
     paths:
       - index.html
       - tests/site.test.mjs
+      - tests/workspace-vault.test.mjs
+      - assets/musitu-workspace-vault.mjs
+      - assets/musitu-workspace-ui.mjs
       - assets/musitu-document-extract.mjs
       - package.json
       - .github/workflows/musitu-website-quality.yml
@@ -26,4 +29,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate MUSITU website
-        run: node tests/site.test.mjs
+        run: |
+          set -euo pipefail
+          node --check assets/musitu-workspace-vault.mjs
+          node --check assets/musitu-workspace-ui.mjs
+          node --test tests/workspace-vault.test.mjs
+          node tests/site.test.mjs
