@@ -626,7 +626,7 @@
             ' characters from '+(answer.mode==='compare'
               ? String(answer.documentReview?.comparedDocuments?.length||'multiple')+' selected source excerpts'
               : String(answer.documentReview?.fileName||'selected text'))+
-            '. Entire files were not analyzed, and the AI may misinterpret their contents.'
+            '. The full file was not analyzed; the AI may misinterpret these excerpts.'
           : answer.reply;
         health.textContent = verifiedTool ? '● VERIFIED COMPUTATION · NO MODEL' :
           requestedMode === 'deep' ? '● REASONING MODEL RESPONDED' : researchMode ? '● REAL SOURCES RETRIEVED' : scholarMode ? '● SCHOLARLY DOI RECORDS RETRIEVED' : documentMode ? (answer.mode==='compare'?'● DOCUMENT EXCERPTS COMPARED':'● SELECTED EXCERPT ANALYZED') : '● LIVE AI RESPONSE VERIFIED';
