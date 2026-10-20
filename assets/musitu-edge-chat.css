@@ -120,3 +120,13 @@
 .edge-document-controls button{border:1px solid var(--line);border-radius:8px;color:var(--text);background:var(--panel);padding:8px 12px;font:inherit;font-size:11px;font-weight:750;cursor:pointer}
 .edge-document-controls button:hover,.edge-document-controls button:focus-visible{border-color:var(--mint)}
 @media(max-width:750px){.edge-document-controls{padding:11px 12px}.edge-document-controls input[type=file]{font-size:11px}}
+
+
+/* Source-backed local multi-document comparisons. Source IDs ≠ verified claims. */
+.edge-document-evidence{margin-top:15px;padding:15px;border:1px solid rgba(106,226,194,.3);border-radius:13px;background:rgba(106,226,194,.05)}
+.edge-document-evidence strong{color:var(--mint);display:block;letter-spacing:.08em;font-size:11px;margin-bottom:11px;font-weight:850}
+.edge-document-evidence ul{list-style:none;padding:0;margin:0 0 10px;display:grid;gap:8px}
+.edge-document-evidence li{font-size:12px;line-height:1.5;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:9px 10px;overflow-wrap:anywhere;color:var(--text)}
+.edge-document-evidence p{font-size:11px;line-height:1.65;margin:9px 0 0;color:var(--muted)}
+.edge-document-evidence .edge-document-warning{color:#ffd18b}
+@media(max-width:750px){.edge-document-evidence{padding:11px}.edge-document-evidence li{font-size:11px}}

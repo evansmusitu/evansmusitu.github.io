@@ -292,22 +292,27 @@ try {
     }
     documentRequest=route.request().postDataJSON();
     await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':origin},
-      body:JSON.stringify({reply:'The selected excerpt says the upper hysteresis threshold is 6 volts. I cannot confirm details outside the excerpt.',
-        mode:'document',model:'@cf/meta/llama-3.1-8b-instruct-fp8',liveSearch:false,
-        documentReview:{fileName:documentRequest.fileName,analyzedCharacters:documentRequest.excerpt.length,fullFileAnalyzed:false,storedOnServer:false,modelOutputMayBeInaccurate:true}})
+      body:JSON.stringify(documentRequest.mode==='compare'
+        ? {reply:'Document one reports six volts [D1]. Document two reports eight volts [D2]. Unlinked [unlinked document].',
+          mode:'compare',model:'@cf/meta/llama-3.1-8b-instruct-fp8',liveSearch:false,
+          citationAudit:{status:'invalid-document-indices-removed',linkedSourceNumbers:[1,2],invalidSourceNumbersRemoved:[9],retrievedSourceCount:documentRequest.documents.length},
+          documentReview:{comparedDocuments:documentRequest.documents.map((d,i)=>({label:'D'+(i+1),fileName:d.fileName,analyzedCharacters:d.excerpt.length})),analyzedCharacters:documentRequest.documents.reduce((sum,d)=>sum+d.excerpt.length,0),fullFileAnalyzed:false,storedOnServer:false,modelOutputMayBeInaccurate:true}}
+        : {reply:'The selected excerpt says the upper hysteresis threshold is 6 volts. I cannot confirm details outside the excerpt.',
+          mode:'document',model:'@cf/meta/llama-3.1-8b-instruct-fp8',liveSearch:false,
+          documentReview:{fileName:documentRequest.fileName,analyzedCharacters:documentRequest.excerpt.length,fullFileAnalyzed:false,storedOnServer:false,modelOutputMayBeInaccurate:true}})
     });
   });
   await page.locator('[data-edge-mode="document"]').click();
   assert.ok(await page.locator('#edge-document-controls').isVisible());
-  assert.match(await page.locator('#edge-input').getAttribute('placeholder'),/text file/);
+  assert.match(await page.locator('#edge-input').getAttribute('placeholder'),/selected files/);
   await page.locator('#edge-input').fill('What is the upper hysteresis threshold according to the selected notes?');
   await page.locator('#edge-send').click();
-  assert.match(await page.locator('#edge-alert').innerText(),/Choose TXT\/MD/);
+  assert.match(await page.locator('#edge-alert').innerText(),/Choose 1–3 distinct files/);
   assert.equal(documentRequest,null,'No file may be transmitted before explicit selection');
   const localText='Background notes only.\n'+('This preliminary document covers several broad study topics.\n'.repeat(200))+
     '\nThe upper hysteresis threshold is exactly 6 volts in the experiment. Lower switching threshold was not specified.\n';
   await page.locator('#edge-document-file').setInputFiles({name:'notes.md',mimeType:'text/markdown',buffer:Buffer.from(localText,'utf8')});
-  assert.match(await page.locator('#edge-document-info').innerText(),/Selected: notes.md/);
+  assert.match(await page.locator('#edge-document-info').innerText(),/1 selected: notes.md/);
   await page.locator('#edge-send').click();
   await page.getByText('SELECTED EXCERPT ANALYZED').waitFor({timeout:15000});
   assert.equal(documentRequest.mode,'document');
@@ -342,7 +347,7 @@ try {
   await page.locator('#edge-document-file').setInputFiles({
     name:'robotics_notes.pdf',mimeType:'application/pdf',buffer:pdfBytes
   });
-  assert.match(await page.locator('#edge-document-info').innerText(),/Selected: robotics_notes.pdf/);
+  assert.match(await page.locator('#edge-document-info').innerText(),/1 selected: robotics_notes.pdf/);
   await page.locator('#edge-input').fill('What is the hysteresis threshold in this PDF robotics experiment?');
   const pdfRequest=page.waitForResponse(
     response => response.url()===worker+'/api/chat' && response.request().method()==='POST',
@@ -463,6 +468,50 @@ try {
   assert.equal(documentRequest,null,'DOCX ZIP expansion bomb must not reach the model');
   await page.locator('#edge-document-clear').click();
   console.log('SCANNED PDF + PAGE-COUNT + DOCX ZIP BOMB REJECTION QA PASS');
+
+  // Real browser multi-file selection and bounded source-annotated comparison.
+  documentRequest=null;
+  await page.locator('#edge-document-file').setInputFiles([
+    {name:'lab_first.txt',mimeType:'text/plain',buffer:Buffer.from('Laboratory A notes: upper switching threshold was measured as six volts. The sensor was calibrated before testing.','utf8')},
+    {name:'lab_second.md',mimeType:'text/markdown',buffer:Buffer.from('Laboratory B notes: upper switching threshold was measured as eight volts. No calibration evidence was given in this excerpt.','utf8')}
+  ]);
+  assert.match(await page.locator('#edge-document-info').innerText(),/2 selected:/);
+  await page.locator('#edge-input').fill('Compare the two experiments: which threshold was higher and which source documented calibration?');
+  const compareReceived=page.waitForResponse(response=>response.url()===worker+'/api/chat'&&response.request().method()==='POST',{timeout:20000});
+  await page.locator('#edge-send').click();
+  await compareReceived;
+  assert.equal(documentRequest.mode,'compare','Two files must opt in to comparison mode');
+  assert.equal(documentRequest.history.length,0,'Comparisons must not send previous chat history');
+  assert.equal(documentRequest.documents.length,2);
+  assert.equal(documentRequest.documents[0].fileName,'lab_first.txt');
+  assert.equal(documentRequest.documents[1].fileName,'lab_second.md');
+  assert.ok(documentRequest.documents.every(d=>d.excerpt.length<=1500),'Each file sends at most 1,500 characters');
+  assert.ok(documentRequest.documents.reduce((sum,d)=>sum+d.excerpt.length,0)<=4800);
+  const compared=page.locator('.edge-message.assistant').last();
+  const evidence=compared.locator('.edge-document-evidence');
+  await evidence.waitFor({timeout:13000});
+  assert.equal(await evidence.locator('li').count(),2);
+  assert.match(await evidence.innerText(),/\[D1\] lab_first.txt/);
+  assert.match(await evidence.innerText(),/\[D2\] lab_second.md/);
+  assert.match(await evidence.innerText(),/Unsupported document citations removed: 9/);
+  assert.match(await compared.innerText(),/full file was not analyzed/);
+  console.log('TWO-DOCUMENT BOUNDED SOURCE COMPARISON + EVIDENCE LABEL UI QA PASS');
+
+  // Three files are accepted; a fourth is rejected before network/model use.
+  documentRequest=null;
+  await page.locator('#edge-document-file').setInputFiles([
+    {name:'first.txt',mimeType:'text/plain',buffer:Buffer.from('One valid study report excerpt contains a measured threshold of six volts and feedback conditions.','utf8')},
+    {name:'second.txt',mimeType:'text/plain',buffer:Buffer.from('The second valid report excerpt compares threshold conditions at eight volts.','utf8')},
+    {name:'third.txt',mimeType:'text/plain',buffer:Buffer.from('The third valid report excerpt contains calibration checks and monitoring data.','utf8')},
+    {name:'fourth.txt',mimeType:'text/plain',buffer:Buffer.from('A fourth document must not be accepted by this application.','utf8')}
+  ]);
+  await page.locator('#edge-input').fill('Compare the switching threshold from all four reports.');
+  await page.locator('#edge-send').click();
+  await page.locator('#edge-alert').waitFor({state:'visible'});
+  assert.match(await page.locator('#edge-alert').innerText(),/Choose 1–3 distinct files/);
+  assert.equal(documentRequest,null,'Fourth file must not trigger an AI request');
+  await page.locator('#edge-document-clear').click();
+
 
 
   await page.locator('#ai-close').click();
