@@ -79,7 +79,7 @@ assert.match(html,/id="edge-document-verify-status"/,'Local hash verification st
 for(const id of ['edge-document-receipt-export','edge-document-receipt-verify','edge-document-receipt-file'])
   assert.ok(html.includes('id="'+id+'"'),'Missing portable source receipt control: '+id);
 const receiptModule=readFileSync('assets/musitu-portable-receipt.mjs','utf8');
-assert.doesNotMatch(receiptModule,/fetch\\(/,'Portable receipt must operate entirely offline');
+assert.ok(!receiptModule.includes('fetch('),'Portable receipt must operate entirely offline');
 assert.match(receiptModule,/verifyLocalFile/,'Portable verifier must hash and compare source bytes');
 const integrityClient=readFileSync('assets/musitu-edge-chat.js','utf8');
 assert.match(integrityClient,/verifyLocalFile/,'Original-byte verifier must be wired to user action');
