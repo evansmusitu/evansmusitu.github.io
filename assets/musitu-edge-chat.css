@@ -148,3 +148,10 @@
 #edge-workspace-status{font-size:11px;line-height:1.65;color:var(--mint);font-weight:750;margin:10px 0 0;overflow-wrap:anywhere}
 #edge-workspace-status[data-state=error]{color:#ffbc90}
 @media(max-width:750px){.edge-workspace-panel{padding:4px 11px 12px}.edge-workspace summary{font-size:11px;padding:11px 12px}.edge-workspace-actions button{font-size:10px;min-height:37px;padding:8px}}
+
+
+/* Isolated encrypted workspace selector: neutral labels disclose no conversation titles. */
+#edge-workspace-slot{display:block;width:100%;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:11px 12px;font-size:13px;font-weight:750;cursor:pointer}
+#edge-workspace-slot:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+#edge-workspace-slot:disabled{opacity:.65;cursor:wait}
+#edge-workspace-slot-status{font-size:11px;line-height:1.65;color:var(--mint);margin:9px 0 12px}

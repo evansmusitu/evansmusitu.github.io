@@ -28,6 +28,11 @@ assert.match(html,/assets\/musitu-edge-chat\.css/,'AI interface styles must load
 assert.match(html,/accept="[^"]*\.pdf,[^"]*\.docx/,'PDF and DOCX supported by local file input');
 assert.match(html,/comparisons send up to 1,500 per file/,'Multi-document per-file privacy limit disclosure required');
 assert.match(html,/id="edge-workspace"/,'Encrypted workspace controls required');
+assert.match(html,/id="edge-workspace-slot"/,'Five-slot workspace selector required');
+assert.match(html,/Workspace 1 preserves your existing saved conversation/,'Legacy vault compatibility must be communicated');
+const slotsModule=readFileSync('assets/musitu-workspace-slots.mjs','utf8');
+assert.match(slotsModule,/WORKSPACE_SLOT_COUNT=5/,'Five isolated vault slots required');
+assert.match(slotsModule,/VAULT_KEY/,'Original workspace slot must remain accessible');
 assert.match(html,/id="edge-workspace-passphrase" type="password"/,'Passphrase input must be masked');
 assert.match(html,/manual save only/,'Do not imply automatic cloud backups');
 const vaultModule=readFileSync('assets/musitu-workspace-vault.mjs','utf8');

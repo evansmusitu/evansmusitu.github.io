@@ -7,7 +7,8 @@ const expected = [
   ['style', homepage + 'assets/musitu-edge-chat.css', ['.edge-thread', '.edge-message', '.edge-form']],
   ['document module', homepage + 'assets/musitu-document-extract.mjs', ['extractDocumentText','checkZipSafety']],
   ['encrypted local vault', homepage + 'assets/musitu-workspace-vault.mjs', ['AES-GCM','encryptWorkspace','decryptWorkspace']],
-  ['workspace controls', homepage + 'assets/musitu-workspace-ui.mjs', ['attachWorkspaceControls','saveEncryptedLocal']],
+  ['workspace controls', homepage + 'assets/musitu-workspace-ui.mjs', ['attachWorkspaceControls','saveSlot']],
+  ['encrypted workspace slot registry', homepage + 'assets/musitu-workspace-slots.mjs', ['WORKSPACE_SLOT_COUNT','readSlot','deleteSlot']],
   ['self-hosted PDF library', homepage + 'assets/vendor/pdf.mjs', ['getDocument']],
   ['self-hosted PDF worker', homepage + 'assets/vendor/pdf.worker.mjs', []],
   ['self-hosted DOCX library', homepage + 'assets/vendor/mammoth.browser.min.js', []]

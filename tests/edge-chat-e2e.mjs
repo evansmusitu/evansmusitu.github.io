@@ -20,6 +20,7 @@ async function launch(width, height) {
     else if (pathname === '/assets/musitu-document-extract.mjs') { path = 'assets/musitu-document-extract.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-vault.mjs') { path = 'assets/musitu-workspace-vault.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-ui.mjs') { path = 'assets/musitu-workspace-ui.mjs'; type = 'application/javascript'; }
+    else if (pathname === '/assets/musitu-workspace-slots.mjs') { path = 'assets/musitu-workspace-slots.mjs'; type = 'application/javascript'; }
     else if (pathname.startsWith('/assets/vendor/')) {
       path = pathname.slice(1);
       type = 'application/javascript';
@@ -526,7 +527,7 @@ try {
   const pw='MUSITU-only local vault password 2026!';
   await secret.fill(pw);
   await page.locator('#edge-workspace-save').click();
-  await page.getByText('Encrypted local copy saved',{exact:false}).waitFor({timeout:15000});
+  await page.getByText('Workspace 1 saved with encryption',{exact:false}).waitFor({timeout:15000});
   assert.equal(await secret.inputValue(),'','Passphrase must be cleared after use');
   const envelope=await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.v1'));
   assert.ok(envelope?.includes('AES-256-GCM'),'Stored value must identify strong authenticated encryption');
@@ -560,13 +561,13 @@ try {
   await page.locator('#ai-dialog[open]').waitFor({timeout:10000});
   assert.equal(await page.locator('.edge-message').count(),0,'Reload should not auto-decrypt or auto-restore');
   await page.locator('#edge-workspace summary').click();
-  await page.waitForFunction(()=>document.getElementById('edge-workspace-status')?.textContent.includes('Use a strong passphrase'),{timeout:12000});
+  await page.waitForFunction(()=>document.getElementById('edge-workspace-status')?.textContent.includes('Select a workspace slot'),{timeout:12000});
   await page.locator('#edge-workspace-passphrase').fill(pw);
   await page.locator('#edge-workspace-unlock').click();
   await page.getByText('Decrypted session restored',{exact:false}).waitFor({timeout:12000});
   assert.ok(await page.locator('.edge-message').count()>2,'Saved ciphertext survives browser reload and decrypts');
   await page.locator('#edge-workspace-delete').click();
-  await page.getByText('Local encrypted copy removed',{exact:false}).waitFor({timeout:10000});
+  await page.getByText('Saved encrypted Workspace 1 deleted',{exact:false}).waitFor({timeout:10000});
   assert.equal(await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.v1')),null,'Delete should remove only workspace key');
   assert.ok(await page.locator('.edge-message').count()>2,'Deleting saved copy does not silently destroy unlocked chat');
   // Restore an encrypted portable backup. A wrong secret must not mutate either
@@ -591,6 +592,45 @@ try {
   assert.equal(await page.locator('#edge-workspace-passphrase').inputValue(),'','Backup restore must clear secret');
   console.log('PORTABLE ENCRYPTED BACKUP WRONG-PASSWORD AND VERIFIED RESTORE QA PASS');
   console.log('AES-GCM OPT-IN LOCAL SAVE, WRONG PASSWORD, RESTORE, RELOAD AND DELETE BROWSER QA PASS');
+
+  // A second encrypted workspace remains isolated from Workspace 1.
+  const slots=page.locator('#edge-workspace-slot');
+  assert.equal(await slots.locator('option').count(),5);
+  await slots.selectOption('2');
+  assert.match(await page.locator('#edge-workspace-slot-status').innerText(),/Workspace 2 · Empty/);
+  await page.locator('#edge-workspace-passphrase').fill('Independent second workspace password 2026');
+  await page.locator('#edge-workspace-save').click();
+  await page.getByText('Workspace 2 saved with encryption',{exact:false}).waitFor({timeout:15000});
+  const slot2=await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.slot.2.v2'));
+  assert.ok(slot2?.includes('AES-256-GCM'),'Second slot must be independently encrypted');
+  const slot1=await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.v1'));
+  assert.ok(slot1?.includes('AES-256-GCM'),'Legacy Workspace 1 must remain compatible');
+  assert.notEqual(slot1,slot2,'Independent slots must use unique randomized encryption');
+
+  // Reload, unlock two independently and delete only selected slot 2.
+  await page.reload({waitUntil:'domcontentloaded',timeout:30000});
+  await page.locator('#launch-ai').click();
+  await page.locator('#ai-dialog[open]').waitFor({timeout:10000});
+  await page.locator('#edge-workspace summary').click();
+  await page.waitForFunction(()=>document.querySelector('#edge-workspace-slot option[value="2"]')?.textContent.includes('Encrypted copy saved'),{timeout:12000});
+  assert.equal(await page.locator('.edge-message').count(),0,'No auto-unlock after page reload');
+  await page.locator('#edge-workspace-slot').selectOption('2');
+  await page.locator('#edge-workspace-passphrase').fill(pw);
+  await page.locator('#edge-workspace-unlock').click();
+  await page.getByText('Unable to unlock',{exact:false}).waitFor({timeout:12000});
+  assert.equal(await page.locator('.edge-message').count(),0,'Wrong workspace passphrase may not unlock another slot');
+  await page.locator('#edge-workspace-passphrase').fill('Independent second workspace password 2026');
+  await page.locator('#edge-workspace-unlock').click();
+  await page.getByText('Decrypted session restored from Workspace 2',{exact:false}).waitFor({timeout:12000});
+  assert.ok(await page.locator('.edge-message').count()>2);
+  await page.locator('#edge-workspace-delete').click();
+  await page.getByText('Saved encrypted Workspace 2 deleted',{exact:false}).waitFor({timeout:12000});
+  assert.equal(await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.slot.2.v2')),null);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.v1')),slot1,
+    'Deleting Workspace 2 must preserve Workspace 1 and its original ciphertext');
+  assert.ok(await page.locator('.edge-message').count()>2,'Deleting local ciphertext does not unexpectedly clear unlocked chat');
+  console.log('FIVE SLOT SELECTOR, LEGACY COMPATIBILITY, ISOLATED DELETION AND PER-SLOT PASSWORD QA PASS');
+
 
   await page.locator('#ai-close').click();
   assert.equal(await page.locator('#ai-dialog').getAttribute('open'),null,'Dialog should close');
