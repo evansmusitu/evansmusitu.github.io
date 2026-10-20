@@ -21,6 +21,7 @@ on:
       - assets/musitu-document-extract.mjs
       - package.json
       - .github/workflows/musitu-website-quality.yml
+      - .github/workflows/musitu-website-pages.yml
   push:
     branches: [main]
     paths:

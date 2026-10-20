@@ -79,3 +79,6 @@ assert.match(html,/id="edge-document-verify-status"/,'Local hash verification st
 const integrityClient=readFileSync('assets/musitu-edge-chat.js','utf8');
 assert.match(integrityClient,/verifyLocalFile/,'Original-byte verifier must be wired to user action');
 assert.match(integrityClient,/sourceIntegrity/,'Original-file evidence provenance must be retained locally');
+
+const pagesRelease=readFileSync('.github/workflows/musitu-website-pages.yml','utf8');
+assert.match(pagesRelease,/cp assets\/musitu-source-integrity\.mjs _site\/assets\/musitu-source-integrity\.mjs/,'Production Pages must bundle integrity verifier');
