@@ -51,6 +51,8 @@ jobs:
           test -s _site/assets/musitu-workspace-ui.mjs
           mkdir -p _site/assets/vendor
           cp assets/musitu-document-extract.mjs _site/assets/musitu-document-extract.mjs
+          cp assets/musitu-local-evidence.mjs _site/assets/musitu-local-evidence.mjs
+          test -s _site/assets/musitu-local-evidence.mjs
           cp assets/vendor/pdf.mjs _site/assets/vendor/pdf.mjs
           cp assets/vendor/pdf.worker.mjs _site/assets/vendor/pdf.worker.mjs
           cp assets/vendor/mammoth.browser.min.js _site/assets/vendor/mammoth.browser.min.js
