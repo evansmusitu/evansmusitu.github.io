@@ -76,9 +76,15 @@ console.log('PASS: Site structure, canonical branding, interaction hooks, access
 
 assert.match(html,/id="edge-document-verify"/,'Original-file verification action required');
 assert.match(html,/id="edge-document-verify-status"/,'Local hash verification status required');
+for(const id of ['edge-document-receipt-export','edge-document-receipt-verify','edge-document-receipt-file'])
+  assert.ok(html.includes('id="'+id+'"'),'Missing portable source receipt control: '+id);
+const receiptModule=readFileSync('assets/musitu-portable-receipt.mjs','utf8');
+assert.ok(!receiptModule.includes('fetch('),'Portable receipt must operate entirely offline');
+assert.match(receiptModule,/verifyLocalFile/,'Portable verifier must hash and compare source bytes');
 const integrityClient=readFileSync('assets/musitu-edge-chat.js','utf8');
 assert.match(integrityClient,/verifyLocalFile/,'Original-byte verifier must be wired to user action');
 assert.match(integrityClient,/sourceIntegrity/,'Original-file evidence provenance must be retained locally');
 
 const pagesRelease=readFileSync('.github/workflows/musitu-website-pages.yml','utf8');
 assert.match(pagesRelease,/cp assets\/musitu-source-integrity\.mjs _site\/assets\/musitu-source-integrity\.mjs/,'Production Pages must bundle integrity verifier');
+assert.match(pagesRelease,/cp assets\/musitu-portable-receipt\.mjs _site\/assets\/musitu-portable-receipt\.mjs/,'Production must package portable receipt verifier');

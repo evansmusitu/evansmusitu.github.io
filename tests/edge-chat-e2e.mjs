@@ -22,6 +22,7 @@ async function launch(width, height) {
     else if (pathname === '/assets/musitu-local-evidence.mjs') { path = 'assets/musitu-local-evidence.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-evidence-pack.mjs') { path = 'assets/musitu-evidence-pack.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-source-integrity.mjs') { path = 'assets/musitu-source-integrity.mjs'; type = 'application/javascript'; }
+    else if (pathname === '/assets/musitu-portable-receipt.mjs') { path = 'assets/musitu-portable-receipt.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-vault.mjs') { path = 'assets/musitu-workspace-vault.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-ui.mjs') { path = 'assets/musitu-workspace-ui.mjs'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-workspace-slots.mjs') { path = 'assets/musitu-workspace-slots.mjs'; type = 'application/javascript'; }
@@ -354,6 +355,45 @@ try {
   assert.match(evidenceText,/[a-f0-9]{64}/,'SHA-256 fingerprint must be in the evidence pack');
   assert.ok(evidenceText.length<15000,'Export only bounded excerpt, not the entire input');
   assert.equal(documentRequest,null,'Local evidence preview and export must not make an AI call');
+  const receiptDownloadEvent=page.waitForEvent('download');
+  await page.locator('#edge-document-receipt-export').click();
+  const receiptDownload=await receiptDownloadEvent;
+  assert.equal(receiptDownload.suggestedFilename(),'musitu-source-fingerprint-receipt.json');
+  const portableReceiptBytes=readFileSync(await receiptDownload.path());
+  const portableReceipt=JSON.parse(portableReceiptBytes.toString('utf8'));
+  assert.equal(portableReceipt.sources.length,1);
+  assert.equal(portableReceipt.sources[0].name,'notes.md');
+  assert.equal(portableReceipt.sources[0].sha256,createHash('sha256').update(localText,'utf8').digest('hex'));
+  assert.ok(!portableReceiptBytes.toString('utf8').includes('hysteresis threshold'));
+  assert.ok(!portableReceiptBytes.toString('utf8').includes(localText),'Portable receipt cannot contain private original content');
+  await page.locator('#edge-document-receipt-file').setInputFiles({
+    name:'musitu-source-fingerprint-receipt.json',mimeType:'application/json',buffer:portableReceiptBytes
+  });
+  await page.waitForFunction(()=>document.getElementById('edge-document-verify-status')?.textContent.includes('Saved receipt verified'));
+  assert.match(await page.locator('#edge-document-verify-status').innerText(),/1 local original file match/);
+  const forged={...portableReceipt,sources:[{...portableReceipt.sources[0],sha256:'0'.repeat(64)}]};
+  await page.locator('#edge-document-receipt-file').setInputFiles({
+    name:'musitu-source-fingerprint-receipt.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(forged))
+  });
+  await page.waitForFunction(()=>document.getElementById('edge-document-verify-status')?.textContent.includes('Saved receipt mismatch'));
+  assert.match(await page.locator('#edge-document-verify-status').innerText(),/Original bytes are different/);
+  assert.equal(documentRequest,null,'Portable verification must not transmit any bytes to the AI service');
+  // Verify the receipt in a new browser page without any prior preview or question.
+  const freshPage=await launch(390,844);
+  await freshPage.locator('#launch-ai').click();
+  await freshPage.locator('[data-edge-mode="document"]').click();
+  await freshPage.locator('#edge-document-file').setInputFiles({
+    name:'notes.md',mimeType:'text/markdown',buffer:Buffer.from(localText,'utf8')
+  });
+  assert.ok(await freshPage.locator('#edge-document-receipt-export').isDisabled(),
+    'Replaying a receipt must not require or fabricate a fresh evidence preview.');
+  await freshPage.locator('#edge-document-receipt-file').setInputFiles({
+    name:'musitu-source-fingerprint-receipt.json',mimeType:'application/json',buffer:portableReceiptBytes
+  });
+  await freshPage.waitForFunction(()=>document.getElementById('edge-document-verify-status')?.textContent.includes('Saved receipt verified'));
+  assert.match(await freshPage.locator('#edge-document-verify-status').innerText(),/1 local original file match/);
+  await freshPage.close();
+    console.log('PORTABLE ORIGINAL-FILE RECEIPT SAVE/REPLAY/MISMATCH + ZERO AI REQUEST QA PASS');
   console.log('LOCAL EVIDENCE PACK DOWNLOAD + SHA-256 + ZERO AI REQUEST QA PASS');
 
   await page.locator('#edge-send').click();

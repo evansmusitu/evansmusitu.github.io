@@ -8,6 +8,7 @@ const expected = [
   ['document module', homepage + 'assets/musitu-document-extract.mjs', ['extractDocumentText','checkZipSafety']],
   ['local provenance export', homepage + 'assets/musitu-evidence-pack.mjs', ['buildLocalEvidencePack','SHA-256']],
   ['original-byte integrity verifier', homepage + 'assets/musitu-source-integrity.mjs', ['fingerprintLocalFile','verifyLocalFile']],
+  ['portable source receipts', homepage + 'assets/musitu-portable-receipt.mjs', ['createPortableReceipt','verifyPortableReceipt']],
   ['offline evidence search', homepage + 'assets/musitu-local-evidence.mjs', ['rankEvidence','BM25']],
   ['encrypted local vault', homepage + 'assets/musitu-workspace-vault.mjs', ['AES-GCM','encryptWorkspace','decryptWorkspace']],
   ['workspace controls', homepage + 'assets/musitu-workspace-ui.mjs', ['attachWorkspaceControls','saveSlot']],
