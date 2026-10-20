@@ -347,7 +347,7 @@ try {
   await page.locator('#edge-document-file').setInputFiles({
     name:'robotics_notes.pdf',mimeType:'application/pdf',buffer:pdfBytes
   });
-  assert.match(await page.locator('#edge-document-info').innerText(),/Selected: robotics_notes.pdf/);
+  assert.match(await page.locator('#edge-document-info').innerText(),/1 selected: robotics_notes.pdf/);
   await page.locator('#edge-input').fill('What is the hysteresis threshold in this PDF robotics experiment?');
   const pdfRequest=page.waitForResponse(
     response => response.url()===worker+'/api/chat' && response.request().method()==='POST',
