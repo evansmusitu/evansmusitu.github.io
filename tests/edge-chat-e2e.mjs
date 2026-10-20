@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
+import { PDFDocument, StandardFonts } from 'pdf-lib';
+import JSZip from 'jszip';
 
 const browser = await chromium.launch({ headless: true });
 const origin = 'https://evansmusitu.github.io';
@@ -15,6 +17,11 @@ async function launch(width, height) {
     let path = 'index.html', type = 'text/html';
     if (pathname === '/assets/musitu-edge-chat.js') { path = 'assets/musitu-edge-chat.js'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-edge-chat.css') { path = 'assets/musitu-edge-chat.css'; type = 'text/css'; }
+    else if (pathname === '/assets/musitu-document-extract.mjs') { path = 'assets/musitu-document-extract.mjs'; type = 'application/javascript'; }
+    else if (pathname.startsWith('/assets/vendor/')) {
+      path = pathname.slice(1);
+      type = 'application/javascript';
+    }
     await route.fulfill({ status:200, contentType:type, body:readFileSync(path) });
   });
   await page.goto(origin+'/', {waitUntil:'domcontentloaded',timeout:30000});
@@ -295,7 +302,7 @@ try {
   assert.match(await page.locator('#edge-input').getAttribute('placeholder'),/text file/);
   await page.locator('#edge-input').fill('What is the upper hysteresis threshold according to the selected notes?');
   await page.locator('#edge-send').click();
-  assert.match(await page.locator('#edge-alert').innerText(),/Choose a UTF-8/);
+  assert.match(await page.locator('#edge-alert').innerText(),/Choose TXT\/MD/);
   assert.equal(documentRequest,null,'No file may be transmitted before explicit selection');
   const localText='Background notes only.\n'+('This preliminary document covers several broad study topics.\n'.repeat(200))+
     '\nThe upper hysteresis threshold is exactly 6 volts in the experiment. Lower switching threshold was not specified.\n';
@@ -316,7 +323,146 @@ try {
   assert.match(await page.locator('#edge-document-info').innerText(),/Selection cleared/);
   console.log('PRIVATE TEXT DOCUMENT EXCERPT + NO FILE STORAGE BROWSER QA PASS');
 
+  // Real PDF.js: create an actual selectable-text PDF locally and verify only
+  // the extracted excerpt is sent to the already-mocked AI endpoint.
+  const pdf=await PDFDocument.create();
+  const font=await pdf.embedFont(StandardFonts.Helvetica);
+  const pdfPage=pdf.addPage([612,792]);
+  pdfPage.drawText('Physics robotics experiment: upper hysteresis threshold is 6 volts.',{
+    x:40,y:720,size:14,font
+  });
+  pdfPage.drawText('The sensor and relay are part of the feedback control loop.',{
+    x:40,y:695,size:12,font
+  });
+  pdfPage.drawText('The complete lab report is not provided here.',{
+    x:40,y:675,size:12,font
+  });
+  const pdfBytes=Buffer.from(await pdf.save());
+  documentRequest=null;
+  await page.locator('#edge-document-file').setInputFiles({
+    name:'robotics_notes.pdf',mimeType:'application/pdf',buffer:pdfBytes
+  });
+  assert.match(await page.locator('#edge-document-info').innerText(),/Selected: robotics_notes.pdf/);
+  await page.locator('#edge-input').fill('What is the hysteresis threshold in this PDF robotics experiment?');
+  const pdfRequest=page.waitForResponse(
+    response => response.url()===worker+'/api/chat' && response.request().method()==='POST',
+    {timeout:25000}
+  );
+  await page.locator('#edge-send').click();
+  await pdfRequest;
+  assert.equal(documentRequest.fileName,'robotics_notes.pdf','PDF file must be analyzed by existing document endpoint');
+  assert.ok(documentRequest.excerpt.includes('hysteresis threshold'),'Actual PDF text extraction required');
+  assert.ok(documentRequest.excerpt.includes('6 volts'),'Selected PDF text must reach the model');
+  assert.ok(documentRequest.excerpt.length<=4800,'PDF extracted excerpt must be bounded');
+  console.log('REAL PDF.js SELECTABLE PDF LOCAL PARSING QA PASS');
 
+  // Real Mammoth browser parser: build a minimal valid Office OpenXML DOCX.
+  const zip=new JSZip();
+  zip.file('[Content_Types].xml',
+    '<?xml version="1.0" encoding="utf-8"?>' +
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+    '<Default Extension="xml" ContentType="application/xml"/>' +
+    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+    '</Types>');
+  zip.folder('_rels').file('.rels',
+    '<?xml version="1.0" encoding="utf-8"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+    '</Relationships>');
+  zip.folder('word').file('document.xml',
+    '<?xml version="1.0" encoding="utf-8"?>' +
+    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+    '<w:body><w:p><w:r><w:t>Word robotics experiment documented an LDR sensor and servo actuator.</w:t></w:r></w:p>' +
+    '<w:p><w:r><w:t>The experimental lower Schmitt trigger threshold is 3 volts.</w:t></w:r></w:p>' +
+    '<w:p><w:r><w:t>No results were recorded beyond these notes.</w:t></w:r></w:p>' +
+    '</w:body></w:document>');
+  const docxBytes=await zip.generateAsync({type:'nodebuffer',compression:'DEFLATE'});
+  documentRequest=null;
+  await page.locator('#edge-document-file').setInputFiles({
+    name:'robotics_notes.docx',
+    mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    buffer:docxBytes
+  });
+  await page.locator('#edge-input').fill('What does this Word document state about the lower Schmitt trigger threshold?');
+  const docxRequest=page.waitForResponse(
+    response => response.url()===worker+'/api/chat' && response.request().method()==='POST',
+    {timeout:25000}
+  );
+  await page.locator('#edge-send').click();
+  await docxRequest;
+  assert.equal(documentRequest.fileName,'robotics_notes.docx');
+  assert.ok(documentRequest.excerpt.includes('3 volts'),'Actual DOCX extraction must include the paragraph');
+  assert.ok(documentRequest.excerpt.includes('Schmitt trigger'),'DOCX text should include the correct topic');
+  assert.ok(documentRequest.excerpt.length<=4800);
+  console.log('REAL Mammoth DOCX LOCAL TEXT PARSING QA PASS');
+
+  // Invalid and scanned PDF: must fail with a clear explanation and no HTTP
+  // transmission of user file bytes.
+  documentRequest=null;
+  await page.locator('#edge-document-file').setInputFiles({
+    name:'damaged.pdf',mimeType:'application/pdf',
+    buffer:Buffer.from('%PDF-not-a-valid-document-but-padding-padding-padding')
+  });
+  await page.locator('#edge-input').fill('Please analyze the damaged PDF source file.');
+  await page.locator('#edge-send').click();
+  await page.locator('#edge-alert').waitFor({state:'visible'});
+  assert.match(await page.locator('#edge-alert').innerText(),/Unable to extract selectable PDF text|Invalid PDF signature/);
+  assert.equal(documentRequest,null,'Damaged PDF must never trigger an AI request');
+  await page.locator('#edge-document-clear').click();
+
+
+
+
+
+  // Image-only PDF: reject without claiming OCR or sending an empty excerpt.
+  const scanned=await PDFDocument.create();
+  scanned.addPage([612,792]);
+  documentRequest=null;
+  await page.locator('#edge-document-file').setInputFiles({
+    name:'image_only.pdf',mimeType:'application/pdf',buffer:Buffer.from(await scanned.save())
+  });
+  await page.locator('#edge-input').fill('Can you summarize this image-only scanned PDF file?');
+  await page.locator('#edge-send').click();
+  await page.locator('#edge-alert').waitFor({state:'visible'});
+  assert.match(await page.locator('#edge-alert').innerText(),/Scanned\/image-only PDFs need OCR/);
+  assert.equal(documentRequest,null,'Image-only PDF must not send a model request without OCR');
+
+  // Bound page counts independently of file size.
+  const longPdf=await PDFDocument.create();
+  for(let index=0;index<21;index++){
+    const pg=longPdf.addPage([400,400]);
+    pg.drawText('Page '+(index+1)+' of this oversized sample.',{x:35,y:340,size:13});
+  }
+  documentRequest=null;
+  await page.locator('#edge-document-file').setInputFiles({
+    name:'too_many_pages.pdf',mimeType:'application/pdf',buffer:Buffer.from(await longPdf.save())
+  });
+  await page.locator('#edge-input').fill('Give a summary of every page of this long PDF file.');
+  await page.locator('#edge-send').click();
+  await page.locator('#edge-alert').waitFor({state:'visible'});
+  assert.match(await page.locator('#edge-alert').innerText(),/PDF exceeds 20 pages/);
+  assert.equal(documentRequest,null,'Overlong PDF must not reach the model');
+
+  // ZIP-bomb preflight: tiny compressed DOCX with unsafe uncompressed entry.
+  const bomb=new JSZip();
+  bomb.file('[Content_Types].xml','<Types/>');
+  bomb.file('word/document.xml','x'.repeat(2400000));
+  const compressedBomb=await bomb.generateAsync({type:'nodebuffer',compression:'DEFLATE',compressionOptions:{level:9}});
+  assert.ok(compressedBomb.length<1048576,'Fixture must fit DOCX compressed-size bound');
+  documentRequest=null;
+  await page.locator('#edge-document-file').setInputFiles({
+    name:'compressed_bomb.docx',
+    mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    buffer:compressedBomb
+  });
+  await page.locator('#edge-input').fill('Can you extract this Word file and explain it?');
+  await page.locator('#edge-send').click();
+  await page.locator('#edge-alert').waitFor({state:'visible'});
+  assert.match(await page.locator('#edge-alert').innerText(),/unsafe ZIP data|expansion limit/);
+  assert.equal(documentRequest,null,'DOCX ZIP expansion bomb must not reach the model');
+  await page.locator('#edge-document-clear').click();
+  console.log('SCANNED PDF + PAGE-COUNT + DOCX ZIP BOMB REJECTION QA PASS');
 
 
   await page.locator('#ai-close').click();
