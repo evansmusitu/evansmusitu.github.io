@@ -17,6 +17,7 @@
   const documentClear=document.getElementById('edge-document-clear');
   const evidencePreview=document.getElementById('edge-document-evidence-preview');
   const evidencePreviewButton=document.getElementById('edge-document-preview');
+  const evidenceExportButton=document.getElementById('edge-document-evidence-export');
   const presets = document.getElementById('edge-calculator-presets');
   const inputLabel = document.querySelector('#edge-form label[for="edge-input"]');
   let pending = false;
@@ -63,8 +64,11 @@
     return FILE_LIMITS[kind];
   }
   let evidenceRevision=0;
+  let evidenceForExport=null;
   function hideEvidencePreview(){
     evidenceRevision++;
+    evidenceForExport=null;
+    evidenceExportButton.disabled=true;
     evidencePreview.replaceChildren();
     evidencePreview.hidden=true;
   }
@@ -98,8 +102,10 @@
     }
     return sourceRecords;
   }
-  function showEvidencePreview(sources,kind='preview'){
+  function showEvidencePreview(sources,kind='preview',sourceQuestion=prompt.value.trim()){
     evidencePreview.replaceChildren();
+    evidenceForExport={question:sourceQuestion,records:sources};
+    evidenceExportButton.disabled=false;
     const heading=document.createElement('strong');
     heading.textContent=kind==='preview'?'LOCAL EVIDENCE PREVIEW · NO AI REQUEST':'EVIDENCE SELECTED FOR AI · BROWSER-LOCAL RANKING';
     evidencePreview.append(heading);
@@ -141,13 +147,36 @@
     try {
       const records=await collectLocalEvidence(question);
       if(revision!==evidenceRevision)return; // selection/question changed while parsing
-      showEvidencePreview(records,'preview');
+      showEvidencePreview(records,'preview',question);
       alert.hidden=true;
     }catch(failure){
       displayError(failure instanceof Error?failure.message:'Unable to preview selected document text.');
     }finally{
       evidencePreviewButton.disabled=false;
       evidencePreviewButton.textContent='⊞ Preview local evidence · no AI request';
+    }
+  });
+  evidenceExportButton.addEventListener('click',async()=>{
+    if(pending||evidenceExportButton.disabled||!evidenceForExport)return;
+    const snapshot=evidenceForExport;
+    const revision=evidenceRevision;
+    evidenceExportButton.disabled=true;
+    try {
+      const {buildLocalEvidencePack}=await import('/assets/musitu-evidence-pack.mjs');
+      const report=await buildLocalEvidencePack(snapshot);
+      if(revision!==evidenceRevision || evidenceForExport!==snapshot)return;
+      const blob=new Blob([report],{type:'text/markdown;charset=utf-8'});
+      const blobURL=URL.createObjectURL(blob);
+      const anchor=document.createElement('a');
+      anchor.href=blobURL;
+      anchor.download='musitu-local-evidence-pack.md';
+      anchor.click();
+      setTimeout(()=>URL.revokeObjectURL(blobURL),1200);
+      alert.hidden=true;
+    } catch(failure) {
+      displayError(failure instanceof Error?failure.message:'Evidence export failed.');
+    } finally {
+      evidenceExportButton.disabled=!(evidenceForExport===snapshot && revision===evidenceRevision);
     }
   });
   prompt.addEventListener('input',hideEvidencePreview);
@@ -703,7 +732,7 @@
       if (imageMode) attachGeneratedImage(answer);
       if (researchMode || scholarMode) attachSources(answer.sources,answer.sourceScope,answer.citationAudit);
       if (documentMode && answer.mode==='compare') attachDocumentReferences(answer.documentReview,answer.citationAudit);
-      if (documentMode && localEvidence) showEvidencePreview(localEvidence,'sent');
+      if (documentMode && localEvidence) showEvidencePreview(localEvidence,'sent',question);
       exportButton.disabled = false;
     } catch (failure) {
       prompt.value = question;
