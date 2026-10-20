@@ -62,7 +62,9 @@
     if(file.name.length<5||file.name.length>100||/[/\\\u0000-\u001f]/.test(file.name))return 0;
     return FILE_LIMITS[kind];
   }
+  let evidenceRevision=0;
   function hideEvidencePreview(){
+    evidenceRevision++;
     evidencePreview.replaceChildren();
     evidencePreview.hidden=true;
   }
@@ -135,8 +137,10 @@
     evidencePreviewButton.disabled=true;
     evidencePreviewButton.textContent='Extracting text locally…';
     hideEvidencePreview();
+    const revision=evidenceRevision;
     try {
       const records=await collectLocalEvidence(question);
+      if(revision!==evidenceRevision)return; // selection/question changed while parsing
       showEvidencePreview(records,'preview');
       alert.hidden=true;
     }catch(failure){
