@@ -8,6 +8,8 @@
     "mammoth": "1.13.0"
   },
   "devDependencies": {
-    "playwright": "1.62.0"
+    "playwright": "1.62.0",
+    "pdf-lib": "1.17.1",
+    "jszip": "3.10.1"
   }
 }
