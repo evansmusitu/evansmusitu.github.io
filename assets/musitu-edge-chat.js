@@ -668,5 +668,47 @@
     setTimeout(() => URL.revokeObjectURL(fileURL), 1000);
   });
 
+  // Local workspace is optional. The unencrypted chat is never auto-persisted.
+  import('/assets/musitu-workspace-ui.mjs').then(({attachWorkspaceControls})=>{
+    attachWorkspaceControls({
+      busy:()=>pending,
+      hasSession:()=>transcript.length>0,
+      snapshot:()=>({transcript:transcript.map(m=>({role:m.role,content:m.content})),
+        history:history.filter(m=>m.content.length<=950).slice(-6).map(m=>({role:m.role,content:m.content}))}),
+      restore:({transcript:oldTranscript,history:oldHistory})=>{
+        history=oldHistory.map(m=>({role:m.role,content:m.content}));
+        transcript=oldTranscript.map(m=>({role:m.role,content:m.content}));
+        thread.replaceChildren();
+        for(const m of transcript)appendMessage(m.role,m.content);
+        documentFile.value='';
+        documentInfo.textContent='Previously selected file bytes were not stored. Select a new local document to analyze.';
+        prompt.value='';
+        counter.textContent='0 / '+prompt.maxLength+' · Enter to send';
+        alert.hidden=true;
+        exportButton.disabled=transcript.length===0;
+      },
+      clear:()=>{
+        transcript=[];history=[];
+        thread.replaceChildren();
+        const note=document.createElement('div');
+        note.className='edge-welcome';
+        const title=document.createElement('h3');
+        title.textContent='Your visible session has been cleared.';
+        const hint=document.createElement('p');
+        hint.textContent='Start a new conversation, or unlock an encrypted local workspace if you saved one.';
+        note.append(title,hint);
+        thread.append(note);
+        documentFile.value='';
+        documentInfo.textContent='Selected documents cleared. No file bytes were stored by the workspace.';
+        prompt.value='';
+        counter.textContent='0 / '+prompt.maxLength+' · Enter to send';
+        alert.hidden=true;
+        exportButton.disabled=true;
+      }
+    });
+  }).catch(()=>{
+    const status=document.getElementById('edge-workspace-status');
+    if(status)status.textContent='Encrypted local workspace is temporarily unavailable. Your AI chat still works.';
+  });
   window.MUSITUEdge = { open, close };
 })();

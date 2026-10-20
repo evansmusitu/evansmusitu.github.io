@@ -87,10 +87,28 @@
       <p id="edge-document-info" role="status">Select 1–3 documents. TXT/MD/CSV/JSON: 64 KiB each; searchable PDF: 2 MiB / 20 pages; DOCX: 1 MiB. Extraction runs on this device. One document sends up to 4,800 characters; comparisons send up to 1,500 per file (maximum 4,500 combined). Only after you press Analyze. Scanned PDFs and encrypted files cannot be analyzed. Do not select secrets or sensitive files.</p>
       <button type="button" id="edge-document-clear" class="edge-export">Clear selected file</button>
     </div>
+    <details id="edge-workspace" class="edge-workspace">
+      <summary>🔒 Private encrypted workspace · Save / Unlock</summary>
+      <div class="edge-workspace-panel">
+        <label for="edge-workspace-passphrase">WORKSPACE PASSPHRASE (12+ CHARACTERS)</label>
+        <input id="edge-workspace-passphrase" type="password" maxlength="256" minlength="12" autocomplete="new-password" spellcheck="false" placeholder="Enter your private passphrase" aria-describedby="edge-workspace-note">
+        <div class="edge-workspace-actions">
+          <button id="edge-workspace-save" type="button">Encrypt &amp; save locally</button>
+          <button id="edge-workspace-unlock" type="button">Unlock saved session</button>
+          <button id="edge-workspace-export" type="button">↓ Encrypted backup</button>
+          <button id="edge-workspace-import-button" type="button">↑ Restore backup</button>
+          <input id="edge-workspace-import" type="file" accept=".json,application/json" aria-label="Choose encrypted MUSITU workspace backup" hidden>
+          <button id="edge-workspace-clear" type="button">Lock / clear current chat</button>
+          <button id="edge-workspace-delete" type="button">Delete locally saved copy</button>
+        </div>
+        <p id="edge-workspace-note">Optional, manual save only. AES-256-GCM encrypts text conversation history in this browser with a key derived from your passphrase. No account or cloud synchronization. Your passphrase cannot be recovered. Attachments, generated images, source cards and document files are not saved. A compromised browser or unlocked session is not protected. Avoid storing secrets or sensitive information.</p>
+        <p id="edge-workspace-status" role="status" aria-live="polite">Nothing is saved automatically. Save again after new messages.</p>
+      </div>
+    </details>
     <form id="edge-form" class="edge-form">
       <label for="edge-input">ASK MUSITU AI</label>
       <textarea id="edge-input" maxlength="900" rows="3" placeholder="Ask a question in the selected mode…"></textarea>
-      <div class="edge-form-actions"><span id="edge-counter" class="edge-counter">0 / 900 · Enter to send</span><div class="edge-actions"><button type="button" id="edge-export" class="edge-export" disabled>↓ Export</button><button type="submit" class="button primary" id="edge-send">Generate answer ↗</button></div></div>
+      <div class="edge-form-actions"><span id="edge-counter" class="edge-counter">0 / 900 · Enter to send</span><div class="edge-actions"><button type="button" id="edge-export" class="edge-export" disabled>↓ Export plaintext</button><button type="submit" class="button primary" id="edge-send">Generate answer ↗</button></div></div>
     </form>
     <div class="edge-disclaimer">Two AI models · Verified math · Live FLUX image creation · Public web research: Wikipedia / Hacker News · Scholar metadata: Crossref DOIs (not full papers or peer-review verification) · Documents: browser-local PDF/Word/text extraction; only selected text excerpt sent to AI, no whole-file upload or storage · No unrestricted browsing or live trading feeds · Free allowances and rate limits apply.</div>
   </div>

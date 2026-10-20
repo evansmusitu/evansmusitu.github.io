@@ -43,6 +43,10 @@ jobs:
           cp index.html _site/index.html
           cp assets/musitu-edge-chat.js _site/assets/musitu-edge-chat.js
           cp assets/musitu-edge-chat.css _site/assets/musitu-edge-chat.css
+          cp assets/musitu-workspace-vault.mjs _site/assets/musitu-workspace-vault.mjs
+          cp assets/musitu-workspace-ui.mjs _site/assets/musitu-workspace-ui.mjs
+          test -s _site/assets/musitu-workspace-vault.mjs
+          test -s _site/assets/musitu-workspace-ui.mjs
           mkdir -p _site/assets/vendor
           cp assets/musitu-document-extract.mjs _site/assets/musitu-document-extract.mjs
           cp assets/vendor/pdf.mjs _site/assets/vendor/pdf.mjs

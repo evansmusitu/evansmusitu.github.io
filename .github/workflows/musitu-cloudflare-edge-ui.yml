@@ -5,11 +5,14 @@ on:
     paths:
       - index.html
       - assets/musitu-edge-chat.js
+      - assets/musitu-workspace-vault.mjs
+      - assets/musitu-workspace-ui.mjs
       - assets/musitu-edge-chat.css
       - assets/musitu-document-extract.mjs
       - package.json
       - scripts/prepare-document-vendors.sh
       - tests/edge-chat-e2e.mjs
+      - tests/workspace-vault.test.mjs
       - .github/workflows/musitu-cloudflare-edge-ui.yml
   push:
     branches: [main]

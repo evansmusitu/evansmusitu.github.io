@@ -27,6 +27,14 @@ assert.match(html,/assets\/musitu-edge-chat\.js/,'Direct AI client must load');
 assert.match(html,/assets\/musitu-edge-chat\.css/,'AI interface styles must load');
 assert.match(html,/accept="[^"]*\.pdf,[^"]*\.docx/,'PDF and DOCX supported by local file input');
 assert.match(html,/comparisons send up to 1,500 per file/,'Multi-document per-file privacy limit disclosure required');
+assert.match(html,/id="edge-workspace"/,'Encrypted workspace controls required');
+assert.match(html,/id="edge-workspace-passphrase" type="password"/,'Passphrase input must be masked');
+assert.match(html,/manual save only/,'Do not imply automatic cloud backups');
+const vaultModule=readFileSync('assets/musitu-workspace-vault.mjs','utf8');
+assert.match(vaultModule,/AES-GCM/,'Authenticated encryption required');
+assert.match(vaultModule,/310000/,'Local PBKDF2 key stretching required');
+assert.doesNotMatch(vaultModule,/fetch\(/,'Vault module must not initiate network requests');
+
 assert.match(html,/maximum 4,500 combined/,'Aggregate excerpt privacy bound required');
 assert.match(html,/type="file" multiple accept=/,'Multi-document local selection required');
 const documentModule=readFileSync('assets/musitu-document-extract.mjs','utf8');

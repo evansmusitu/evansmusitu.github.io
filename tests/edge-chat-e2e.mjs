@@ -18,6 +18,8 @@ async function launch(width, height) {
     if (pathname === '/assets/musitu-edge-chat.js') { path = 'assets/musitu-edge-chat.js'; type = 'application/javascript'; }
     else if (pathname === '/assets/musitu-edge-chat.css') { path = 'assets/musitu-edge-chat.css'; type = 'text/css'; }
     else if (pathname === '/assets/musitu-document-extract.mjs') { path = 'assets/musitu-document-extract.mjs'; type = 'application/javascript'; }
+    else if (pathname === '/assets/musitu-workspace-vault.mjs') { path = 'assets/musitu-workspace-vault.mjs'; type = 'application/javascript'; }
+    else if (pathname === '/assets/musitu-workspace-ui.mjs') { path = 'assets/musitu-workspace-ui.mjs'; type = 'application/javascript'; }
     else if (pathname.startsWith('/assets/vendor/')) {
       path = pathname.slice(1);
       type = 'application/javascript';
@@ -513,6 +515,82 @@ try {
   await page.locator('#edge-document-clear').click();
 
 
+
+  page.on('dialog', async d => d.accept());
+  // Opt-in encrypted local workspace: no plaintext session in localStorage.
+  const panel=page.locator('#edge-workspace');
+  await panel.locator('summary').click();
+  const secret=page.locator('#edge-workspace-passphrase');
+  await page.locator('#edge-workspace-save').click();
+  assert.match(await page.locator('#edge-workspace-status').innerText(),/12 and 256/,'Weak passphrases must be rejected before storage');
+  const pw='MUSITU-only local vault password 2026!';
+  await secret.fill(pw);
+  await page.locator('#edge-workspace-save').click();
+  await page.getByText('Encrypted local copy saved',{exact:false}).waitFor({timeout:15000});
+  assert.equal(await secret.inputValue(),'','Passphrase must be cleared after use');
+  const envelope=await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.v1'));
+  assert.ok(envelope?.includes('AES-256-GCM'),'Stored value must identify strong authenticated encryption');
+  assert.equal(envelope.includes('hysteresis threshold'),false,'Plaintext chat must not be saved to localStorage');
+  assert.equal(envelope.includes('six volts'),false,'Plaintext facts must not be saved to localStorage');
+  const exportPromise=page.waitForEvent('download');
+  await page.locator('#edge-workspace-export').click();
+  const encryptedBackup=await exportPromise;
+  assert.equal(encryptedBackup.suggestedFilename(),'musitu-encrypted-workspace.json');
+  const backupBytes=readFileSync(await encryptedBackup.path());
+  await page.locator('#edge-workspace-clear').click();
+  await page.getByText('Visible session cleared',{exact:false}).waitFor({timeout:10000});
+  assert.equal(await page.locator('.edge-message').count(),0);
+  assert.equal(await page.locator('#edge-export').isDisabled(),true);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.v1')),envelope,'Clearing memory cannot destroy an encrypted copy');
+  await secret.fill('This is the incorrect password');
+  await page.locator('#edge-workspace-unlock').click();
+  await page.getByText('Unable to unlock',{exact:false}).waitFor({timeout:12000});
+  assert.equal(await page.locator('.edge-message').count(),0,'Wrong passphrase must not restore conversation');
+  await secret.fill(pw);
+  await page.locator('#edge-workspace-unlock').click();
+  await page.getByText('Decrypted session restored',{exact:false}).waitFor({timeout:12000});
+  assert.ok(await page.locator('.edge-message').count()>2,'Encrypted conversation should round-trip in UI');
+  assert.equal(await page.locator('#edge-document-file').inputValue(),'','Document bytes must never be restored');
+  assert.ok(await page.locator('#edge-export').isEnabled(),'Recovered text conversation can be exported');
+  assert.equal(await secret.inputValue(),'','Unlock must not retain secret in form');
+
+  // Reload actually discards live state; only ciphertext persists on origin.
+  await page.reload({waitUntil:'domcontentloaded',timeout:30000});
+  await page.locator('#launch-ai').click();
+  await page.locator('#ai-dialog[open]').waitFor({timeout:10000});
+  assert.equal(await page.locator('.edge-message').count(),0,'Reload should not auto-decrypt or auto-restore');
+  await page.locator('#edge-workspace summary').click();
+  await page.waitForFunction(()=>document.getElementById('edge-workspace-status')?.textContent.includes('Use a strong passphrase'),{timeout:12000});
+  await page.locator('#edge-workspace-passphrase').fill(pw);
+  await page.locator('#edge-workspace-unlock').click();
+  await page.getByText('Decrypted session restored',{exact:false}).waitFor({timeout:12000});
+  assert.ok(await page.locator('.edge-message').count()>2,'Saved ciphertext survives browser reload and decrypts');
+  await page.locator('#edge-workspace-delete').click();
+  await page.getByText('Local encrypted copy removed',{exact:false}).waitFor({timeout:10000});
+  assert.equal(await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.v1')),null,'Delete should remove only workspace key');
+  assert.ok(await page.locator('.edge-message').count()>2,'Deleting saved copy does not silently destroy unlocked chat');
+  // Restore an encrypted portable backup. A wrong secret must not mutate either
+  // the current conversation or browser storage; correct passphrase can recover.
+  await page.locator('#edge-workspace-clear').click();
+  await page.getByText('Visible session cleared',{exact:false}).waitFor({timeout:12000});
+  assert.equal(await page.locator('.edge-message').count(),0);
+  await page.locator('#edge-workspace-passphrase').fill('An incorrect recovery passphrase!');
+  await page.locator('#edge-workspace-import').setInputFiles({
+    name:'musitu-encrypted-workspace.json',mimeType:'application/json',buffer:backupBytes
+  });
+  await page.getByText('Unable to unlock',{exact:false}).waitFor({timeout:12000});
+  assert.equal(await page.locator('.edge-message').count(),0);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.v1')),null);
+  await page.locator('#edge-workspace-passphrase').fill(pw);
+  await page.locator('#edge-workspace-import').setInputFiles({
+    name:'musitu-encrypted-workspace.json',mimeType:'application/json',buffer:backupBytes
+  });
+  await page.getByText('Encrypted backup verified',{exact:false}).waitFor({timeout:12000});
+  assert.ok(await page.locator('.edge-message').count()>2,'Portable encrypted backup must restore conversations');
+  assert.ok((await page.evaluate(()=>localStorage.getItem('musitu.intelligence.encrypted.v1')))?.includes('AES-256-GCM'));
+  assert.equal(await page.locator('#edge-workspace-passphrase').inputValue(),'','Backup restore must clear secret');
+  console.log('PORTABLE ENCRYPTED BACKUP WRONG-PASSWORD AND VERIFIED RESTORE QA PASS');
+  console.log('AES-GCM OPT-IN LOCAL SAVE, WRONG PASSWORD, RESTORE, RELOAD AND DELETE BROWSER QA PASS');
 
   await page.locator('#ai-close').click();
   assert.equal(await page.locator('#ai-dialog').getAttribute('open'),null,'Dialog should close');

@@ -101,6 +101,21 @@ for (const [label,path,marker,minLength] of [
     return 'asset '+code.length+' chars; no user files transmitted';
   });
 }
+if(process.env.GITHUB_EVENT_NAME!=='pull_request') {
+for(const [name,path,marker] of [
+  ['Encrypted local vault','assets/musitu-workspace-vault.mjs','encryptWorkspace'],
+  ['Local workspace interface','assets/musitu-workspace-ui.mjs','attachWorkspaceControls']
+]) {
+  await check(name+' is published',async()=>{
+    const response=await fetchWithRetry(HOME+path);
+    assert.equal(response.status,200);
+    const body=await response.text();
+    assert.ok(body.length>3000 && body.includes(marker),'Local workspace module was missing or incomplete');
+    return 'module '+body.length+' chars; no model inference';
+  });
+}
+}
+else console.log('PR watch: new static workspace modules are tested by CI and checked on production only after merge.');
 await check('Cloudflare backend advertised capabilities',async()=>{
   const response=await fetchWithRetry(EDGE+'/api/health',{headers:{origin:SITE}});
   assert.equal(response.status,200);
