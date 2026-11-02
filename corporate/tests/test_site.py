@@ -40,6 +40,7 @@ def test_local_links():
 def test_claim_safety_and_stage_labels():
     catalog=(DIST/'products/index.html').read_text()
     assert catalog.count('data-product-card')==6
+    assert catalog.count('aria-haspopup="dialog"')==6
     for p in EXPECTED:
         if p.startswith('products/'):
             s=(DIST/p/'index.html').read_text()
