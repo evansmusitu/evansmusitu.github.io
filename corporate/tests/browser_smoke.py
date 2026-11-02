@@ -5,6 +5,7 @@ HTML and exact stylesheet/JS are loaded with set_content, allowing real layout,
 DOM events and interaction checks without weakening network restrictions.
 """
 from pathlib import Path
+import shutil
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,7 +23,10 @@ def document(path):
                 .replace('<script defer src="/assets/site.js"></script>', '').replace('</body>','<script>'+js+'</script></body>'))
 
 with sync_playwright() as pw:
-    browser = pw.chromium.launch(headless=True, executable_path='/usr/bin/chromium', args=['--no-sandbox'])
+    browser_opts={'headless':True, 'args':['--no-sandbox']}
+    if shutil.which('chromium'):browser_opts['executable_path']=shutil.which('chromium')
+    elif shutil.which('google-chrome'):browser_opts['executable_path']=shutil.which('google-chrome')
+    browser = pw.chromium.launch(**browser_opts)
     for width,height,name in ((1440,900,'desktop'),(390,844,'mobile'),(320,720,'small-mobile')):
         page=browser.new_page(viewport={'width':width,'height':height},device_scale_factor=1)
         page.set_default_timeout(6000)
@@ -63,6 +67,7 @@ with sync_playwright() as pw:
         page.keyboard.press('Escape')
         assert not page.locator('#evidence-dialog').is_visible(),name
         assert not page.evaluate('document.documentElement.scrollWidth > innerWidth'),(name,'catalog horizontal overflow')
+        page.evaluate('window.scrollTo(0, 0)')
         page.screenshot(path=str(ART/f'{name}-products.png'),full_page=True,animations='disabled',timeout=10000)
         assert not errors,(name,errors)
         page.close()
