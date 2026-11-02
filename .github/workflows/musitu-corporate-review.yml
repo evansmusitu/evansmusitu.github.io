@@ -1,0 +1,42 @@
+name: MUSITU Corporate Review (no deployment)
+
+on:
+  pull_request:
+    paths:
+      - 'corporate/**'
+      - '.github/workflows/musitu-corporate-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  corporate-static-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build isolated static corporate site
+        run: python3 corporate/scripts/build.py
+      - name: Install audit-only test dependencies
+        run: python3 -m pip install --disable-pip-version-check --no-cache-dir pytest==8.4.2 beautifulsoup4==4.14.2
+      - name: Run structural, content and safety tests
+        run: python3 -m pytest -q corporate/tests/test_site.py
+      - name: Check JavaScript syntax
+        run: node --check corporate/assets/site.js
+      - name: Assert staging noindex and no production writes
+        run: |
+          test -s corporate/dist/index.html
+          grep -q 'noindex,nofollow' corporate/dist/index.html
+          test "$(find corporate/dist -name index.html | wc -l)" -eq 22
+          test ! -e corporate/dist/.env
+      - name: Upload review-only website artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: musitu-corporate-review-noindex-${{ github.sha }}
+          path: corporate/dist/
+          if-no-files-found: error
+          retention-days: 7
