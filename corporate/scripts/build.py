@@ -55,10 +55,11 @@ def link(url,label,cls='',external=False):
 
 def bstatus(p):return f'<span class="status status--{H(p["flag"])}"><span class="dot" aria-hidden="true"></span>{H(p["maturity"])}</span>'
 
-def card(p):
+def card(p, heading_level=3):
+    assert heading_level in (2,3)
     return f'''<article class="product-card" data-product-card data-category="{H(p['category'].lower())}" data-state="{H(p['flag'])}" data-search="{H((p['name']+' '+p['category']+' '+p['line']).lower())}">
     <div class="card-top"><span class="index-label">{H(p['tag'])}</span><span class="mini-symbol" aria-hidden="true">✳</span></div>
-    <h3>{link('/products/'+p['slug']+'/',p['name'])}</h3><p>{H(p['line'])}</p>
+    <h{heading_level}>{link('/products/'+p['slug']+'/',p['name'])}</h{heading_level}><p>{H(p['line'])}</p>
     <div class="card-bottom">{bstatus(p)}{link('/products/'+p['slug']+'/','Details','quiet-link')}</div><button type="button" class="evidence-trigger" data-evidence="{H(p['slug'])}" aria-haspopup="dialog" aria-label="Review evidence for {H(p['name'])}">Inspect supporting evidence ↗</button></article>'''
 
 def head(title,description,canonical='/'):
@@ -112,7 +113,7 @@ def home():
 
 def products():
     cats=sorted(set(p['category'] for p in PRODUCTS))
-    return hero_section('Products / Discover','Explore the <em>portfolio.</em>','Six canonical families. Different kinds of work, different stages of readiness. Filter by focus or maturity without mistaking a research direction for a launched service.')+f'''<section class="section shell"><div class="catalog-controls"><div class="catalog-search"><label for="catalog-query">Search products</label><input id="catalog-query" type="search" placeholder="Find capabilities or products…" autocomplete="off"></div><div class="catalog-filter"><label for="catalog-category">Category</label><select id="catalog-category"><option value="all">All categories</option>{''.join('<option value="'+H(c.lower())+'">'+H(c)+'</option>' for c in cats)}</select></div><div class="catalog-filter"><label for="catalog-state">Stage</label><select id="catalog-state"><option value="all">All stages</option><option value="public">Published</option><option value="prototype">Prototype / pilot</option><option value="research">Research / concept</option></select></div></div><p class="results-count" id="catalog-count" role="status" aria-live="polite">Showing six product families</p><div class="card-grid" id="catalog-grid">{''.join(card(p) for p in PRODUCTS)}</div><div class="empty-state" id="catalog-empty" hidden>No products matched. Try a broader search or another category.</div></section>'''
+    return hero_section('Products / Discover','Explore the <em>portfolio.</em>','Six canonical families. Different kinds of work, different stages of readiness. Filter by focus or maturity without mistaking a research direction for a launched service.')+f'''<section class="section shell"><div class="catalog-controls"><div class="catalog-search"><label for="catalog-query">Search products</label><input id="catalog-query" type="search" placeholder="Find capabilities or products…" autocomplete="off"></div><div class="catalog-filter"><label for="catalog-category">Category</label><select id="catalog-category"><option value="all">All categories</option>{''.join('<option value="'+H(c.lower())+'">'+H(c)+'</option>' for c in cats)}</select></div><div class="catalog-filter"><label for="catalog-state">Stage</label><select id="catalog-state"><option value="all">All stages</option><option value="public">Published</option><option value="prototype">Prototype / pilot</option><option value="research">Research / concept</option></select></div></div><p class="results-count" id="catalog-count" role="status" aria-live="polite">Showing six product families</p><div class="card-grid" id="catalog-grid">{''.join(card(p,2) for p in PRODUCTS)}</div><div class="empty-state" id="catalog-empty" hidden>No products matched. Try a broader search or another category.</div></section>'''
 
 def product_page(p):
     items=''.join('<li>'+H(x)+'</li>' for x in p['points'])
