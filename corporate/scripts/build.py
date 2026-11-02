@@ -59,7 +59,7 @@ def card(p):
     return f'''<article class="product-card" data-product-card data-category="{H(p['category'].lower())}" data-state="{H(p['flag'])}" data-search="{H((p['name']+' '+p['category']+' '+p['line']).lower())}">
     <div class="card-top"><span class="index-label">{H(p['tag'])}</span><span class="mini-symbol" aria-hidden="true">✳</span></div>
     <h3>{link('/products/'+p['slug']+'/',p['name'])}</h3><p>{H(p['line'])}</p>
-    <div class="card-bottom">{bstatus(p)}{link('/products/'+p['slug']+'/','Details','quiet-link')}</div></article>'''
+    <div class="card-bottom">{bstatus(p)}{link('/products/'+p['slug']+'/','Details','quiet-link')}</div><button type="button" class="evidence-trigger" data-evidence="{H(p['slug'])}" aria-haspopup="dialog" aria-label="Review evidence for {H(p['name'])}">Inspect supporting evidence ↗</button></article>'''
 
 def head(title,description,canonical='/'):
     full=f'{title} — MUSITU' if title!='Home' else 'MUSITU — Intelligence with evidence'
