@@ -32,3 +32,6 @@ Status: **REVIEW ONLY — NOT PUBLISHED**. Evidence reviewed: 3 November 2026. T
 ## Scope of automated results
 
 Automated checks are useful regression evidence, not third-party certification or blanket production claims. A passing source/CI test does not automatically authorize public release.
+
+| Staging performance and no third-party traffic | `browser_perf.py`, 8 route/device combinations, local HTTP only | Lab-only measurement; no field Core Web Vitals claims |
+| HTTP security policy | `DEPLOYMENT_SECURITY_HEADERS.md` and CSP-negative browser test | Staging verified; provider headers and HSTS owner-gated |

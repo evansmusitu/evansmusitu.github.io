@@ -47,6 +47,9 @@ jobs:
       - name: Actual HTTP and Chromium navigation acceptance
         working-directory: corporate
         run: python tests/browser_hosted.py
+      - name: Measure staging-only performance and third-party request budget
+        working-directory: corporate
+        run: python tests/browser_perf.py
       - name: Search keyboard, results and focus acceptance (66 views)
         working-directory: corporate
         run: python tests/browser_search.py
@@ -86,6 +89,7 @@ jobs:
             corporate/review-artifacts/crossengine-results.json
             corporate/review-artifacts/crossengine-*.png
             corporate/review-artifacts/portable-browser-results.json
+            corporate/review-artifacts/performance-lab.json
             corporate/review-artifacts/portable-mobile-search-navigation.png
             corporate/review-artifacts/MUSITU_portable_interactive_preview.html
           if-no-files-found: warn

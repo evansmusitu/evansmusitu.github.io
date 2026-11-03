@@ -308,3 +308,19 @@ def test_audience_paths_are_real_navigation_not_unsupported_marketing_claims():
     assert any('controlled pilots' in a.get_text() for a in cards)
     assert any('pending independent qualification' in a.get_text() for a in cards)
     assert all(a.select_one('h3') for a in cards)
+
+
+def test_unique_metadata_and_no_unreviewed_canonical_domain():
+    titles=[]
+    for page in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(page.read_text(encoding='utf-8'),'html.parser')
+        t=soup.title.text.strip()
+        assert 9<len(t)<=80,(page,'title length',len(t))
+        titles.append(t)
+        desc=soup.select_one('meta[name="description"]')['content']
+        assert 35<=len(desc)<=210,(page,'description length',len(desc))
+        assert not soup.select('link[rel="canonical"]'),(page,'unverified domain')
+        assert soup.select_one('meta[property="og:type"]')
+        assert soup.select_one('meta[property="og:title"]')
+        assert soup.select_one('meta[property="og:description"]')
+    assert len(set(titles))==len(titles),'Duplicate document titles'

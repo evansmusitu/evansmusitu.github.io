@@ -59,3 +59,7 @@
 - Portable reviewer closes open search dialogs when internal navigation occurs and places focus on the replacement page's `main` landmark.
 - Chromium, Firefox and WebKit coverage is configured as a required CI test; each engine tests 22 routes at three viewport sizes, mobile navigation and search. A local Chromium-only success cannot be described as a three-engine success.
 - Search is documented in the preview privacy section, does not transmit queries, and is excluded when JavaScript is unavailable.
+
+## Lab performance versus field performance
+- A staging localhost browser report is generated under `review-artifacts/performance-lab.json` with Chromium first-contentful-paint observations, LCP candidates, observed layout shifts and asset bytes. This is not a production page-speed score or a substitute for the real-user 75th-percentile Core Web Vitals targets.
+- The proposed response CSP, Permissions-Policy, Referrer-Policy, and nosniff rules are documented in `DEPLOYMENT_SECURITY_HEADERS.md`, but no live headers can be claimed without origin/account readback.

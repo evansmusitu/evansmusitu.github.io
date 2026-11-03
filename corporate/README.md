@@ -80,3 +80,7 @@ The search control uses a compact public-route index embedded at build time. No 
 `python3 scripts/make_portable_preview.py` followed by `python3 tests/browser_portable.py` verifies search-result navigation, dialog closure and focus transfer into the new route, and catalog filtering after client-side route swapping. The portable preview is self-contained but **never a production deploy artifact**.
 
 `python3 tests/browser_crossengine.py` is a required staging CI gate for current Chromium, Firefox and WebKit; it tests all 22 routes at three sizes, verifies search and mobile navigation, and records engine-specific failures. The container-only single-engine invocation does not certify the other engines. Local real HTTP behavior remains verified in Chromium CI; production HTTP headers and independent manual accessibility assessments remain owner/reviewer gates.
+
+## Staging laboratory performance and deployment boundary
+
+`python3 tests/browser_perf.py` on the GitHub Actions runner serves the generated site over local HTTP and records FCP/LCP candidates, observed layout shifts, resource counts, and bytes for four representative routes at mobile/desktop sizes. Metrics are explicitly staging lab observations, **not** real-user Core Web Vitals. It rejects unexpected third-party requests and large layout shifts. The production response-header and origin requirements live in `DEPLOYMENT_SECURITY_HEADERS.md` and must be reviewed against real provider configuration before launch.
