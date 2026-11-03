@@ -47,6 +47,9 @@ jobs:
       - name: Actual HTTP and Chromium navigation acceptance
         working-directory: corporate
         run: python tests/browser_hosted.py
+      - name: Browser no-JavaScript and missing-script fallback (66 views)
+        working-directory: corporate
+        run: python tests/browser_nojs.py
       - name: Generate standalone zero-network reviewer artifact
         working-directory: corporate
         run: python scripts/make_portable_preview.py
@@ -68,6 +71,7 @@ jobs:
             corporate/review-artifacts/extended-browser-results.json
             corporate/review-artifacts/hosted-browser-results.json
             corporate/review-artifacts/accessibility-regressions.json
+            corporate/review-artifacts/nojs-browser-results.json
             corporate/review-artifacts/MUSITU_portable_interactive_preview.html
           if-no-files-found: warn
           retention-days: 7

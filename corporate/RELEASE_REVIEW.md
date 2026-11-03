@@ -38,3 +38,12 @@
 3. Authorized Cloudflare administrator performs account inventory, least-privilege review, DNS, security header and environment check; **never extract credential values from GitHub Actions secrets**.
 4. Independent security and accessibility reviewers provide observable results and can block a release.
 5. Owner issues separate explicit merge and deployment authorization after receiving the acceptance packet. No automatic deployment on this branch.
+
+## November 3 implementation review addendum
+- A published-source visibility audit found two private GitHub repositories previously linked from the FMI and Foundry product pages. Public references now resolve to the internal public evidence overview and state that underlying primary research is not public; generated HTML/claim JSON test forbids the private repository slugs.
+- The AXIOM main action no longer points to an unverified ChatGPT app URL. It points to the published GitHub release/correction record until an owner-approved public product entry link is verified.
+- Corporate theme choice is optional, tab-scoped only (`sessionStorage`) and does not use cookies, localStorage, accounts, analytics, or customer information. Public privacy copy reflects this precisely.
+- A mobile JS-loading failure previously could leave only a nonfunctional menu button. The primary navigation now remains usable when the script is unavailable, even when JavaScript is technically enabled. Dead controls disappear without the script.
+- An automated control-name/ARIA/duplicate-ID/text-spacing audit was added. Text-spacing enlargement previously overflowed seven pages; fixes now pass all 66 layout checks.
+- New HTTP/Chromium CI acceptance exercises actual HTML, CSS, JS, routes, CSP, theme navigation and no-JavaScript navigation on GitHub Actions localhost. The ChatGPT managed browser prohibits navigation to localhost, so local real-URL browser results are not claimed.
+- **Not yet qualified:** independently verified accessibility conformance, production-domain HTTP response security headers, privacy/legal identity, contact delivery, real-user Core Web Vitals, Safari/WebKit/Firefox behavior, final domain routing and Cloudflare account authority.

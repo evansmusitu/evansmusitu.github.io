@@ -35,3 +35,16 @@
 .home-hero > *,.split > *,.product-intro > *,.info-grid > *,.card-grid > *{min-width:0}
 .hero-copy h1,.page-hero h1,.section-head h2,.final-cta h2,.info-card p,.info-card h2,.product-card h2,.product-card h3,.product-intro p,.source-list p{overflow-wrap:anywhere}
 .eyebrow{flex-wrap:wrap}
+
+/* No-JS fallback: never leave controls that cannot perform their advertised action. */
+html:not(.has-js) .theme-toggle,html:not(.has-js) .menu-toggle,
+html:not(.has-js) .catalog-controls,html:not(.has-js) .results-count,
+html:not(.has-js) .evidence-trigger{display:none!important}
+
+/* If JavaScript is disabled OR the script fails to load, the ordinary primary
+   navigation remains usable on mobile. No duplicate secondary nav is needed. */
+@media(max-width:820px){
+  html:not(.has-js) .header-row{height:auto;min-height:67px;flex-wrap:wrap;padding-block:10px}
+  html:not(.has-js) .primary-nav{display:flex;order:3;flex:1 0 100%;flex-wrap:wrap;gap:8px 16px;border-top:1px solid var(--line);padding-block:8px}
+  html:not(.has-js) .primary-nav .nav-link{min-height:44px}
+}

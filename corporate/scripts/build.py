@@ -94,7 +94,7 @@ def header():
       <div class="header-actions"><button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch color theme" title="Switch color theme">◐</button>{link('/experiences/intelligence/','Try Intelligence','button button--small')}
       <button type="button" class="menu-toggle" id="menu-toggle" aria-controls="mobile-nav" aria-expanded="false" aria-label="Open navigation"><span></span><span></span><span></span></button></div></div>
       <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation" hidden>{nav}{link('/experiences/intelligence/','Try Intelligence','nav-link')}</nav>
-      <noscript><nav class="noscript-nav shell" aria-label="Navigation without JavaScript">{nav}</nav></noscript></header>'''.replace('&lt;M&gt;','<span class="brand-mark" aria-hidden="true">M</span>')
+      </header>'''.replace('&lt;M&gt;','<span class="brand-mark" aria-hidden="true">M</span>')
 
 def footer():
     links=[('Products','/products/'),('Research','/research/'),('Trust','/trust/'),('Support','/support/'),('Privacy','/legal/privacy/'),('Terms','/legal/terms/'),('Accessibility','/accessibility/'),('Contact','/contact/')]

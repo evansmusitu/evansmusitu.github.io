@@ -158,7 +158,7 @@ def test_accessible_progressive_enhancement_and_forced_colors():
     assert '@media (prefers-contrast: more)' in css
     for p in sorted(DIST.rglob('index.html')):
         soup=BeautifulSoup(p.read_text(),'html.parser')
-        assert soup.select_one('noscript nav[aria-label="Navigation without JavaScript"]'),p
+        assert soup.select_one('nav[aria-label="Main navigation"]'),p
 
 
 
@@ -244,3 +244,20 @@ def test_favicon_and_tab_only_theme_preference():
         soup=BeautifulSoup(page.read_text(),'html.parser')
         assert soup.select_one('link[rel="icon"][href="/assets/favicon.svg"]')
         assert soup.select_one('meta[name="theme-color"]')
+
+
+def test_javascript_disabled_controls_are_not_inert():
+    js=(DIST/'assets/site.js').read_text()
+    css=(DIST/'assets/site.css').read_text()
+    assert "document.documentElement.classList.add('has-js')" in js
+    for selector in ('.theme-toggle','.menu-toggle','.catalog-controls','.results-count','.evidence-trigger'):
+        assert 'html:not(.has-js) '+selector in css
+
+
+def test_primary_nav_survives_failed_javascript_asset():
+    css=(DIST/'assets/site.css').read_text()
+    assert 'html:not(.has-js) .primary-nav{display:flex' in css
+    assert 'html:not(.has-js) .header-row{height:auto' in css
+    for page in DIST.rglob('index.html'):
+        soup=BeautifulSoup(page.read_text(),'html.parser')
+        assert len(soup.select('nav[aria-label="Main navigation"] a'))==5

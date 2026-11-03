@@ -61,3 +61,7 @@ Note: the ChatGPT container's managed browser policy blocks Chromium URL navigat
 All 22 routes use the same tiny local SVG favicon and the canonical MUSITU navy, violet, and mint palette. Choosing light or dark mode saves only the visual preference in the browser tab's `sessionStorage` under `musitu_corporate_theme_v1`; no preference is sent to a server. If storage is disabled, theme switching still works for the current page. No cookies, analytics, browser localStorage, or customer data are used by the corporate shell. Existing Intelligence local encrypted workspaces are unrelated and never touched.
 
 Private research repositories are never presented as public evidence links. The FMI and Foundry cards direct visitors to a public research/evidence summary until their primary materials receive explicit publication approval. Unverified direct ChatGPT app URLs are not included in this preview; AXIOM's action goes to its published release evidence.
+
+## Missing-script resilience
+
+`python3 tests/browser_nojs.py` checks every route at 320, 390, and 1440 CSS pixels with the corporate script absent. The five-link primary navigation remains usable, and interaction-only theme/menu/filter/evidence controls do not become dead buttons. In real HTTP CI, `browser_hosted.py` additionally checks navigation with JavaScript explicitly disabled at mobile and desktop sizes. These two checks cover separate failure mechanisms.

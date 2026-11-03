@@ -1,6 +1,7 @@
 /* MUSITU corporate shell: no analytics, storage, remote requests or third-party dependencies. */
 (()=>{
   'use strict';
+  document.documentElement.classList.add('has-js');
   const qs=(s,root=document)=>root.querySelector(s);
   const qsa=(s,root=document)=>Array.from(root.querySelectorAll(s));
   const themeBtn=qs('#theme-toggle');
