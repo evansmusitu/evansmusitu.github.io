@@ -1,5 +1,5 @@
 """Create an all-in-one offline review preview; no change to the production build."""
-import json,re,sys
+import json,re,sys,base64
 from pathlib import Path
 from bs4 import BeautifulSoup
 root=Path(__file__).resolve().parents[1]
@@ -69,6 +69,8 @@ home=re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>',
             '<!-- PORTABLE REVIEW ONLY: CSP omitted; never serve this file as production -->',home)
 # Move all styles and JS inline to make it portable.
 home=home.replace('<link rel="stylesheet" href="/assets/site.css">','<style>'+css+'</style>')
+favicon=base64.b64encode((root/'assets/favicon.svg').read_bytes()).decode('ascii')
+home=home.replace('href="/assets/favicon.svg"','href="data:image/svg+xml;base64,'+favicon+'"')
 home=home.replace('<script defer src="/assets/site.js"></script>','')
 registry=json.dumps(pages,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')
 home=home.replace('</body></html>','<script type="application/json" id="portable-routes">'+registry+'</script><script>'+js+'\n'+router+'</script></body></html>')

@@ -261,3 +261,8 @@ def test_primary_nav_survives_failed_javascript_asset():
     for page in DIST.rglob('index.html'):
         soup=BeautifulSoup(page.read_text(),'html.parser')
         assert len(soup.select('nav[aria-label="Main navigation"] a'))==5
+
+def test_single_file_review_embeds_favicon_instead_of_broken_absolute_asset():
+    script=(ROOT/'scripts/make_portable_preview.py').read_text()
+    assert 'base64.b64encode' in script
+    assert 'href="/assets/favicon.svg"' in script
