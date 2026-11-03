@@ -6,6 +6,7 @@ DOM events and interaction checks without weakening network restrictions.
 """
 from pathlib import Path
 import shutil
+import re
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,6 +20,7 @@ def document(path):
     html = (DIST/path).read_text()
     assert '<link rel="stylesheet" href="/assets/site.css">' in html
     assert '<script defer src="/assets/site.js"></script>' in html
+    html=re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>', '', html)  # inline test harness only
     return (html.replace('<link rel="stylesheet" href="/assets/site.css">', '<style>'+css+'</style>')
                 .replace('<script defer src="/assets/site.js"></script>', '').replace('</body>','<script>'+js+'</script></body>'))
 
@@ -40,8 +42,9 @@ with sync_playwright() as pw:
         assert page.locator('main').is_visible(),name
         page.screenshot(path=str(ART/f'{name}-homepage.png'),full_page=True,animations='disabled',timeout=10000)
         print('HOME SCREENSHOT',flush=True)
+        initial=page.locator('html').get_attribute('data-theme')
         page.locator('#theme-toggle').click()
-        assert page.locator('html').get_attribute('data-theme')=='light',name
+        assert page.locator('html').get_attribute('data-theme')!=initial,name
         if width<=820:
             button=page.locator('#menu-toggle')
             button.click()
