@@ -1,0 +1,423 @@
+from pathlib import Path
+import html, json, re
+from bs4 import BeautifulSoup
+ROOT=Path(__file__).resolve().parents[1]
+DIST=ROOT/'dist'
+EXPECTED=['','products','products/axiom','products/education','products/fmi','products/foundry','products/markets','products/worldfabric','experiences/intelligence','research','evidence','company','trust','resources','contact','support','legal/privacy','legal/terms','accessibility','404','developers','status']
+
+def test_routes():
+    for path in EXPECTED:
+        assert (DIST/path/'index.html').is_file() if path else (DIST/'index.html').is_file()
+
+def test_semantic_a11y_and_metadata():
+    for p in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(p.read_text(),'html.parser')
+        assert soup.html.get('lang')=='en',p
+        assert soup.select_one('main#main[tabindex="-1"]'),p
+        assert soup.select_one('nav[aria-label="Main navigation"]'),p
+        assert soup.select_one('.skip[href="#main"]'),p
+        assert len(soup.select('h1'))==1,p
+        assert soup.title and soup.title.text.strip(),p
+        assert soup.select_one('meta[name="description"]'),p
+        assert soup.select_one('meta[name="robots"][content="noindex,nofollow"]'),p
+        assert not soup.select('form'),p
+        assert not soup.select('script[src^="http"]'),p
+        assert not soup.select('img[src^="http"]'),p
+
+def test_local_links():
+    for p in sorted(DIST.rglob('*.html')):
+        soup=BeautifulSoup(p.read_text(),'html.parser')
+        for a in soup.select('a[href]'):
+            href=a['href']
+            if href.startswith('/'):
+                target=href.split('#')[0].split('?')[0]
+                path=DIST/target.lstrip('/')
+                if target.endswith('/'):path=path/'index.html'
+                assert path.exists(),(p,href)
+            elif href.startswith('#') and href!='#':
+                assert soup.select_one('[id="'+href[1:]+'"]'),(p,href)
+
+def test_claim_safety_and_stage_labels():
+    catalog=(DIST/'products/index.html').read_text()
+    assert catalog.count('data-product-card')==6
+    assert catalog.count('data-evidence=')==6
+    assert catalog.count('aria-haspopup="dialog"')==7
+    soup=BeautifulSoup(catalog,'html.parser')
+    assert len(soup.select('#catalog-grid h2'))==6
+    for p in EXPECTED:
+        if p.startswith('products/'):
+            s=(DIST/p/'index.html').read_text()
+            assert 'Important limits' in s and 'PUBLIC MATURITY STATE' in s and 'EVIDENCE' in s
+    assert 'noindex' in (DIST/'index.html').read_text()
+    assert 'Disallow: /' in (DIST/'robots.txt').read_text()
+
+def test_no_sensitive_or_remote_services():
+    js=(DIST/'assets/site.js').read_text()
+    for token in ['fetch(', 'localStorage','document.cookie','XMLHttpRequest','sendBeacon','analytics']:
+        assert token not in js.replace('no analytics',''),token
+    assert 'prefers-reduced-motion' in (DIST/'assets/site.css').read_text()
+
+def test_manifest_integrity():
+    import hashlib
+    m=json.loads((DIST/'build-manifest.json').read_text())
+    for item in m:
+        p=DIST/item['path']
+        assert p.stat().st_size==item['bytes']
+        assert hashlib.sha256(p.read_bytes()).hexdigest()==item['sha256']
+
+# Contract tests added in review round three: make every staging gate machine-checkable.
+def test_strict_static_security_policy_and_safe_links():
+    import sys
+    sys.path.insert(0,str(ROOT/'scripts'))
+    from build import checked_link_url, H, PRODUCTS
+    for value in ('javascript:alert(1)','data:text/html,hi','//example.com/','http://example.com/','file:///etc/passwd','#',''):
+        import pytest
+        with pytest.raises(ValueError):checked_link_url(value)
+    for value in ('/products/','#main','https://github.com/evansmusitu','mailto:support@mftintelligence.com?subject=MUSITU%20company%20enquiry'):
+        assert checked_link_url(value)==value
+    assert H('<script>alert(1)</script>')=='&lt;script&gt;alert(1)&lt;/script&gt;'
+    assert len(set(z['slug'] for z in PRODUCTS))==6
+    for p in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(p.read_text(),'html.parser')
+        csp=soup.select_one('meta[http-equiv="Content-Security-Policy"]')
+        assert csp,p
+        directive=csp.get('content','')
+        for must in ("default-src 'none'", "script-src 'self'", "style-src 'self'", "connect-src 'none'", "form-action 'none'", "object-src 'none'", "base-uri 'none'"):
+            assert must in directive,(p,must)
+        assert soup.select_one('meta[name="referrer"]'),p
+        for a in soup.select('a[href]'):
+            href=a.get('href','')
+            assert href.startswith(('/','#','https://','mailto:')),(p,href)
+            assert not href.startswith('//'),(p,href)
+            if a.get('target')=='_blank':
+                assert {'noopener','noreferrer'}.issubset(set(a.get('rel',[]))),(p,href)
+        assert not soup.select('iframe, object, embed'),p
+
+
+def test_evidence_registration_and_explicit_release_holds():
+    from datetime import date
+    reviewed=date.fromisoformat('2026-11-02')
+    assert reviewed.year==2026
+    for p in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(p.read_text(),'html.parser')
+        script=soup.select_one('script#evidence-registry[type="application/json"]')
+        assert script,(p,'missing evidence register')
+        data=json.loads(script.string)
+        assert len(data)==6
+        assert all(item['reviewed']=='2026-11-02' for item in data.values())
+        assert soup.select_one('#evidence-reviewed'),p
+        assert not soup.select('script[onload],img[onerror]')
+    for path in ('developers','status','legal/privacy','legal/terms'):
+        s=(DIST/path/'index.html').read_text()
+        assert 'Pre-publication gate' in s,(path,'missing release hold')
+    s=(DIST/'index.html').read_text()
+    assert 'noindex,nofollow' in s
+    assert 'Cloudflare account' not in s
+
+
+def test_unique_metadata_and_deterministic_build():
+    titles=set()
+    for p in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(p.read_text(),'html.parser')
+        t=soup.title.get_text(strip=True)
+        assert t not in titles, (p,'duplicate title')
+        titles.add(t)
+        description=soup.select_one('meta[name="description"]').get('content','')
+        assert 35 <= len(description) <= 180,(p,len(description))
+        assert soup.select_one('footer[aria-label]') is None  # footer landmark is native HTML
+        assert soup.select_one('nav[aria-label="Footer navigation"]')
+    assert len(titles)==22
+    assert sorted(p.name for p in DIST.glob('*.html'))==['404.html','index.html']
+
+
+def test_palette_tokens_meet_normal_text_contrast_for_basic_surfaces():
+    # Explicit fixed-color pairs. Gradients, composites, imagery, focus indicators,
+    # component states and real AT still require human inspection.
+    palettes={
+      'dark':{'bg':'#090e1b','surface':'#10192b','surface2':'#14213a','text':'#f0f4ff','muted':'#b0bfd7','faint':'#8193b3','mint':'#72ebc7','violet':'#aaa3ff'},
+      'light':{'bg':'#f4f7fd','surface':'#ffffff','surface2':'#e9f0fa','text':'#14213c','muted':'#3c4c65','faint':'#51647e','mint':'#086c5a','violet':'#5044bf'},
+    }
+    def luminance(color):
+        values=[int(color[i:i+2],16)/255 for i in (1,3,5)]
+        linear=[v/12.92 if v<=0.04045 else ((v+0.055)/1.055)**2.4 for v in values]
+        return sum(w*v for w,v in zip((.2126,.7152,.0722),linear))
+    def contrast(a,b):
+        L=sorted((luminance(a),luminance(b)))
+        return (L[1]+0.05)/(L[0]+0.05)
+    css=(DIST/'assets/site.css').read_text()
+    for pal,color in palettes.items():
+        for key,value in color.items():
+            assert value.lower() in css.lower(),(pal,key,'token lost')
+        for foreground in ('text','muted','faint','mint','violet'):
+            for background in ('bg','surface','surface2'):
+                assert contrast(color[foreground],color[background])>=4.5,(pal,foreground,background)
+
+
+def test_accessible_progressive_enhancement_and_forced_colors():
+    css=(DIST/'assets/site.css').read_text()
+    assert '@media (forced-colors: active)' in css
+    assert '@media (prefers-contrast: more)' in css
+    for p in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(p.read_text(),'html.parser')
+        assert soup.select_one('nav[aria-label="Main navigation"]'),p
+
+
+
+def test_claim_register_is_complete_and_traces_public_sources():
+    register=json.loads((DIST/'claim-register.json').read_text())
+    assert register['schema']=='musitu.corporate.claim-register.v1'
+    assert register['release_state']=='NOINDEX_REVIEW_ONLY'
+    assert register['reviewed_on']=='2026-11-02'
+    assert len(register['families'])==6
+    names=[p['name'] for p in register['families']]
+    assert len(set(names))==6
+    for family in register['families']:
+        assert family['maturity'] and family['limits'] and family['claims']
+        assert family['evidence']['url'].startswith(('https://github.com/','/evidence/'))
+        assert family['evidence']['access'] in ('public_record','summary_only')
+        body=(DIST/'products'/family['slug']/'index.html').read_text()
+        assert family['name'] in body and family['limits'] in html.unescape(body)
+
+
+def test_first_load_performance_budget_is_bounded_static_assets():
+    # Not a runtime CWV claim: this is an enforceable uncompressed transfer budget.
+    css=(DIST/'assets/site.css').stat().st_size
+    js=(DIST/'assets/site.js').stat().st_size
+    html_sizes=[p.stat().st_size for p in DIST.rglob('index.html')]
+    assert css <= 36_000,css
+    assert js <= 12_000,js
+    assert max(html_sizes) <= 32_000,max(html_sizes)
+    assert max(html_sizes)+css+js <= 80_000
+    assert not list(DIST.rglob('*.woff*'))
+    assert not list(DIST.rglob('*.mp4'))
+
+
+def test_build_is_byte_reproducible():
+    import subprocess, sys, hashlib
+    def fingerprint():
+        return hashlib.sha256((DIST/'build-manifest.json').read_bytes()).hexdigest()
+    previous=fingerprint()
+    subprocess.run([sys.executable,str(ROOT/'scripts/build.py')],cwd=ROOT,check=True,capture_output=True)
+    assert fingerprint()==previous
+
+
+def test_dialog_source_fallback_is_named_and_safe():
+    for p in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(p.read_text(),'html.parser')
+        link=soup.select_one('dialog#evidence-dialog a#evidence-source')
+        assert link and link.get('href')=='/evidence/' and link.get_text(strip=True),p
+        assert soup.select_one('main#main[tabindex="-1"]'),p
+
+
+def test_private_repository_links_never_appear_in_public_html_or_claims():
+    private_slugs=('mft-gpu-training','musitu-foundry-forge')
+    for p in list(DIST.rglob('*.html'))+[DIST/'claim-register.json']:
+        source=p.read_text(encoding='utf-8')
+        for private in private_slugs:
+            assert private not in source,(p,private)
+    register=json.loads((DIST/'claim-register.json').read_text())
+    private_summary={r['slug'] for r in register['families'] if r['evidence']['access']=='summary_only'}
+    assert private_summary=={'fmi','foundry'}
+
+
+def test_no_unreviewed_remote_assets_or_unverified_plugin_link():
+    css=(DIST/'assets/site.css').read_text()
+    assert '@import' not in css
+    assert 'url(http' not in css.lower()
+    assert 'plugin_asdk_app_' not in (DIST/'products/axiom/index.html').read_text()
+    for page in DIST.rglob('index.html'):
+        soup=BeautifulSoup(page.read_text(),'html.parser')
+        for tag in soup.select('script[src],link[rel=stylesheet]'):
+            assert tag.get('src',tag.get('href','')).startswith('/assets/'),(page,tag)
+        for a in soup.select('a[href]'):
+            assert not a.get('href','').startswith(('http://','//','javascript:')), (page,a)
+
+
+def test_favicon_and_tab_only_theme_preference():
+    svg=(DIST/'assets/favicon.svg').read_text()
+    assert '<svg' in svg and 'MUSITU' in svg
+    js=(DIST/'assets/site.js').read_text()
+    assert "sessionStorage.getItem(themeKey)" in js
+    assert "sessionStorage.setItem(themeKey,next)" in js
+    assert 'localStorage' not in js
+    assert 'musitu_corporate_theme_v1' in js
+    for page in DIST.rglob('index.html'):
+        soup=BeautifulSoup(page.read_text(),'html.parser')
+        assert soup.select_one('link[rel="icon"][href="/assets/favicon.svg"]')
+        assert soup.select_one('meta[name="theme-color"]')
+
+
+def test_javascript_disabled_controls_are_not_inert():
+    js=(DIST/'assets/site.js').read_text()
+    css=(DIST/'assets/site.css').read_text()
+    assert "document.documentElement.classList.add('has-js')" in js
+    for selector in ('.theme-toggle','.menu-toggle','.catalog-controls','.results-count','.evidence-trigger'):
+        assert 'html:not(.has-js) '+selector in css
+
+
+def test_primary_nav_survives_failed_javascript_asset():
+    css=(DIST/'assets/site.css').read_text()
+    assert 'html:not(.has-js) .fallback-nav{display:block' in css
+    assert 'html:not(.has-js) .fallback-nav[open]>nav{display:flex' in css
+    # The initial mobile header must not become a tall block before JS loads.
+    assert 'html:not(.has-js) .header-row{height:auto' not in css
+    for page in DIST.rglob('index.html'):
+        soup=BeautifulSoup(page.read_text(),'html.parser')
+        assert len(soup.select('nav[aria-label="Main navigation"] a'))==5
+        fallback=soup.select_one('details#fallback-nav.fallback-nav')
+        assert fallback and not fallback.has_attr('open'),page
+        assert fallback.select_one('summary[aria-label="Open navigation without JavaScript"]')
+        assert len(fallback.select('nav[aria-label="Navigation without JavaScript"] a'))==6
+
+def test_single_file_review_embeds_favicon_instead_of_broken_absolute_asset():
+    script=(ROOT/'scripts/make_portable_preview.py').read_text()
+    assert 'base64.b64encode' in script
+    assert 'href="/assets/favicon.svg"' in script
+
+
+def test_site_search_build_time_index_is_public_sanitized_and_consistent():
+    import json
+    from bs4 import BeautifulSoup
+    for file in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(file.read_text(encoding='utf-8'),'html.parser')
+        toggle=soup.select_one('button#search-toggle[aria-controls="site-search"][aria-haspopup="dialog"]')
+        dialog=soup.select_one('dialog#site-search[aria-labelledby="site-search-title"]')
+        search_input=soup.select_one('input#site-search-query[type="search"]')
+        assert soup.select_one('ul#site-search-results'),file
+        assert toggle and dialog and search_input and soup.select_one('label[for="site-search-query"]'),file
+        source=soup.select_one('script#site-search-index[type="application/json"]')
+        assert source and source.string,file
+        records=json.loads(source.string)
+        assert len(records)==17,(file,len(records))
+        seen=set()
+        for item in records:
+            assert set(item)=={'url','title','description'},item
+            assert item['url'].startswith('/') and item['url'].endswith('/')
+            assert not any(private in json.dumps(item) for private in ('mft-gpu-training','musitu-foundry-forge','customer/axiom','private'))
+            assert item['url'] not in seen,item['url']
+            seen.add(item['url'])
+            assert (DIST/item['url'].lstrip('/')/'index.html').is_file() if item['url']!='/' else (DIST/'index.html').is_file()
+        assert '/products/axiom/' in seen and '/research/' in seen and '/experiences/intelligence/' in seen
+        assert '/status/' not in seen and '/legal/privacy/' not in seen
+    js=(DIST/'assets/site.js').read_text(encoding='utf-8')
+    assert 'siteSearch.showModal()' in js and 'searchResults.replaceChildren()' in js
+    assert 'document.createElement' in js and not 'innerHTML' in js
+    css=(DIST/'assets/site.css').read_text(encoding='utf-8')
+    assert 'html:not(.has-js) .search-toggle' in css
+
+
+def test_audience_paths_are_real_navigation_not_unsupported_marketing_claims():
+    soup=BeautifulSoup((DIST/'index.html').read_text(),'html.parser')
+    cards=soup.select('#find-your-path a.audience-card')
+    assert len(cards)==4
+    assert {a['href'] for a in cards}=={'/products/axiom/','/evidence/','/products/education/','/products/foundry/'}
+    assert any('controlled pilots' in a.get_text() for a in cards)
+    assert any('pending independent qualification' in a.get_text() for a in cards)
+    assert all(a.select_one('h3') for a in cards)
+
+
+def test_unique_metadata_and_no_unreviewed_canonical_domain():
+    titles=[]
+    for page in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(page.read_text(encoding='utf-8'),'html.parser')
+        t=soup.title.text.strip()
+        assert 9<len(t)<=80,(page,'title length',len(t))
+        titles.append(t)
+        desc=soup.select_one('meta[name="description"]')['content']
+        assert 35<=len(desc)<=210,(page,'description length',len(desc))
+        assert not soup.select('link[rel="canonical"]'),(page,'unverified domain')
+        assert soup.select_one('meta[property="og:type"]')
+        assert soup.select_one('meta[property="og:title"]')
+        assert soup.select_one('meta[property="og:description"]')
+    assert len(set(titles))==len(titles),'Duplicate document titles'
+
+
+def test_outbound_evidence_urls_are_explicit_and_cannot_smuggle_authority():
+    import sys, pytest
+    sys.path.insert(0,str(ROOT/'scripts'))
+    from build import checked_link_url, ALLOWED_PUBLIC_HOSTS, VERIFIED_DRAFT_CONTACT
+    assert 'github.com' in ALLOWED_PUBLIC_HOSTS
+    assert checked_link_url('https://evansmusitu.github.io/')=='https://evansmusitu.github.io/'
+    assert checked_link_url('mailto:'+VERIFIED_DRAFT_CONTACT+'?subject=Company%20enquiry')
+    attacks=(
+        'https://github.com.evil.test/product',
+        'https://github.com@evil.test/',
+        'https://github.com:8080/',
+        'https://github.com\\@evil.test/',
+        'https://evil.test/',
+        'https://github.com/%0aevil',
+        'https://github.com/%0d%0aInjection',
+        'https://github.com/#irrelevant',
+        'https://github.com/\n',
+        '//github.com/',
+        '/\\evil.test/',
+        '/evidence/../private/',
+        '/%2f%2fevil.test/',
+        'mailto:attacker@evil.test?subject=hello',
+        'mailto:'+VERIFIED_DRAFT_CONTACT+'?cc=third@evil.test',
+        'mailto:'+VERIFIED_DRAFT_CONTACT+'?subject=Hi&bcc=secret@evil.test',
+        'mailto:'+VERIFIED_DRAFT_CONTACT+'?subject=Hi%0d%0aBcc:evil@evil.test',
+        'javascript:alert(1)',
+    )
+    for case in attacks:
+        with pytest.raises(ValueError):checked_link_url(case)
+
+
+def test_server_rendered_current_navigation_and_named_hero_illustration():
+    # Navigation semantics must not depend on JavaScript loading successfully.
+    for current in ('products','research','company','trust'):
+        soup=BeautifulSoup((DIST/current/'index.html').read_text(),'html.parser')
+        primary=soup.select_one('nav[aria-label="Main navigation"]')
+        selected=primary.select('a[aria-current="page"]')
+        assert len(selected)==1,(current,selected)
+        assert selected[0].get('href')=='/'+current+'/',current
+    home=BeautifulSoup((DIST/'index.html').read_text(),'html.parser')
+    illustration=home.select_one('.hero-visual[role="img"][aria-label]')
+    assert illustration and illustration['aria-label'].strip()
+
+
+def test_search_accessibility_and_bounded_results_controls():
+    for path in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(path.read_text(),'html.parser')
+        query=soup.select_one('input#site-search-query')
+        assert query and query.get('maxlength')=='120',path
+        assert query.get('aria-controls')=='site-search-results'
+        help_element=soup.select_one('#site-search-help')
+        assert help_element and 'site-search-help' in query.get('aria-describedby','')
+    js=(DIST/'assets/site.js').read_text()
+    assert 'Showing ${matching.length} of ${matches.length} matching pages.' in js
+    assert "event.key!=='ArrowUp'&&event.key!=='ArrowDown'" in js
+
+
+def test_external_new_tab_navigation_has_accessible_warning():
+    pages=list(DIST.rglob('index.html'))
+    observed=0
+    for page in pages:
+        soup=BeautifulSoup(page.read_text(),'html.parser')
+        for a in soup.select('a[target="_blank"]'):
+            assert 'noopener' in a.get('rel',[])
+            assert 'noreferrer' in a.get('rel',[])
+            assert 'opens in a new tab' in a.get_text(' ',strip=True).lower(),(page,a)
+            observed+=1
+    assert observed>=10
+    assert '.sr-only' in (DIST/'assets/site.css').read_text()
+
+
+def test_server_rendered_breadcrumbs_cover_deep_routes_without_javascript():
+    root=BeautifulSoup((DIST/'index.html').read_text(),'html.parser')
+    assert not root.select_one('nav[aria-label="Breadcrumb"]')
+    for path in sorted(DIST.rglob('index.html')):
+        if path==DIST/'index.html':continue
+        route=path.parent.relative_to(DIST).as_posix()
+        soup=BeautifulSoup(path.read_text(),'html.parser')
+        nav=soup.select_one('main nav[aria-label="Breadcrumb"]')
+        assert nav,path
+        items=nav.select('ol > li')
+        assert items[0].a.get('href')=='/',path
+        assert len(nav.select('li[aria-current="page"]'))==1,path
+        assert items[-1].get_text(strip=True),path
+        if route.startswith('products/'):
+            assert len(items)==3
+            assert items[1].a.get('href')=='/products/'
+        else:
+            assert len(items)==2
