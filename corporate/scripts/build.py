@@ -204,6 +204,17 @@ def build():
         out=(DIST/path/'index.html') if path else DIST/'index.html'
         out.parent.mkdir(parents=True,exist_ok=True)
         out.write_text(render(page),encoding='utf-8')
+    # Readable, source-linked public-claim register for staged editorial review.
+    register={
+      'schema':'musitu.corporate.claim-register.v1',
+      'reviewed_on':EVIDENCE_REVIEW_DATE,
+      'release_state':'NOINDEX_REVIEW_ONLY',
+      'note':'Source review is not a production certification or independent provider acceptance.',
+      'families':[{'slug':p['slug'],'name':p['name'],'category':p['category'],
+                   'maturity':p['maturity'],'claims':p['points'],'limits':p['limits'],
+                   'evidence':{'title':p['proof'],'url':checked_link_url(p['proof_url'])}} for p in PRODUCTS]
+    }
+    (DIST/'claim-register.json').write_text(json.dumps(register,ensure_ascii=False,indent=2),encoding='utf-8')
     (DIST/'robots.txt').write_text('User-agent: *\nDisallow: /\n',encoding='utf-8')
     (DIST/'404.html').write_text(render(PAGES['404']),encoding='utf-8')
     manifests=[]
