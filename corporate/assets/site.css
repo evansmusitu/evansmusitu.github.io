@@ -22,3 +22,10 @@
   :focus-visible {outline:3px solid Highlight;outline-offset:3px}
 }
 @media(max-width:820px){.noscript-nav{display:flex;gap:15px;flex-wrap:wrap;padding-block:13px}.noscript-nav a{text-decoration:underline;color:var(--text)}}
+/* Deliberate tap targets: preserve readable links without tiny hit areas. */
+.primary-nav .nav-link{display:inline-flex;align-items:center;min-height:44px}
+.mobile-nav .nav-link,.noscript-nav a{display:inline-flex;align-items:center;min-height:44px}
+.footer-links a{display:inline-flex;align-items:center;min-height:36px}
+.quiet-link,.text-link{display:inline-flex;align-items:center;min-height:32px}
+.evidence-trigger{min-height:40px;display:inline-flex;align-items:center}
+.dialog-close{width:44px;height:44px}
