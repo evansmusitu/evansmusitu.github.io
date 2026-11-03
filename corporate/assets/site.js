@@ -62,10 +62,11 @@
       evidenceDialog.showModal();
       qs('#evidence-close').focus();
     });
-    const close=()=>evidenceDialog.close();
+    const close=()=>{if(evidenceDialog.open)evidenceDialog.close();};
+    evidenceDialog.addEventListener('cancel',event=>{event.preventDefault();close();});
     qs('#evidence-close').addEventListener('click',close);
     evidenceDialog.addEventListener('click',event=>{if(event.target===evidenceDialog)close();});
-    evidenceDialog.addEventListener('close',()=>{if(trigger)trigger.focus();});
+    evidenceDialog.addEventListener('close',()=>{if(trigger)requestAnimationFrame(()=>trigger.focus());});
   }
   const search=qs('#catalog-query'),category=qs('#catalog-category'),state=qs('#catalog-state');
   const count=qs('#catalog-count'),empty=qs('#catalog-empty');
