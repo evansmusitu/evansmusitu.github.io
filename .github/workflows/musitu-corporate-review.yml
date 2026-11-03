@@ -41,11 +41,15 @@ jobs:
       - name: Extended keyboard, reduced-motion and responsive matrix (198 views)
         working-directory: corporate
         run: python tests/browser_extended.py
+      - name: Generate standalone zero-network reviewer artifact
+        working-directory: corporate
+        run: python scripts/make_portable_preview.py
       - name: Confirm noindex and no production writes
         run: |
           test -s corporate/dist/index.html
           grep -q 'noindex,nofollow' corporate/dist/index.html
           test "$(find corporate/dist -name index.html | wc -l)" -eq 22
+          test -s corporate/dist/claim-register.json
           test ! -e corporate/dist/.env
       - name: Upload review-only website and screenshots
         if: always()
@@ -56,5 +60,6 @@ jobs:
             corporate/dist/
             corporate/review-artifacts/*.png
             corporate/review-artifacts/extended-browser-results.json
+            corporate/review-artifacts/MUSITU_portable_interactive_preview.html
           if-no-files-found: warn
           retention-days: 7
