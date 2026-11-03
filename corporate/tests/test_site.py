@@ -159,3 +159,41 @@ def test_accessible_progressive_enhancement_and_forced_colors():
     for p in sorted(DIST.rglob('index.html')):
         soup=BeautifulSoup(p.read_text(),'html.parser')
         assert soup.select_one('noscript nav[aria-label="Navigation without JavaScript"]'),p
+
+
+
+def test_claim_register_is_complete_and_traces_public_sources():
+    register=json.loads((DIST/'claim-register.json').read_text())
+    assert register['schema']=='musitu.corporate.claim-register.v1'
+    assert register['release_state']=='NOINDEX_REVIEW_ONLY'
+    assert register['reviewed_on']=='2026-11-02'
+    assert len(register['families'])==6
+    names=[p['name'] for p in register['families']]
+    assert len(set(names))==6
+    for family in register['families']:
+        assert family['maturity'] and family['limits'] and family['claims']
+        assert family['evidence']['url'].startswith('https://github.com/')
+        body=(DIST/'products'/family['slug']/'index.html').read_text()
+        assert family['name'] in body and family['limits'] in html.unescape(body)
+
+
+def test_first_load_performance_budget_is_bounded_static_assets():
+    # Not a runtime CWV claim: this is an enforceable uncompressed transfer budget.
+    css=(DIST/'assets/site.css').stat().st_size
+    js=(DIST/'assets/site.js').stat().st_size
+    html_sizes=[p.stat().st_size for p in DIST.rglob('index.html')]
+    assert css <= 36_000,css
+    assert js <= 12_000,js
+    assert max(html_sizes) <= 32_000,max(html_sizes)
+    assert max(html_sizes)+css+js <= 80_000
+    assert not list(DIST.rglob('*.woff*'))
+    assert not list(DIST.rglob('*.mp4'))
+
+
+def test_build_is_byte_reproducible():
+    import subprocess, sys, hashlib
+    def fingerprint():
+        return hashlib.sha256((DIST/'build-manifest.json').read_bytes()).hexdigest()
+    previous=fingerprint()
+    subprocess.run([sys.executable,str(ROOT/'scripts/build.py')],cwd=ROOT,check=True,capture_output=True)
+    assert fingerprint()==previous
