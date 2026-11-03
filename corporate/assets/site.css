@@ -80,3 +80,19 @@ html:not(.has-js) .search-toggle{display:none!important}
 @media(max-width:650px){.audience-grid{grid-template-columns:1fr}.audience-card{min-height:210px}}
 @media(forced-colors:active){.audience-card{border-color:CanvasText;background:Canvas}.audience-action{color:LinkText}}
 @media(prefers-reduced-motion:reduce){.audience-card{transition:none}.audience-card:hover{transform:none}}
+
+/* New-tab disclosure remains available to assistive technology without
+   disrupting visual rhythm or causing responsive overflow. */
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+
+/* Server-rendered breadcrumbs improve direct deep-link navigation even when JS fails. */
+.breadcrumbs{padding-top:23px;color:var(--muted);font-size:12px;line-height:1.5}
+.breadcrumbs ol{display:flex;align-items:baseline;flex-wrap:wrap;list-style:none;gap:9px;margin:0;padding:0}
+.breadcrumbs li{min-width:0;overflow-wrap:anywhere}
+.breadcrumbs li+li::before{content:'›';color:var(--faint);margin-right:9px}
+.breadcrumbs a{text-decoration:underline;text-underline-offset:3px}
+.breadcrumbs a:hover{color:var(--mint)}
+.breadcrumbs li[aria-current=page]{color:var(--text);font-weight:750}
+.breadcrumbs + .page-hero{padding-top:40px}
+@media(max-width:560px){.breadcrumbs{padding-top:14px}.breadcrumbs+.page-hero{padding-top:26px}}
+@media(forced-colors:active){.breadcrumbs a,.breadcrumbs li[aria-current=page]{color:CanvasText}}

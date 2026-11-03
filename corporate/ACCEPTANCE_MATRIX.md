@@ -35,3 +35,8 @@ Automated checks are useful regression evidence, not third-party certification o
 
 | Staging performance and no third-party traffic | `browser_perf.py`, 8 route/device combinations, local HTTP only | Lab-only measurement; no field Core Web Vitals claims |
 | HTTP security policy | `DEPLOYMENT_SECURITY_HEADERS.md` and CSP-negative browser test | Staging verified; provider headers and HSTS owner-gated |
+
+| Staged external-link allowlist and new-window announcement | `checked_link_url` + negative URL tests + evidence dialog | Automated staging check; external source assertions still need manual review |
+| Semantic deep-link breadcrumbs and SSR nav state | `breadcrumbs(page)`, `header(page)`, static tests | Verified without JavaScript |
+| Computed solid-background text contrast | `browser_color_contrast.py`, 88 theme/view/route checks | Automated sub-scope; complex painted elements and independent WCAG audit pending |
+| Locked-down review CI dependencies | Exact official GitHub Action release commit SHAs; no persisted checkout token | Read-only CI; staging only |

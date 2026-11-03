@@ -84,3 +84,12 @@ The search control uses a compact public-route index embedded at build time. No 
 ## Staging laboratory performance and deployment boundary
 
 `python3 tests/browser_perf.py` on the GitHub Actions runner serves the generated site over local HTTP and records FCP/LCP candidates, observed layout shifts, resource counts, and bytes for four representative routes at mobile/desktop sizes. Metrics are explicitly staging lab observations, **not** real-user Core Web Vitals. It rejects unexpected third-party requests and large layout shifts. The production response-header and origin requirements live in `DEPLOYMENT_SECURITY_HEADERS.md` and must be reviewed against real provider configuration before launch.
+
+## Build 7 hardening: navigation, source integrity and readable evidence links
+
+- All external evidence origins are explicitly allowlisted by `checked_link_url` (`github.com` and the existing public `evansmusitu.github.io` origin). It rejects user-info URLs, alternate ports, misleading subdomains, control characters, protocol-relative links and malformed internal routes. Only the existing publicly documented `support@mftintelligence.com` mail draft is allowed; **corporate email delivery remains unverified**.
+- New-window source links include a visually hidden accessible announcement. The evidence dialog uses a same-tab link for internal summaries and new tabs only for reviewed external sources, with a matching announcement.
+- Navigation `aria-current=page` and breadcrumbs render server-side and stay available when JavaScript is disabled or fails.
+- Site search announces capped result counts correctly and supports ArrowUp/ArrowDown navigation through the result links. The query field is bounded to 120 characters; queries stay in the local browser.
+- `tests/browser_color_contrast.py` adds a computed text-contrast regression across all 22 routes at two widths in light and dark modes. It evaluates solid, resolved backgrounds; **gradient/image/translucent areas and real assistive technology still require review**.
+- Review GitHub Actions are pinned to exact upstream-verified commit SHAs, checkout credentials are not persisted, and the workflow remains read-only. No production or live app changes.

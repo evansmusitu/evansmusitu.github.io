@@ -67,7 +67,16 @@
       qs('#evidence-maturity').textContent=rec.maturity;
       qs('#evidence-limits').textContent=rec.limits;
       qs('#evidence-reviewed').textContent=rec.reviewed+' (source review, not certification)';
-      const url=qs('#evidence-source'); url.href=rec.url; url.textContent=rec.proof+' ↗';
+      const url=qs('#evidence-source');
+      const external=rec.url.startsWith('https://');
+      url.href=rec.url;
+      url.target=external?'_blank':'_self';
+      if(external)url.rel='noopener noreferrer';else url.removeAttribute('rel');
+      url.textContent=rec.proof+(external?' ↗':'');
+      if(external){
+        const note=document.createElement('span');note.className='sr-only';
+        note.textContent=' (opens in a new tab)';url.append(note);
+      }
       evidenceDialog.showModal();
       qs('#evidence-close').focus();
     });
@@ -99,9 +108,12 @@
       const query=normalized(searchBox.value.trim());
       if(!query){searchFeedback.textContent='Type to search public MUSITU pages.';return;}
       const words=query.split(/\s+/).filter(Boolean).slice(0,7);
-      const matching=pages.map(page=>({page,rank:score(page,words)})).filter(entry=>entry.rank>0)
-        .sort((a,b)=>b.rank-a.rank||a.page.title.localeCompare(b.page.title)).slice(0,8);
-      searchFeedback.textContent=matching.length?`${matching.length} matching page${matching.length===1?'':'s'}.`:'No matching pages. Try another word or browse Products.';
+      const matches=pages.map(page=>({page,rank:score(page,words)})).filter(entry=>entry.rank>0)
+        .sort((a,b)=>b.rank-a.rank||a.page.title.localeCompare(b.page.title));
+      const matching=matches.slice(0,8);
+      searchFeedback.textContent=matches.length
+        ?(matches.length>matching.length?`Showing ${matching.length} of ${matches.length} matching pages.`:`${matches.length} matching page${matches.length===1?'':'s'}.`)
+        :'No matching pages. Try another word or browse Products.';
       const fragment=document.createDocumentFragment();
       for(const entry of matching){
         const item=document.createElement('a');item.href=entry.page.url;item.className='search-result';
@@ -124,10 +136,14 @@
       }
     });
     searchResults.addEventListener('keydown',event=>{
-      if(event.key==='ArrowUp'){
-        const first=qs('.search-result',searchResults);
-        if(event.target===first){event.preventDefault();searchBox.focus();}
-      }
+      if(event.key!=='ArrowUp'&&event.key!=='ArrowDown')return;
+      const links=qsa('.search-result',searchResults);
+      const current=links.indexOf(event.target);
+      if(current<0)return;
+      event.preventDefault();
+      if(event.key==='ArrowUp'&&current===0){searchBox.focus();return;}
+      const next=Math.max(0,Math.min(links.length-1,current+(event.key==='ArrowDown'?1:-1)));
+      links[next].focus();
     });
     // Native dialog Escape and backdrop behavior; restore focus to the trigger.
     siteSearch.addEventListener('click',e=>{if(e.target===siteSearch)hide();});

@@ -63,3 +63,12 @@
 ## Lab performance versus field performance
 - A staging localhost browser report is generated under `review-artifacts/performance-lab.json` with Chromium first-contentful-paint observations, LCP candidates, observed layout shifts and asset bytes. This is not a production page-speed score or a substitute for the real-user 75th-percentile Core Web Vitals targets.
 - The proposed response CSP, Permissions-Policy, Referrer-Policy, and nosniff rules are documented in `DEPLOYMENT_SECURITY_HEADERS.md`, but no live headers can be claimed without origin/account readback.
+
+## Build 7 — structured independent quality boundaries
+
+- Rejection tests cover authority-confusion URLs (`github.com@evil.example`, misleading subdomains, custom ports), percent-encoded CR/LF, malformed internal paths and unauthorized `mailto` headers. The source validator is build-time only, protecting *staged corporate outbound links*; it is not an external-site content audit.
+- The navigation state and breadcrumb hierarchy are now static HTML. This works with normal page loads and no-JavaScript access, including mobile fallback.
+- Evidence modal external links disclose new-tab behavior and internal source summaries remain in-page navigation. This was found while expanding automated accessibility tests.
+- The computed browser contrast audit checks **solid-background text only**, currently 88 route/size/theme views. It intentionally skips complex painted backgrounds; the figures must not be presented as certified WCAG compliance or accessibility conformance.
+- The review workflow uses fixed GitHub action commit IDs validated against official GitHub release tags, with `persist-credentials: false`; a passing CI build does not establish full dependency-chain integrity or production hosting security.
+- Production release remains blocked pending independent accessibility, security and legal review, confirmed contact, verified domain/response headers, real-user field performance and separate explicit owner merge/deploy authorization.

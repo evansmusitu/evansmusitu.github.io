@@ -2,22 +2,42 @@
 """MUSITU corporate website: deterministic, dependency-free static builder.
 This builds a staging preview only, never touches deployed Intelligence assets.
 """
-import json, html, shutil, hashlib
+import json, html, shutil, hashlib, re
+from urllib.parse import urlsplit, unquote, parse_qsl
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 DIST=ROOT/'dist'
 H=lambda s: html.escape(str(s),quote=True)
 EVIDENCE_REVIEW_DATE='2026-11-02'
-ALLOWED_EXTERNAL_PREFIXES=('https://','mailto:')
+# Stage-specific outbound allowlist: only inspected public evidence domains.
+# New domains must be separately reviewed before they are admitted.
+ALLOWED_PUBLIC_HOSTS=frozenset({'github.com','evansmusitu.github.io'})
+VERIFIED_DRAFT_CONTACT='support@mftintelligence.com'  # published contact; corporate owner verification pending
 
-# Explicit URL allowlist prevents product data from silently becoming script or data links.
+
 def checked_link_url(url):
-    url=str(url)
-    if url.startswith('/') and not url.startswith('//'):
+    if not isinstance(url,str) or not url or url.strip()!=url or "\\" in url:
+        raise ValueError('Invalid or ambiguous URL')
+    if any(ord(ch)<32 or ord(ch)==127 for ch in unquote(url)):
+        raise ValueError('Control characters are forbidden in links')
+    if url.startswith('#'):
+        if re.fullmatch(r'#[A-Za-z][A-Za-z0-9_-]*',url):return url
+        raise ValueError('Malformed internal fragment')
+    if url.startswith('/'):
+        if re.fullmatch(r'/(?:[a-z0-9-]+/)*',url):return url
+        raise ValueError('Malformed or protocol-relative internal route')
+    parsed=urlsplit(url)
+    if parsed.scheme=='https':
+        if (parsed.hostname not in ALLOWED_PUBLIC_HOSTS or parsed.username is not None
+            or parsed.password is not None or parsed.port is not None or not parsed.netloc
+            or parsed.fragment or parsed.netloc.lower()!=parsed.hostname):
+            raise ValueError('Unreviewed or ambiguous external evidence origin')
         return url
-    if url.startswith('#') and len(url)>1:
-        return url
-    if url.startswith(ALLOWED_EXTERNAL_PREFIXES) and all(ord(c)>=32 for c in url):
+    if parsed.scheme=='mailto':
+        headers=parse_qsl(parsed.query,keep_blank_values=True)
+        if (parsed.path!=VERIFIED_DRAFT_CONTACT or parsed.netloc or parsed.fragment
+            or len(headers)!=1 or headers[0][0]!='subject' or not (1<=len(headers[0][1])<=120)):
+            raise ValueError('Unapproved or malformed email destination')
         return url
     raise ValueError('Unsupported or unsafe link scheme')
 
@@ -62,10 +82,10 @@ NAV=[('Products','/products/'),('Research','/research/'),('Evidence','/evidence/
 SITE='MUSITU'
 BADGE={'public':'public','prototype':'prototype','research':'research'}
 
-def link(url,label,cls='',external=False):
+def link(url,label,cls='',external=False,current=False):
     url=checked_link_url(url)
     ext=external or url.startswith('https://')
-    return f'<a class="{cls}" href="{H(url)}"'+(' target="_blank" rel="noopener noreferrer"' if ext else '')+f'>{H(label)}'+ (' <span aria-hidden="true">↗</span>' if ext else '')+'</a>'
+    return f'<a class="{cls}" href="{H(url)}"'+(' target="_blank" rel="noopener noreferrer"' if ext else '')+(' aria-current="page"' if current else '')+f'>{H(label)}'+ (' <span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span>' if ext else '')+'</a>'
 
 def bstatus(p):return f'<span class="status status--{H(p["flag"])}"><span class="dot" aria-hidden="true"></span>{H(p["maturity"])}</span>'
 
@@ -87,14 +107,27 @@ def head(title,description,canonical='/'):
     <title>{H(full)}</title><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/site.css"><script defer src="/assets/site.js"></script>
     </head><body><a href="#main" class="skip">Skip to main content</a>'''
 
-def header():
-    nav=''.join(link(url,label,'nav-link') for label,url in NAV)
+def header(current_path=''):
+    current_url='/'+current_path+'/' if current_path else '/'
+    nav=''.join(link(url,label,'nav-link',current=(url==current_url)) for label,url in NAV)
     return f'''<header class="site-header"><div class="shell header-row">
       {link('/','<M> MUSITU','brand')}<nav class="primary-nav" id="primary-nav" aria-label="Main navigation">{nav}</nav>
       <div class="header-actions"><button type="button" class="search-toggle" id="search-toggle" aria-label="Search MUSITU pages" aria-haspopup="dialog" aria-controls="site-search" title="Search pages (Ctrl+K)"><svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.3"></circle><path d="m16 16 5 5"></path></svg></button><button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch color theme" title="Switch color theme">◐</button>{link('/experiences/intelligence/','Try Intelligence','button button--small')}
       <button type="button" class="menu-toggle" id="menu-toggle" aria-controls="mobile-nav" aria-expanded="false" aria-label="Open navigation"><span></span><span></span><span></span></button></div></div>
       <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation" hidden>{nav}{link('/experiences/intelligence/','Try Intelligence','nav-link')}</nav>
       </header>'''.replace('&lt;M&gt;','<span class="brand-mark" aria-hidden="true">M</span>')
+
+def breadcrumbs(page):
+    """Semantic, server-rendered navigation for direct links and script failures."""
+    path=page['path']
+    if not path:return ''
+    segments=[('<a href="/">Home</a>',None)]
+    if path.startswith('products/'):
+        segments.append(('<a href="/products/">Products</a>',None))
+    segments.append((H(page['title']), 'page'))
+    lis=''.join('<li'+(' aria-current="page"' if current else '')+'>'+label+'</li>'
+                for label,current in segments)
+    return '<nav class="breadcrumbs shell" aria-label="Breadcrumb"><ol>'+lis+'</ol></nav>'
 
 def footer():
     links=[('Products','/products/'),('Research','/research/'),('Trust','/trust/'),('Support','/support/'),('Privacy','/legal/privacy/'),('Terms','/legal/terms/'),('Accessibility','/accessibility/'),('Contact','/contact/')]
@@ -117,7 +150,7 @@ def home():
     <p class="lead">MUSITU develops applied AI products for quantitative work, responsible automation and connected digital experiences—designed to make important results easier to inspect.</p>
     <div class="hero-actions">{link('/products/axiom/','Explore AXIOM','button button--primary')}{link('/products/','Explore the portfolio','button button--ghost')}</div>
     <p class="microcopy">Independent evaluation matters. Availability differs across products.</p></div>
-    <div class="hero-visual" aria-label="Illustration of MUSITU connected product families"><div class="visual-grid"></div><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="visual-core"><span class="core-mark">✳</span><strong>MUSITU</strong><small>INTELLIGENCE</small></div>
+    <div class="hero-visual" role="img" aria-label="Illustration of MUSITU connected product families"><div class="visual-grid"></div><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="visual-core"><span class="core-mark">✳</span><strong>MUSITU</strong><small>INTELLIGENCE</small></div>
     <span class="orbit-tag tag-a">AXIOM</span><span class="orbit-tag tag-b">EDUCATION</span><span class="orbit-tag tag-c">FOUNDRY</span><span class="orbit-tag tag-d">WORLDFABRIC</span><div class="visual-bottom"><span>Six canonical families</span><span>One accountable identity</span></div></div></section>
     {evidence_strip()}
     <section class="section shell" id="flagship">{section_title('01 / Flagship','Complex questions deserve <span class="accent-text">checkable answers.</span>','Axiom is MUSITU’s primary quantitative-intelligence product. Public release and future development are distinct.')}
@@ -194,7 +227,7 @@ def render(page):
     elif page['kind']=='product':content=product_page(next(p for p in PRODUCTS if page['path']=='products/'+p['slug']))
     else:content=editorial(page['kind'])
     registry=json.dumps({p['slug']:{'name':p['name'],'maturity':p['maturity'],'proof':p['proof'],'url':p['proof_url'],'limits':p['limits'],'reviewed':EVIDENCE_REVIEW_DATE} for p in PRODUCTS},ensure_ascii=False).replace('<','\\u003c')
-    drawer=f"""<dialog class=\"evidence-dialog\" id=\"evidence-dialog\" aria-labelledby=\"evidence-title\"><div class=\"dialog-header\"><span class=\"eyebrow\">EVIDENCE RECORD</span><button type=\"button\" id=\"evidence-close\" class=\"dialog-close\" aria-label=\"Close evidence dialog\">×</button></div><h2 id=\"evidence-title\"></h2><p class=\"dialog-label\">CURRENT MATURITY</p><p id=\"evidence-maturity\"></p><p class=\"dialog-label\">WHAT THIS DOES NOT ESTABLISH</p><p id=\"evidence-limits\"></p><p class=\"dialog-label\">SOURCE REVIEW DATE</p><p id=\"evidence-reviewed\"></p><p class=\"dialog-label\">SUPPORTING SOURCE</p><a id=\"evidence-source\" class=\"text-link\" href=\"/evidence/\" rel=\"noopener noreferrer\" target=\"_blank\">Review the public evidence register</a><p class=\"dialog-footnote\">Source records are not a substitute for independent certification.</p></dialog><script type=\"application/json\" id=\"evidence-registry\">{registry}</script>"""
+    drawer=f"""<dialog class=\"evidence-dialog\" id=\"evidence-dialog\" aria-labelledby=\"evidence-title\"><div class=\"dialog-header\"><span class=\"eyebrow\">EVIDENCE RECORD</span><button type=\"button\" id=\"evidence-close\" class=\"dialog-close\" aria-label=\"Close evidence dialog\">×</button></div><h2 id=\"evidence-title\"></h2><p class=\"dialog-label\">CURRENT MATURITY</p><p id=\"evidence-maturity\"></p><p class=\"dialog-label\">WHAT THIS DOES NOT ESTABLISH</p><p id=\"evidence-limits\"></p><p class=\"dialog-label\">SOURCE REVIEW DATE</p><p id=\"evidence-reviewed\"></p><p class=\"dialog-label\">SUPPORTING SOURCE</p><a id=\"evidence-source\" class=\"text-link\" href=\"/evidence/\">Review the public evidence register</a><p class=\"dialog-footnote\">Source records are not a substitute for independent certification.</p></dialog><script type=\"application/json\" id=\"evidence-registry\">{registry}</script>"""
     # Compact, build-time public route index. No analytics, remote fetches, or private document text.
     indexed=[]
     for path,item in PAGES.items():
@@ -205,14 +238,18 @@ def render(page):
         desc=(product['line']+' '+product['maturity']) if product else item['description']
         indexed.append({'url':'/'+path+'/' if path else '/', 'title':item['title'] if path else 'MUSITU homepage', 'description':desc})
     public_search_index=json.dumps(indexed,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')
-    search_dialog=f'''<dialog class="site-search" id="site-search" aria-labelledby="site-search-title"><div class="search-head"><div><span class="eyebrow">SITE DISCOVERY</span><h2 id="site-search-title">Find your way around MUSITU</h2></div><button type="button" id="search-close" class="dialog-close" aria-label="Close site search">×</button></div><label for="site-search-query">Search products, research and pages</label><input id="site-search-query" type="search" autocomplete="off" spellcheck="false" placeholder="Try Axiom, learning, research…"><p id="site-search-feedback" class="search-feedback" role="status" aria-live="polite">Type to search public MUSITU pages.</p><ul id="site-search-results" class="search-results" aria-label="Page search results"></ul><p class="search-help">Shortcut: Ctrl+K or ⌘K. This search runs only in your browser.</p></dialog><script type="application/json" id="site-search-index">{public_search_index}</script>'''
-    return head(page['title'],page['description'])+header()+f'<main id="main" tabindex="-1">{content}</main>'+drawer+search_dialog+footer()
+    search_dialog=f'''<dialog class="site-search" id="site-search" aria-labelledby="site-search-title"><div class="search-head"><div><span class="eyebrow">SITE DISCOVERY</span><h2 id="site-search-title">Find your way around MUSITU</h2></div><button type="button" id="search-close" class="dialog-close" aria-label="Close site search">×</button></div><label for="site-search-query">Search products, research and pages</label><input id="site-search-query" type="search" autocomplete="off" spellcheck="false" maxlength="120" aria-controls="site-search-results" aria-describedby="site-search-help" placeholder="Try Axiom, learning, research…"><p id="site-search-feedback" class="search-feedback" role="status" aria-live="polite">Type to search public MUSITU pages.</p><ul id="site-search-results" class="search-results" aria-label="Page search results"></ul><p class="search-help" id="site-search-help">Shortcut: Ctrl+K or ⌘K. This search runs only in your browser.</p></dialog><script type="application/json" id="site-search-index">{public_search_index}</script>'''
+    return head(page['title'],page['description'])+header(page['path'])+f'<main id="main" tabindex="-1">{breadcrumbs(page)}{content}</main>'+drawer+search_dialog+footer()
 
 def build():
     for product in PRODUCTS:
         assert product['slug'].isalnum(), 'Invalid product slug'
         checked_link_url(product['proof_url'])
         checked_link_url(product['action_url'])
+    for _,url,_ in SOURCE_LIST:
+        checked_link_url(url)
+    for label,url in NAV:
+        checked_link_url(url)
     if DIST.exists():shutil.rmtree(DIST)
     DIST.mkdir(parents=True)
     (DIST/'assets').mkdir()

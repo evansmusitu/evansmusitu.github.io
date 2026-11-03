@@ -48,6 +48,20 @@ with sync_playwright() as pw:
                 assert page.locator('.search-result').first.evaluate('(e)=>document.activeElement===e'),(width,route,'ArrowDown focus')
                 page.locator('.search-result').first.press('ArrowUp')
                 assert page.locator('#site-search-query').evaluate('(e)=>document.activeElement===e'),(width,route,'ArrowUp focus')
+                # Multi-result list supports both arrow directions; the feedback must
+                # distinguish capped visible results from the true matching count.
+                page.locator('#site-search-query').fill('musitu')
+                links=page.locator('.search-result')
+                assert links.count()==8, (width,route,'expected capped results')
+                assert 'Showing 8 of' in page.locator('#site-search-feedback').inner_text()
+                page.locator('#site-search-query').press('ArrowDown')
+                assert links.nth(0).evaluate('(e)=>document.activeElement===e')
+                links.nth(0).press('ArrowDown')
+                assert links.nth(1).evaluate('(e)=>document.activeElement===e')
+                links.nth(1).press('ArrowUp')
+                assert links.nth(0).evaluate('(e)=>document.activeElement===e')
+                links.nth(0).press('ArrowUp')
+                assert page.locator('#site-search-query').evaluate('(e)=>document.activeElement===e')
                 page.locator('#site-search-query').fill('impossible_zxyv_not_a_page')
                 assert page.locator('.search-result').count()==0
                 assert 'No matching pages' in page.locator('#site-search-feedback').inner_text()

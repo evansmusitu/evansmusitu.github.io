@@ -73,7 +73,7 @@ def test_strict_static_security_policy_and_safe_links():
     for value in ('javascript:alert(1)','data:text/html,hi','//example.com/','http://example.com/','file:///etc/passwd','#',''):
         import pytest
         with pytest.raises(ValueError):checked_link_url(value)
-    for value in ('/products/','#main','https://github.com/evansmusitu','mailto:support@example.com'):
+    for value in ('/products/','#main','https://github.com/evansmusitu','mailto:support@mftintelligence.com?subject=MUSITU%20company%20enquiry'):
         assert checked_link_url(value)==value
     assert H('<script>alert(1)</script>')=='&lt;script&gt;alert(1)&lt;/script&gt;'
     assert len(set(z['slug'] for z in PRODUCTS))==6
@@ -324,3 +324,94 @@ def test_unique_metadata_and_no_unreviewed_canonical_domain():
         assert soup.select_one('meta[property="og:title"]')
         assert soup.select_one('meta[property="og:description"]')
     assert len(set(titles))==len(titles),'Duplicate document titles'
+
+
+def test_outbound_evidence_urls_are_explicit_and_cannot_smuggle_authority():
+    import sys, pytest
+    sys.path.insert(0,str(ROOT/'scripts'))
+    from build import checked_link_url, ALLOWED_PUBLIC_HOSTS, VERIFIED_DRAFT_CONTACT
+    assert 'github.com' in ALLOWED_PUBLIC_HOSTS
+    assert checked_link_url('https://evansmusitu.github.io/')=='https://evansmusitu.github.io/'
+    assert checked_link_url('mailto:'+VERIFIED_DRAFT_CONTACT+'?subject=Company%20enquiry')
+    attacks=(
+        'https://github.com.evil.test/product',
+        'https://github.com@evil.test/',
+        'https://github.com:8080/',
+        'https://github.com\\@evil.test/',
+        'https://evil.test/',
+        'https://github.com/%0aevil',
+        'https://github.com/%0d%0aInjection',
+        'https://github.com/#irrelevant',
+        'https://github.com/\n',
+        '//github.com/',
+        '/\\evil.test/',
+        '/evidence/../private/',
+        '/%2f%2fevil.test/',
+        'mailto:attacker@evil.test?subject=hello',
+        'mailto:'+VERIFIED_DRAFT_CONTACT+'?cc=third@evil.test',
+        'mailto:'+VERIFIED_DRAFT_CONTACT+'?subject=Hi&bcc=secret@evil.test',
+        'mailto:'+VERIFIED_DRAFT_CONTACT+'?subject=Hi%0d%0aBcc:evil@evil.test',
+        'javascript:alert(1)',
+    )
+    for case in attacks:
+        with pytest.raises(ValueError):checked_link_url(case)
+
+
+def test_server_rendered_current_navigation_and_named_hero_illustration():
+    # Navigation semantics must not depend on JavaScript loading successfully.
+    for current in ('products','research','company','trust'):
+        soup=BeautifulSoup((DIST/current/'index.html').read_text(),'html.parser')
+        primary=soup.select_one('nav[aria-label="Main navigation"]')
+        selected=primary.select('a[aria-current="page"]')
+        assert len(selected)==1,(current,selected)
+        assert selected[0].get('href')=='/'+current+'/',current
+    home=BeautifulSoup((DIST/'index.html').read_text(),'html.parser')
+    illustration=home.select_one('.hero-visual[role="img"][aria-label]')
+    assert illustration and illustration['aria-label'].strip()
+
+
+def test_search_accessibility_and_bounded_results_controls():
+    for path in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(path.read_text(),'html.parser')
+        query=soup.select_one('input#site-search-query')
+        assert query and query.get('maxlength')=='120',path
+        assert query.get('aria-controls')=='site-search-results'
+        help_element=soup.select_one('#site-search-help')
+        assert help_element and 'site-search-help' in query.get('aria-describedby','')
+    js=(DIST/'assets/site.js').read_text()
+    assert 'Showing ${matching.length} of ${matches.length} matching pages.' in js
+    assert "event.key!=='ArrowUp'&&event.key!=='ArrowDown'" in js
+
+
+def test_external_new_tab_navigation_has_accessible_warning():
+    pages=list(DIST.rglob('index.html'))
+    observed=0
+    for page in pages:
+        soup=BeautifulSoup(page.read_text(),'html.parser')
+        for a in soup.select('a[target="_blank"]'):
+            assert 'noopener' in a.get('rel',[])
+            assert 'noreferrer' in a.get('rel',[])
+            assert 'opens in a new tab' in a.get_text(' ',strip=True).lower(),(page,a)
+            observed+=1
+    assert observed>=10
+    assert '.sr-only' in (DIST/'assets/site.css').read_text()
+
+
+def test_server_rendered_breadcrumbs_cover_deep_routes_without_javascript():
+    root=BeautifulSoup((DIST/'index.html').read_text(),'html.parser')
+    assert not root.select_one('nav[aria-label="Breadcrumb"]')
+    for path in sorted(DIST.rglob('index.html')):
+        if path==DIST/'index.html':continue
+        route=path.parent.relative_to(DIST).as_posix()
+        soup=BeautifulSoup(path.read_text(),'html.parser')
+        nav=soup.select_one('main nav[aria-label="Breadcrumb"]')
+        assert nav,path
+        items=nav.select('ol > li')
+        assert items[0].a.get('href')=='/',path
+        assert len(nav.select('li[aria-current="page"]'))==1,path
+        assert items[-1].get_text(strip=True),path
+        if route.startswith('products/'):
+            assert len(items)==3
+            assert items[1].a.get('href')=='/products/'
+        else:
+            assert len(items)==2
