@@ -13,7 +13,7 @@ def test_semantic_a11y_and_metadata():
     for p in sorted(DIST.rglob('index.html')):
         soup=BeautifulSoup(p.read_text(),'html.parser')
         assert soup.html.get('lang')=='en',p
-        assert soup.select_one('main#main'),p
+        assert soup.select_one('main#main[tabindex="-1"]'),p
         assert soup.select_one('nav[aria-label="Main navigation"]'),p
         assert soup.select_one('.skip[href="#main"]'),p
         assert len(soup.select('h1'))==1,p
@@ -197,3 +197,11 @@ def test_build_is_byte_reproducible():
     previous=fingerprint()
     subprocess.run([sys.executable,str(ROOT/'scripts/build.py')],cwd=ROOT,check=True,capture_output=True)
     assert fingerprint()==previous
+
+
+def test_dialog_source_fallback_is_named_and_safe():
+    for p in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(p.read_text(),'html.parser')
+        link=soup.select_one('dialog#evidence-dialog a#evidence-source')
+        assert link and link.get('href')=='/evidence/' and link.get_text(strip=True),p
+        assert soup.select_one('main#main[tabindex="-1"]'),p

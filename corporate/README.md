@@ -51,3 +51,7 @@ Full release requires separate owner authorization even after tests pass.
 `python3 tests/browser_hosted.py` launches an ephemeral Python HTTP server bound to `127.0.0.1`, then exercises the built website in real Chromium. Unlike the existing offline-DOM tests, this checks HTTP routing, stylesheet/JS loading, CSP enforcement, keyboard navigation, product filtering, and JavaScript-disabled navigation. It never calls production APIs or third-party sites.
 
 Note: the ChatGPT container's managed browser policy blocks Chromium URL navigation, so this suite is evaluated on the GitHub Actions runner where loopback navigation is permitted. The local offline-DOM test continues to run independently.
+
+## Accessibility regression checks (not certification)
+
+`python3 tests/browser_accessibility.py` runs DOM-name, duplicate-ID, ARIA-reference, skip-focus, 320px reflow, and WCAG 1.4.12 text-spacing-style regression checks at 320, 390, and 1440 CSS pixels. All pages are checked without calling live services. The output `review-artifacts/accessibility-regressions.json` is uploaded as a review-only artifact. This does not claim complete WCAG 2.2 AA conformance or replace a screen-reader/manual audit.

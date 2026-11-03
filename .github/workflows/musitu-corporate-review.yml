@@ -41,6 +41,9 @@ jobs:
       - name: Extended keyboard, reduced-motion and responsive matrix (198 views)
         working-directory: corporate
         run: python tests/browser_extended.py
+      - name: Accessible names, 320px text spacing and focus audit
+        working-directory: corporate
+        run: python tests/browser_accessibility.py
       - name: Actual HTTP and Chromium navigation acceptance
         working-directory: corporate
         run: python tests/browser_hosted.py
@@ -64,6 +67,7 @@ jobs:
             corporate/review-artifacts/*.png
             corporate/review-artifacts/extended-browser-results.json
             corporate/review-artifacts/hosted-browser-results.json
+            corporate/review-artifacts/accessibility-regressions.json
             corporate/review-artifacts/MUSITU_portable_interactive_preview.html
           if-no-files-found: warn
           retention-days: 7

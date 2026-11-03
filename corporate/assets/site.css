@@ -21,6 +21,7 @@
   .status,.status--prototype,.status--public,.index-label,.eyebrow,.text-link,.quiet-link {color:CanvasText;border-color:CanvasText}
   :focus-visible {outline:3px solid Highlight;outline-offset:3px}
 }
+.noscript-nav{display:none}
 @media(max-width:820px){.noscript-nav{display:flex;gap:15px;flex-wrap:wrap;padding-block:13px}.noscript-nav a{text-decoration:underline;color:var(--text)}}
 /* Deliberate tap targets: preserve readable links without tiny hit areas. */
 .primary-nav .nav-link{display:inline-flex;align-items:center;min-height:44px}
@@ -29,3 +30,8 @@
 .quiet-link,.text-link{display:inline-flex;align-items:center;min-height:32px}
 .evidence-trigger{min-height:40px;display:inline-flex;align-items:center}
 .dialog-close{width:44px;height:44px}
+/* Reflow at 320 CSS px / enlarged text spacing: grid items can actually shrink.
+   Long technical product names and email addresses must wrap rather than clip. */
+.home-hero > *,.split > *,.product-intro > *,.info-grid > *,.card-grid > *{min-width:0}
+.hero-copy h1,.page-hero h1,.section-head h2,.final-cta h2,.info-card p,.info-card h2,.product-card h2,.product-card h3,.product-intro p,.source-list p{overflow-wrap:anywhere}
+.eyebrow{flex-wrap:wrap}
