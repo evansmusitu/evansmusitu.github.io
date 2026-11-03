@@ -2,7 +2,7 @@
 
 **ISOLATED WORK. DO NOT MERGE OR DEPLOY WITHOUT EXPLICIT OWNER RELEASE APPROVAL.**
 
-This package implements the approved MUSITU corporate specification as a deterministic 22-route static site, with the six canonical product families, an Intelligence experience entry point, source links, truthful maturity states, responsive navigation, mobile product explorer, theme controls, working legal/support draft routes, SEO metadata and verification boundaries. The site is intentionally **noindex** and has no analytics, contact-form backend, customer account creation, payment gateway or live changes.
+This package implements the approved MUSITU corporate specification as a deterministic 22-route static site, with the six canonical product families, an Intelligence experience entry point, source links, truthful maturity states, responsive navigation, mobile product explorer, zero-network site-wide page search, theme controls, working legal/support draft routes, SEO metadata and verification boundaries. The site is intentionally **noindex** and has no analytics, contact-form backend, customer account creation, payment gateway or live changes.
 
 ## Build
 
@@ -65,3 +65,7 @@ Private research repositories are never presented as public evidence links. The 
 ## Missing-script resilience
 
 `python3 tests/browser_nojs.py` checks every route at 320, 390, and 1440 CSS pixels with the corporate script absent. The five-link primary navigation remains usable, and interaction-only theme/menu/filter/evidence controls do not become dead buttons. In real HTTP CI, `browser_hosted.py` additionally checks navigation with JavaScript explicitly disabled at mobile and desktop sizes. These two checks cover separate failure mechanisms.
+
+## Corporate site-wide search (review only)
+
+The search control uses a compact public-route index embedded at build time. No remote requests, private Drive content, prompt text, or client analytics are involved. It shows ranked results across approved public corporate and product pages, excluding gated legal/status and error routes. Keyboard shortcuts: Ctrl+K / Cmd+K and `/` outside inputs. Escape closes and returns focus to the trigger. Without JavaScript, the search control disappears while ordinary navigation remains available.

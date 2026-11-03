@@ -40,7 +40,8 @@ def test_local_links():
 def test_claim_safety_and_stage_labels():
     catalog=(DIST/'products/index.html').read_text()
     assert catalog.count('data-product-card')==6
-    assert catalog.count('aria-haspopup="dialog"')==6
+    assert catalog.count('data-evidence=')==6
+    assert catalog.count('aria-haspopup="dialog"')==7
     soup=BeautifulSoup(catalog,'html.parser')
     assert len(soup.select('#catalog-grid h2'))==6
     for p in EXPECTED:
@@ -266,3 +267,34 @@ def test_single_file_review_embeds_favicon_instead_of_broken_absolute_asset():
     script=(ROOT/'scripts/make_portable_preview.py').read_text()
     assert 'base64.b64encode' in script
     assert 'href="/assets/favicon.svg"' in script
+
+
+def test_site_search_build_time_index_is_public_sanitized_and_consistent():
+    import json
+    from bs4 import BeautifulSoup
+    for file in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(file.read_text(encoding='utf-8'),'html.parser')
+        toggle=soup.select_one('button#search-toggle[aria-controls="site-search"][aria-haspopup="dialog"]')
+        dialog=soup.select_one('dialog#site-search[aria-labelledby="site-search-title"]')
+        search_input=soup.select_one('input#site-search-query[type="search"]')
+        assert soup.select_one('ul#site-search-results'),file
+        assert toggle and dialog and search_input and soup.select_one('label[for="site-search-query"]'),file
+        source=soup.select_one('script#site-search-index[type="application/json"]')
+        assert source and source.string,file
+        records=json.loads(source.string)
+        assert len(records)==17,(file,len(records))
+        seen=set()
+        for item in records:
+            assert set(item)=={'url','title','description'},item
+            assert item['url'].startswith('/') and item['url'].endswith('/')
+            assert not any(private in json.dumps(item) for private in ('mft-gpu-training','musitu-foundry-forge','customer/axiom','private'))
+            assert item['url'] not in seen,item['url']
+            seen.add(item['url'])
+            assert (DIST/item['url'].lstrip('/')/'index.html').is_file() if item['url']!='/' else (DIST/'index.html').is_file()
+        assert '/products/axiom/' in seen and '/research/' in seen and '/experiences/intelligence/' in seen
+        assert '/status/' not in seen and '/legal/privacy/' not in seen
+    js=(DIST/'assets/site.js').read_text(encoding='utf-8')
+    assert 'siteSearch.showModal()' in js and 'searchResults.replaceChildren()' in js
+    assert 'document.createElement' in js and not 'innerHTML' in js
+    css=(DIST/'assets/site.css').read_text(encoding='utf-8')
+    assert 'html:not(.has-js) .search-toggle' in css

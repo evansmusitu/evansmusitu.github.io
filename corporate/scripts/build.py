@@ -91,7 +91,7 @@ def header():
     nav=''.join(link(url,label,'nav-link') for label,url in NAV)
     return f'''<header class="site-header"><div class="shell header-row">
       {link('/','<M> MUSITU','brand')}<nav class="primary-nav" id="primary-nav" aria-label="Main navigation">{nav}</nav>
-      <div class="header-actions"><button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch color theme" title="Switch color theme">◐</button>{link('/experiences/intelligence/','Try Intelligence','button button--small')}
+      <div class="header-actions"><button type="button" class="search-toggle" id="search-toggle" aria-label="Search MUSITU pages" aria-haspopup="dialog" aria-controls="site-search" title="Search pages (Ctrl+K)"><svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.3"></circle><path d="m16 16 5 5"></path></svg></button><button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch color theme" title="Switch color theme">◐</button>{link('/experiences/intelligence/','Try Intelligence','button button--small')}
       <button type="button" class="menu-toggle" id="menu-toggle" aria-controls="mobile-nav" aria-expanded="false" aria-label="Open navigation"><span></span><span></span><span></span></button></div></div>
       <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation" hidden>{nav}{link('/experiences/intelligence/','Try Intelligence','nav-link')}</nav>
       </header>'''.replace('&lt;M&gt;','<span class="brand-mark" aria-hidden="true">M</span>')
@@ -188,7 +188,18 @@ def render(page):
     else:content=editorial(page['kind'])
     registry=json.dumps({p['slug']:{'name':p['name'],'maturity':p['maturity'],'proof':p['proof'],'url':p['proof_url'],'limits':p['limits'],'reviewed':EVIDENCE_REVIEW_DATE} for p in PRODUCTS},ensure_ascii=False).replace('<','\\u003c')
     drawer=f"""<dialog class=\"evidence-dialog\" id=\"evidence-dialog\" aria-labelledby=\"evidence-title\"><div class=\"dialog-header\"><span class=\"eyebrow\">EVIDENCE RECORD</span><button type=\"button\" id=\"evidence-close\" class=\"dialog-close\" aria-label=\"Close evidence dialog\">×</button></div><h2 id=\"evidence-title\"></h2><p class=\"dialog-label\">CURRENT MATURITY</p><p id=\"evidence-maturity\"></p><p class=\"dialog-label\">WHAT THIS DOES NOT ESTABLISH</p><p id=\"evidence-limits\"></p><p class=\"dialog-label\">SOURCE REVIEW DATE</p><p id=\"evidence-reviewed\"></p><p class=\"dialog-label\">SUPPORTING SOURCE</p><a id=\"evidence-source\" class=\"text-link\" href=\"/evidence/\" rel=\"noopener noreferrer\" target=\"_blank\">Review the public evidence register</a><p class=\"dialog-footnote\">Source records are not a substitute for independent certification.</p></dialog><script type=\"application/json\" id=\"evidence-registry\">{registry}</script>"""
-    return head(page['title'],page['description'])+header()+f'<main id=\"main\" tabindex=\"-1\">{content}</main>'+drawer+footer()
+    # Compact, build-time public route index. No analytics, remote fetches, or private document text.
+    indexed=[]
+    for path,item in PAGES.items():
+        if path in ('404','legal/terms','legal/privacy','developers','status'):
+            # Navigation-only/gated resources can be reached via footer; do not promote them as answers.
+            continue
+        product=next((p for p in PRODUCTS if path=='products/'+p['slug']),None)
+        desc=(product['line']+' '+product['maturity']) if product else item['description']
+        indexed.append({'url':'/'+path+'/' if path else '/', 'title':item['title'] if path else 'MUSITU homepage', 'description':desc})
+    public_search_index=json.dumps(indexed,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')
+    search_dialog=f'''<dialog class="site-search" id="site-search" aria-labelledby="site-search-title"><div class="search-head"><div><span class="eyebrow">SITE DISCOVERY</span><h2 id="site-search-title">Find your way around MUSITU</h2></div><button type="button" id="search-close" class="dialog-close" aria-label="Close site search">×</button></div><label for="site-search-query">Search products, research and pages</label><input id="site-search-query" type="search" autocomplete="off" spellcheck="false" placeholder="Try Axiom, learning, research…"><p id="site-search-feedback" class="search-feedback" role="status" aria-live="polite">Type to search public MUSITU pages.</p><ul id="site-search-results" class="search-results" aria-label="Page search results"></ul><p class="search-help">Shortcut: Ctrl+K or ⌘K. This search runs only in your browser.</p></dialog><script type="application/json" id="site-search-index">{public_search_index}</script>'''
+    return head(page['title'],page['description'])+header()+f'<main id="main" tabindex="-1">{content}</main>'+drawer+search_dialog+footer()
 
 def build():
     for product in PRODUCTS:

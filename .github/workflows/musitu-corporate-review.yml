@@ -47,6 +47,9 @@ jobs:
       - name: Actual HTTP and Chromium navigation acceptance
         working-directory: corporate
         run: python tests/browser_hosted.py
+      - name: Search keyboard, results and focus acceptance (66 views)
+        working-directory: corporate
+        run: python tests/browser_search.py
       - name: Browser no-JavaScript and missing-script fallback (66 views)
         working-directory: corporate
         run: python tests/browser_nojs.py
@@ -72,6 +75,8 @@ jobs:
             corporate/review-artifacts/hosted-browser-results.json
             corporate/review-artifacts/accessibility-regressions.json
             corporate/review-artifacts/nojs-browser-results.json
+            corporate/review-artifacts/search-regressions.json
+            corporate/review-artifacts/search-dialog-desktop.png
             corporate/review-artifacts/MUSITU_portable_interactive_preview.html
           if-no-files-found: warn
           retention-days: 7

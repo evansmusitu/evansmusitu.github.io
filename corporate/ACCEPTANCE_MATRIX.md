@@ -10,6 +10,7 @@ Status: **REVIEW ONLY — NOT PUBLISHED**. Evidence reviewed: 3 November 2026. T
 | No direct private research links | `test_private_repository_links_never_appear_in_public_html_or_claims` | Enforced |
 | Existing Intelligence workspaces untouched | Corporate-only branch diff; no live data migration | Preserved by source isolation; deployment requires separate validation |
 | Mobile and desktop responsive layout | `browser_extended.py` (198 view combinations) | Passed in Chromium |
+| Zero-network site-wide discovery | Embedded public route index; `browser_search.py` (66 views); hosted interaction | Chromium validation; staged only |
 | Text spacing, accessible names, focus | `browser_accessibility.py` (66 view combinations) | Automated checks pass; independent WCAG audit pending |
 | Navigation with no JS or failed JS asset | `browser_nojs.py` (66 views); `browser_hosted.py` | Automated checks pass |
 | Real HTTP routing/CSP/assets | `browser_hosted.py` on GitHub Actions localhost | CI tested; production hosting untested |

@@ -47,3 +47,9 @@
 - An automated control-name/ARIA/duplicate-ID/text-spacing audit was added. Text-spacing enlargement previously overflowed seven pages; fixes now pass all 66 layout checks.
 - New HTTP/Chromium CI acceptance exercises actual HTML, CSS, JS, routes, CSP, theme navigation and no-JavaScript navigation on GitHub Actions localhost. The ChatGPT managed browser prohibits navigation to localhost, so local real-URL browser results are not claimed.
 - **Not yet qualified:** independently verified accessibility conformance, production-domain HTTP response security headers, privacy/legal identity, contact delivery, real-user Core Web Vitals, Safari/WebKit/Firefox behavior, final domain routing and Cloudflare account authority.
+
+## November 3 search enhancement (Build 6 review)
+- Public company-page discovery uses a locally embedded route index, without analytics, remote requests, hidden documents or personal data. Gated pages are omitted from indexed results.
+- Search dialog has a labeled search input, status announcements, semantic list of results, keyboard shortcuts, ArrowDown/ArrowUp focus management, Escape dismissal, and trigger focus restoration.
+- With JavaScript disabled or missing, the search button is hidden and ordinary navigation remains functional.
+- This capability is a staged corporate-site interface, not a general MUSITU AI or research search service.

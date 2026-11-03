@@ -77,6 +77,71 @@
     evidenceDialog.addEventListener('click',event=>{if(event.target===evidenceDialog)close();});
     evidenceDialog.addEventListener('close',()=>{if(trigger)requestAnimationFrame(()=>trigger.focus());});
   }
+  // Zero-network site discovery. Search index is public, deterministic and embedded by the builder.
+  const siteSearch=qs('#site-search'),searchToggle=qs('#search-toggle'),searchClose=qs('#search-close');
+  const searchBox=qs('#site-search-query'),searchResults=qs('#site-search-results'),searchFeedback=qs('#site-search-feedback');
+  const searchIndex=qs('#site-search-index');
+  if(siteSearch&&searchToggle&&searchBox&&searchResults&&searchFeedback&&searchIndex){
+    const pages=JSON.parse(searchIndex.textContent);
+    const normalized=text=>text.toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+    const score=(page,words)=>{
+      const title=normalized(page.title),summary=normalized(page.description),path=normalized(page.url);
+      let points=0;
+      for(const word of words){
+        const value=(title.includes(word)?5:0)+(path.includes(word)?2:0)+(summary.includes(word)?1:0);
+        if(!value)return 0;
+        points+=value;
+      }
+      return points;
+    };
+    const draw=()=>{
+      searchResults.replaceChildren();
+      const query=normalized(searchBox.value.trim());
+      if(!query){searchFeedback.textContent='Type to search public MUSITU pages.';return;}
+      const words=query.split(/\s+/).filter(Boolean).slice(0,7);
+      const matching=pages.map(page=>({page,rank:score(page,words)})).filter(entry=>entry.rank>0)
+        .sort((a,b)=>b.rank-a.rank||a.page.title.localeCompare(b.page.title)).slice(0,8);
+      searchFeedback.textContent=matching.length?`${matching.length} matching page${matching.length===1?'':'s'}.`:'No matching pages. Try another word or browse Products.';
+      const fragment=document.createDocumentFragment();
+      for(const entry of matching){
+        const item=document.createElement('a');item.href=entry.page.url;item.className='search-result';
+        const title=document.createElement('strong');title.textContent=entry.page.title;
+        const summary=document.createElement('span');summary.textContent=entry.page.description;
+        item.append(title,summary);
+        const listItem=document.createElement('li');listItem.append(item);fragment.append(listItem);
+      }
+      searchResults.append(fragment);
+    };
+    const show=()=>{if(siteSearch.open)return;siteSearch.showModal();searchBox.focus();draw();};
+    const hide=()=>{if(siteSearch.open)siteSearch.close();};
+    searchToggle.addEventListener('click',show);
+    searchClose.addEventListener('click',hide);
+    searchBox.addEventListener('input',draw);
+    searchBox.addEventListener('keydown',event=>{
+      if(event.key==='ArrowDown'){
+        const first=qs('.search-result',searchResults);
+        if(first){event.preventDefault();first.focus();}
+      }
+    });
+    searchResults.addEventListener('keydown',event=>{
+      if(event.key==='ArrowUp'){
+        const first=qs('.search-result',searchResults);
+        if(event.target===first){event.preventDefault();searchBox.focus();}
+      }
+    });
+    // Native dialog Escape and backdrop behavior; restore focus to the trigger.
+    siteSearch.addEventListener('click',e=>{if(e.target===siteSearch)hide();});
+    // Search inputs may consume Escape to clear text: close the dialog on the first Escape.
+    siteSearch.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();hide();}});
+    siteSearch.addEventListener('close',()=>{searchToggle.focus();});
+    document.addEventListener('keydown',event=>{
+      const target=event.target;
+      const editable=target instanceof HTMLElement&&(target.isContentEditable||['INPUT','TEXTAREA','SELECT'].includes(target.tagName));
+      if((event.key.toLowerCase()==='k'&&(event.ctrlKey||event.metaKey))||(event.key==='/'&&!editable&&!event.ctrlKey&&!event.metaKey&&!event.altKey)){
+        event.preventDefault();show();
+      }
+    });
+  }
   const search=qs('#catalog-query'),category=qs('#catalog-category'),state=qs('#catalog-state');
   const count=qs('#catalog-count'),empty=qs('#catalog-empty');
   if(search&&category&&state){

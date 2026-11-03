@@ -40,6 +40,7 @@ with sync_playwright() as pw:
                 assert page.locator('.primary-nav a:visible').count()==5,(route,width,'navigation link count')
                 assert not page.locator('.theme-toggle').is_visible(),(route,width,'inert theme control')
                 assert not page.locator('.menu-toggle').is_visible(),(route,width,'inert mobile menu')
+                assert not page.locator('.search-toggle').is_visible(),(route,width,'inert global search')
                 assert not page.locator('.evidence-trigger').first.is_visible(),(route,width,'inert evidence button')
                 assert not page.evaluate('document.documentElement.scrollWidth>innerWidth'),(route,width,'overflow')
                 if route=='products/index.html':

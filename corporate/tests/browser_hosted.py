@@ -36,7 +36,7 @@ def website_server():
 results = {'scope': 'real HTTP Chromium on CI localhost', 'route_count': len(ROUTES),
            'viewports': {}, 'html_responses': 0, 'asset_responses': 0, 'external_requests': [],
            'page_errors': [], 'failed_requests': [], 'csp_rejected_inline': False,
-           'navigation': False, 'catalog': False, 'modal': False, 'mobile_menu': False,
+           'navigation': False, 'catalog': False, 'modal': False, 'global_search': False, 'mobile_menu': False,
            'javascript_disabled_navigation': False, 'javascript_disabled_desktop': False}
 
 with website_server() as origin, sync_playwright() as playwright:
@@ -89,6 +89,22 @@ with website_server() as origin, sync_playwright() as playwright:
                 assert page.locator('h1').inner_text().strip().startswith('MUSITU')
                 results['navigation'] = True
                 page.goto(origin+'/',wait_until='load')
+                page.get_by_role('button',name='Search MUSITU pages').click()
+                assert page.locator('#site-search').is_visible(), 'Global site search dialog must open'
+                assert page.locator('#site-search-query').evaluate('(e)=>document.activeElement===e')
+                page.locator('#site-search-query').fill('chemistry')
+                assert page.locator('.search-result').count() == 0  # Search is limited to public route copy, not private claims.
+                page.locator('#site-search-query').fill('education')
+                assert page.locator('.search-result').count() >= 1
+                assert page.locator('.search-result').first.get_attribute('href') == '/products/education/'
+                page.keyboard.press('Escape')
+                assert not page.locator('#site-search').is_visible()
+                assert page.locator('#search-toggle').evaluate('(e)=>document.activeElement===e')
+                # Keyboard shortcut also opens search from ordinary page content.
+                page.keyboard.press('Control+k')
+                assert page.locator('#site-search').is_visible()
+                page.locator('#search-close').click()
+                results['global_search'] = True
                 original=page.locator('html').get_attribute('data-theme')
                 page.locator('#theme-toggle').click()
                 selected=page.locator('html').get_attribute('data-theme')
@@ -119,6 +135,7 @@ with website_server() as origin, sync_playwright() as playwright:
         assert page.locator('nav[aria-label="Main navigation"]').is_visible()
         assert not page.locator('#menu-toggle').is_visible()
         assert not page.locator('#theme-toggle').is_visible()
+        assert not page.locator('#search-toggle').is_visible()
         assert not page.locator('.catalog-controls').is_visible()
         assert not page.locator('.evidence-trigger').first.is_visible()
         page.locator('nav[aria-label="Main navigation"]').get_by_role('link',name='Company').click()
