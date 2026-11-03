@@ -1,5 +1,5 @@
 """Create an all-in-one offline review preview; no change to the production build."""
-import json,re
+import json,re,sys
 from pathlib import Path
 from bs4 import BeautifulSoup
 root=Path(__file__).resolve().parents[1]
@@ -72,6 +72,7 @@ home=home.replace('<link rel="stylesheet" href="/assets/site.css">','<style>'+cs
 home=home.replace('<script defer src="/assets/site.js"></script>','')
 registry=json.dumps(pages,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')
 home=home.replace('</body></html>','<script type="application/json" id="portable-routes">'+registry+'</script><script>'+js+'\n'+router+'</script></body></html>')
-out=Path('/mnt/data/MUSITU_portable_interactive_preview.html')
-out.write_text(home)
+out=Path(sys.argv[1]) if len(sys.argv)>1 else (root/'review-artifacts'/'MUSITU_portable_interactive_preview.html')
+out.parent.mkdir(parents=True,exist_ok=True)
+out.write_text(home,encoding='utf-8')
 print(f'Portable HTML preview: {out.stat().st_size} bytes, {len(pages)} navigable routes; no network dependencies.')
