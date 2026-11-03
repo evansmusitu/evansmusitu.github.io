@@ -2,12 +2,25 @@
 """MUSITU corporate website: deterministic, dependency-free static builder.
 This builds a staging preview only, never touches deployed Intelligence assets.
 """
-import json, html, re, shutil, hashlib
+import json, html, shutil, hashlib
 from pathlib import Path
-from urllib.parse import quote
 ROOT=Path(__file__).resolve().parents[1]
 DIST=ROOT/'dist'
 H=lambda s: html.escape(str(s),quote=True)
+EVIDENCE_REVIEW_DATE='2026-11-02'
+ALLOWED_EXTERNAL_PREFIXES=('https://','mailto:')
+
+# Explicit URL allowlist prevents product data from silently becoming script or data links.
+def checked_link_url(url):
+    url=str(url)
+    if url.startswith('/') and not url.startswith('//'):
+        return url
+    if url.startswith('#') and len(url)>1:
+        return url
+    if url.startswith(ALLOWED_EXTERNAL_PREFIXES) and all(ord(c)>=32 for c in url):
+        return url
+    raise ValueError('Unsupported or unsafe link scheme')
+
 
 PRODUCTS=[
  dict(slug='axiom',name='MUSITU Axiom',category='Intelligence',maturity='Published integration documented',flag='public',tag='Flagship',line='Structured quantitative work with inspectable inputs and reproducible computation.',summary='Axiom brings deterministic calculations, quantitative workflows and evidence-aware tool use into decision support. Its published ChatGPT integration is reported in the founder portfolio and repository release records; capabilities and access are scoped to the actual approved release.',points=['Quantitative calculation and structured analytical workflows','Inputs, constraints and outputs designed for review','Published ChatGPT integration documented; independently verified release links required at launch'],limits='The broader autonomous operating-system vision, customer accounts, keyless sign-in and integrated billing are not publicly released. Do not infer live trading, financial advice or certified superiority.',proof='GitHub AXIOM release and review record',proof_url='https://github.com/evansmusitu/mft-axiom-build/pull/47',action='Open AXIOM in ChatGPT',action_url='https://chatgpt.com/plugins/plugin_asdk_app_6ae058ee6cec81919329ae43b76a4c86',featured=True),
@@ -50,7 +63,8 @@ SITE='MUSITU'
 BADGE={'public':'public','prototype':'prototype','research':'research'}
 
 def link(url,label,cls='',external=False):
-    ext=external or url.startswith('http')
+    url=checked_link_url(url)
+    ext=external or url.startswith('https://')
     return f'<a class="{cls}" href="{H(url)}"'+(' target="_blank" rel="noopener noreferrer"' if ext else '')+f'>{H(label)}'+ (' <span aria-hidden="true">↗</span>' if ext else '')+'</a>'
 
 def bstatus(p):return f'<span class="status status--{H(p["flag"])}"><span class="dot" aria-hidden="true"></span>{H(p["maturity"])}</span>'
@@ -65,6 +79,9 @@ def card(p, heading_level=3):
 def head(title,description,canonical='/'):
     full=f'{title} — MUSITU' if title!='Home' else 'MUSITU — Intelligence with evidence'
     return f'''<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="color-scheme" content="dark light">
     <meta name="theme-color" content="#090e1b"><meta name="robots" content="noindex,nofollow"><meta name="description" content="{H(description)}">
     <meta property="og:type" content="website"><meta property="og:title" content="{H(full)}"><meta property="og:description" content="{H(description)}">
     <title>{H(full)}</title><link rel="stylesheet" href="/assets/site.css"><script defer src="/assets/site.js"></script>
@@ -168,11 +185,15 @@ def render(page):
     elif page['kind']=='products':content=products()
     elif page['kind']=='product':content=product_page(next(p for p in PRODUCTS if page['path']=='products/'+p['slug']))
     else:content=editorial(page['kind'])
-    registry=json.dumps({p['slug']:{'name':p['name'],'maturity':p['maturity'],'proof':p['proof'],'url':p['proof_url'],'limits':p['limits']} for p in PRODUCTS},ensure_ascii=False).replace('<','\\u003c')
-    drawer=f"""<dialog class=\"evidence-dialog\" id=\"evidence-dialog\" aria-labelledby=\"evidence-title\"><div class=\"dialog-header\"><span class=\"eyebrow\">EVIDENCE RECORD</span><button type=\"button\" id=\"evidence-close\" class=\"dialog-close\" aria-label=\"Close evidence dialog\">×</button></div><h2 id=\"evidence-title\"></h2><p class=\"dialog-label\">CURRENT MATURITY</p><p id=\"evidence-maturity\"></p><p class=\"dialog-label\">WHAT THIS DOES NOT ESTABLISH</p><p id=\"evidence-limits\"></p><p class=\"dialog-label\">SUPPORTING SOURCE</p><a id=\"evidence-source\" class=\"text-link\" rel=\"noopener noreferrer\" target=\"_blank\"></a><p class=\"dialog-footnote\">Source records are not a substitute for independent certification.</p></dialog><script type=\"application/json\" id=\"evidence-registry\">{registry}</script>"""
+    registry=json.dumps({p['slug']:{'name':p['name'],'maturity':p['maturity'],'proof':p['proof'],'url':p['proof_url'],'limits':p['limits'],'reviewed':EVIDENCE_REVIEW_DATE} for p in PRODUCTS},ensure_ascii=False).replace('<','\\u003c')
+    drawer=f"""<dialog class=\"evidence-dialog\" id=\"evidence-dialog\" aria-labelledby=\"evidence-title\"><div class=\"dialog-header\"><span class=\"eyebrow\">EVIDENCE RECORD</span><button type=\"button\" id=\"evidence-close\" class=\"dialog-close\" aria-label=\"Close evidence dialog\">×</button></div><h2 id=\"evidence-title\"></h2><p class=\"dialog-label\">CURRENT MATURITY</p><p id=\"evidence-maturity\"></p><p class=\"dialog-label\">WHAT THIS DOES NOT ESTABLISH</p><p id=\"evidence-limits\"></p><p class=\"dialog-label\">SOURCE REVIEW DATE</p><p id=\"evidence-reviewed\"></p><p class=\"dialog-label\">SUPPORTING SOURCE</p><a id=\"evidence-source\" class=\"text-link\" rel=\"noopener noreferrer\" target=\"_blank\"></a><p class=\"dialog-footnote\">Source records are not a substitute for independent certification.</p></dialog><script type=\"application/json\" id=\"evidence-registry\">{registry}</script>"""
     return head(page['title'],page['description'])+header()+f'<main id=\"main\">{content}</main>'+drawer+footer()
 
 def build():
+    for product in PRODUCTS:
+        assert product['slug'].isalnum(), 'Invalid product slug'
+        checked_link_url(product['proof_url'])
+        checked_link_url(product['action_url'])
     if DIST.exists():shutil.rmtree(DIST)
     DIST.mkdir(parents=True)
     (DIST/'assets').mkdir()
