@@ -38,7 +38,7 @@ jobs:
       - name: Real Chromium interactions in offline DOM
         working-directory: corporate
         run: python tests/browser_smoke.py
-      - name: Confirm noindex and no production writes
+      - name: Extended keyboard, reduced-motion and responsive matrix (198 views)\n        working-directory: corporate\n        run: python tests/browser_extended.py\n      - name: Confirm noindex and no production writes
         run: |
           test -s corporate/dist/index.html
           grep -q 'noindex,nofollow' corporate/dist/index.html
@@ -51,6 +51,6 @@ jobs:
           name: musitu-corporate-noindex-review
           path: |
             corporate/dist/
-            corporate/review-artifacts/*.png
+            corporate/review-artifacts/*.png\n            corporate/review-artifacts/extended-browser-results.json
           if-no-files-found: warn
           retention-days: 7
