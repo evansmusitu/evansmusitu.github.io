@@ -55,7 +55,7 @@ with server() as origin,sync_playwright() as p:
                      asset_bytes:resources.filter(x=>x.name.includes('/assets/')).reduce((sum,x)=>sum+(x.decodedBodySize||0),0)};
                 }""")
                 report['routes'][label+route]=data
-                assert data['cls_observed']<=.1,(label,route,data), 'Significant layout shift in local staging'
+                assert data['cls_observed']<=.1,(label,route,data,'Significant staging layout shift')
                 assert data['asset_bytes']<150000,(label,route,'asset payload unexpectedly large')
             page.close()
     finally:browser.close()
