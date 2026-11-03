@@ -150,3 +150,12 @@ def test_palette_tokens_meet_normal_text_contrast_for_basic_surfaces():
         for foreground in ('text','muted','faint','mint','violet'):
             for background in ('bg','surface','surface2'):
                 assert contrast(color[foreground],color[background])>=4.5,(pal,foreground,background)
+
+
+def test_accessible_progressive_enhancement_and_forced_colors():
+    css=(DIST/'assets/site.css').read_text()
+    assert '@media (forced-colors: active)' in css
+    assert '@media (prefers-contrast: more)' in css
+    for p in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(p.read_text(),'html.parser')
+        assert soup.select_one('noscript nav[aria-label="Navigation without JavaScript"]'),p
