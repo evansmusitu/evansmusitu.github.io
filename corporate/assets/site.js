@@ -7,14 +7,22 @@
   const menuBtn=qs('#menu-toggle');
   const mobile=qs('#mobile-nav');
   if(themeBtn){
-    themeBtn.addEventListener('click',()=>{
-      const next=document.documentElement.dataset.theme==='dark'?'light':'dark';
+    const preference=window.matchMedia('(prefers-color-scheme: light)');
+    let explicitChoice=false;
+    const setTheme=(next)=>{
       document.documentElement.dataset.theme=next;
       themeBtn.setAttribute('aria-label',`Switch to ${next==='dark'?'light':'dark'} mode`);
       themeBtn.setAttribute('aria-pressed',String(next==='light'));
+      themeBtn.title=`Switch to ${next==='dark'?'light':'dark'} mode`;
+    };
+    setTheme(preference.matches?'light':'dark');
+    themeBtn.addEventListener('click',()=>{
+      explicitChoice=true;
+      setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
     });
-    themeBtn.setAttribute('aria-pressed','false');
-    themeBtn.setAttribute('aria-label','Switch to light mode');
+    preference.addEventListener('change',event=>{
+      if(!explicitChoice)setTheme(event.matches?'light':'dark');
+    });
   }
   if(menuBtn&&mobile){
     const close=()=>{
@@ -49,6 +57,7 @@
       qs('#evidence-title').textContent=rec.name;
       qs('#evidence-maturity').textContent=rec.maturity;
       qs('#evidence-limits').textContent=rec.limits;
+      qs('#evidence-reviewed').textContent=rec.reviewed+' (source review, not certification)';
       const url=qs('#evidence-source'); url.href=rec.url; url.textContent=rec.proof+' ↗';
       evidenceDialog.showModal();
       qs('#evidence-close').focus();
