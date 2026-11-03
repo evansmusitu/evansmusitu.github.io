@@ -63,3 +63,90 @@ def test_manifest_integrity():
         p=DIST/item['path']
         assert p.stat().st_size==item['bytes']
         assert hashlib.sha256(p.read_bytes()).hexdigest()==item['sha256']
+
+# Contract tests added in review round three: make every staging gate machine-checkable.
+def test_strict_static_security_policy_and_safe_links():
+    import sys
+    sys.path.insert(0,str(ROOT/'scripts'))
+    from build import checked_link_url, H, PRODUCTS
+    for value in ('javascript:alert(1)','data:text/html,hi','//example.com/','http://example.com/','file:///etc/passwd','#',''):
+        import pytest
+        with pytest.raises(ValueError):checked_link_url(value)
+    for value in ('/products/','#main','https://github.com/evansmusitu','mailto:support@example.com'):
+        assert checked_link_url(value)==value
+    assert H('<script>alert(1)</script>')=='&lt;script&gt;alert(1)&lt;/script&gt;'
+    assert len(set(z['slug'] for z in PRODUCTS))==6
+    for p in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(p.read_text(),'html.parser')
+        csp=soup.select_one('meta[http-equiv="Content-Security-Policy"]')
+        assert csp,p
+        directive=csp.get('content','')
+        for must in ("default-src 'none'", "script-src 'self'", "style-src 'self'", "connect-src 'none'", "form-action 'none'", "object-src 'none'", "base-uri 'none'"):
+            assert must in directive,(p,must)
+        assert soup.select_one('meta[name="referrer"]'),p
+        for a in soup.select('a[href]'):
+            href=a.get('href','')
+            assert href.startswith(('/','#','https://','mailto:')),(p,href)
+            assert not href.startswith('//'),(p,href)
+            if a.get('target')=='_blank':
+                assert {'noopener','noreferrer'}.issubset(set(a.get('rel',[]))),(p,href)
+        assert not soup.select('iframe, object, embed'),p
+
+
+def test_evidence_registration_and_explicit_release_holds():
+    from datetime import date
+    reviewed=date.fromisoformat('2026-11-02')
+    assert reviewed.year==2026
+    for p in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(p.read_text(),'html.parser')
+        script=soup.select_one('script#evidence-registry[type="application/json"]')
+        assert script,(p,'missing evidence register')
+        data=json.loads(script.string)
+        assert len(data)==6
+        assert all(item['reviewed']=='2026-11-02' for item in data.values())
+        assert soup.select_one('#evidence-reviewed'),p
+        assert not soup.select('script[onload],img[onerror]')
+    for path in ('developers','status','legal/privacy','legal/terms'):
+        s=(DIST/path/'index.html').read_text()
+        assert 'Pre-publication gate' in s,(path,'missing release hold')
+    s=(DIST/'index.html').read_text()
+    assert 'noindex,nofollow' in s
+    assert 'Cloudflare account' not in s
+
+
+def test_unique_metadata_and_deterministic_build():
+    titles=set()
+    for p in sorted(DIST.rglob('index.html')):
+        soup=BeautifulSoup(p.read_text(),'html.parser')
+        t=soup.title.get_text(strip=True)
+        assert t not in titles, (p,'duplicate title')
+        titles.add(t)
+        description=soup.select_one('meta[name="description"]').get('content','')
+        assert 35 <= len(description) <= 180,(p,len(description))
+        assert soup.select_one('footer[aria-label]') is None  # footer landmark is native HTML
+        assert soup.select_one('nav[aria-label="Footer navigation"]')
+    assert len(titles)==22
+    assert sorted(p.name for p in DIST.glob('*.html'))==['404.html','index.html']
+
+
+def test_palette_tokens_meet_normal_text_contrast_for_basic_surfaces():
+    # Explicit fixed-color pairs. Gradients, composites, imagery, focus indicators,
+    # component states and real AT still require human inspection.
+    palettes={
+      'dark':{'bg':'#090e1b','surface':'#10192b','surface2':'#14213a','text':'#f0f4ff','muted':'#b0bfd7','faint':'#8193b3','mint':'#72ebc7','violet':'#aaa3ff'},
+      'light':{'bg':'#f4f7fd','surface':'#ffffff','surface2':'#e9f0fa','text':'#14213c','muted':'#3c4c65','faint':'#51647e','mint':'#086c5a','violet':'#5044bf'},
+    }
+    def luminance(color):
+        values=[int(color[i:i+2],16)/255 for i in (1,3,5)]
+        linear=[v/12.92 if v<=0.04045 else ((v+0.055)/1.055)**2.4 for v in values]
+        return sum(w*v for w,v in zip((.2126,.7152,.0722),linear))
+    def contrast(a,b):
+        L=sorted((luminance(a),luminance(b)))
+        return (L[1]+0.05)/(L[0]+0.05)
+    css=(DIST/'assets/site.css').read_text()
+    for pal,color in palettes.items():
+        for key,value in color.items():
+            assert value.lower() in css.lower(),(pal,key,'token lost')
+        for foreground in ('text','muted','faint','mint','violet'):
+            for background in ('bg','surface','surface2'):
+                assert contrast(color[foreground],color[background])>=4.5,(pal,foreground,background)
