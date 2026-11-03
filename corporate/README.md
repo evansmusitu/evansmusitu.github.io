@@ -45,3 +45,9 @@ Do not replace the existing `index.html` or `/assets/musitu-*` files; leave the 
 - Education pilot: https://github.com/evansmusitu/chemforge-enterprise-android
 
 Full release requires separate owner authorization even after tests pass.
+
+## Real HTTP acceptance (CI)
+
+`python3 tests/browser_hosted.py` launches an ephemeral Python HTTP server bound to `127.0.0.1`, then exercises the built website in real Chromium. Unlike the existing offline-DOM tests, this checks HTTP routing, stylesheet/JS loading, CSP enforcement, keyboard navigation, product filtering, and JavaScript-disabled navigation. It never calls production APIs or third-party sites.
+
+Note: the ChatGPT container's managed browser policy blocks Chromium URL navigation, so this suite is evaluated on the GitHub Actions runner where loopback navigation is permitted. The local offline-DOM test continues to run independently.
