@@ -1,48 +1,47 @@
-# MUSITU Corporate Website — isolated review candidate
+# MUSITU Corporate Website — review candidate (2 Nov 2026)
 
-**2 November 2026 · Not approved for public release**
+**ISOLATED WORK. DO NOT MERGE OR DEPLOY WITHOUT EXPLICIT OWNER RELEASE APPROVAL.**
 
-The implementation lives in this branch under `corporate/`, separate from the existing published MUSITU Intelligence homepage and assets.
+This package implements the approved MUSITU corporate specification as a deterministic 22-route static site, with the six canonical product families, an Intelligence experience entry point, source links, truthful maturity states, responsive navigation, mobile product explorer, theme controls, working legal/support draft routes, SEO metadata and verification boundaries. The site is intentionally **noindex** and has no analytics, contact-form backend, customer account creation, payment gateway or live changes.
 
-## What is implemented
-
-- 22 deterministic static routes covering the agreed company pages, six canonical product families, research, evidence, trust, support, legal review, developer and status gates.
-- Source-linked maturity and limitation statements on each product page; no false claim that draft customer portals, marketplace payments or trading are public services.
-- Responsive MUSITU navy/violet/mint design, mobile navigation, theme switching, searchable/filterable product directory and accessible native evidence dialogs.
-- Static, dependency-free page generation; SEO title/description foundations; staging `noindex,nofollow` and `robots.txt` denial.
-- Review-only CI workflow: build + automated checks + artifact upload; **no deployment step**.
-
-## Local build and review
-
-Requires Python 3.12+ for building, Node.js for JS syntax checks, and optional `pytest` and `beautifulsoup4` for tests.
+## Build
 
 ```bash
-python3 corporate/scripts/build.py
-python3 -m pip install pytest==8.4.2 beautifulsoup4==4.14.2
-python3 -m pytest -q corporate/tests/test_site.py
-node --check corporate/assets/site.js
-python3 -m http.server 8000 --directory corporate/dist
+python3 scripts/build.py
+python3 -m pytest -q tests/test_site.py
+python3 tests/browser_smoke.py
+python3 tests/browser_extended.py
+python3 scripts/make_portable_preview.py
+python3 -m http.server --directory dist 8000
 ```
 
-Open `http://localhost:8000/`. Files use root-relative URLs so they must be served from the domain root in staging.
+Browser: `http://localhost:8000/` (the site uses root-relative routes). Static build requires only Python 3.12; static tests need pytest and BeautifulSoup; browser checks additionally require Playwright and Chromium. The standalone offline review file is generated at `review-artifacts/MUSITU_portable_interactive_preview.html` (portable review removes the production CSP for inline CSS/JS).
 
-## Preservation and release rules
+## Evidence and independent verification
 
-- **Do not replace** existing repository-root `index.html`, `assets/musitu-*`, or published GitHub Pages workflows as part of review.
-- Existing Intelligence's encrypted local workspaces remain on their original origin. A move requires verified user export/import and regression testing.
-- Do not infer a verified legal entity, business contact, pricing, domain ownership, customer account system or live commerce.
-- Privacy and terms are clearly marked as working drafts; developer/status surfaces are gated.
-- Public launch requires owner acceptance of content and legal details, verified Cloudflare/DNS authority, real-device and accessibility review, security checks, tested contact delivery, deployment change review and **separate explicit release approval**.
-- Only remove `noindex` after production release authorization.
+`dist/claim-register.json` is a machine-readable register of the six product families, public source references, evidence review date, maturity and limitations. The generator includes a restrictive CSP meta policy, noindex, no remote scripts, no forms, and explicit external URL checks. See `RELEASE_REVIEW.md` for the limitations of CSP meta, unresolved real-browser/AT testing, hosting controls and release gates.
 
-## Primary evidence
+Static CI checks asset limits, metadata, internal links, product disclosures, contrast tokens, deterministic output, CSP, and approved schemes. The extended offline Chromium check covers 22 pages across nine viewport sizes and keyboard interaction. These checks **do not establish** hosted performance, security certification, legal validity or WCAG conformance.
 
-- Canonical family naming: https://github.com/evansmusitu/mft-axiom-build/blob/main/branding/MUSITU_BRAND_CANONICAL.json
-- AXIOM integration and correction-draft distinction: https://github.com/evansmusitu/mft-axiom-build/pull/47
-- Customer identity B27 rollback failure and no-release: https://github.com/evansmusitu/mft-axiom-build/pull/66
-- Current Intelligence source: https://github.com/evansmusitu/evansmusitu.github.io
-- Education development record: https://github.com/evansmusitu/chemforge-enterprise-android
+## Important preservation rule
 
-## Remaining independent quality verification
+Do not replace the existing `index.html` or `/assets/musitu-*` files; leave the live Intelligence site and local encrypted workspaces intact. The corporate package is built and staged separately. New domain/origin migration needs explicit local workspace export/import acceptance.
 
-The 6 local static test groups passed. Browser-level and screen-reader accessibility tests, Core Web Vitals, contact delivery, verified company legal identity, real Cloudflare account readback and production deployment were **not** performed or certified.
+## Release gates
+
+- Owner approval of exact company copy, legal name, canonical domain, published contact and public product disclosures
+- Privacy, terms and accessibility statements reviewed for actual deployment behavior
+- Real-account Cloudflare/DNS and least-privilege deployment review
+- Manual browser, mobile and WCAG 2.2 AA acceptance, security checks and real-form routing if contact form added
+- Regression verification of existing live Intelligence site and no local-vault loss
+- Remove noindex only on an explicitly approved production release
+
+## Evidence sources
+
+- Existing site: https://github.com/evansmusitu/evansmusitu.github.io
+- Canonical products: https://github.com/evansmusitu/mft-axiom-build/blob/main/branding/MUSITU_BRAND_CANONICAL.json
+- Axiom plugin release review: https://github.com/evansmusitu/mft-axiom-build/pull/47
+- Customer identity NOT RELEASE: https://github.com/evansmusitu/mft-axiom-build/pull/66
+- Education pilot: https://github.com/evansmusitu/chemforge-enterprise-android
+
+Full release requires separate owner authorization even after tests pass.
