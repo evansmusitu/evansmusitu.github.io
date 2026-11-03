@@ -36,8 +36,17 @@ with sync_playwright() as pw:
             for route in ROUTES:
                 page.set_content(doc_without_js(route),wait_until='load')
                 assert not page.locator('html').evaluate("(e)=>e.classList.contains('has-js')")
-                assert page.locator('.primary-nav').is_visible(),(route,width,'main navigation unavailable')
-                assert page.locator('.primary-nav a:visible').count()==5,(route,width,'navigation link count')
+                if width<=820:
+                    assert page.locator('#fallback-nav summary').is_visible(),(route,width,'native menu missing')
+                    assert not page.locator('.primary-nav').is_visible(),(route,width,'desktop nav should be hidden')
+                    assert not page.locator('#fallback-nav nav').is_visible(),(route,width,'menu unexpectedly open')
+                    page.locator('#fallback-nav summary').click()
+                    assert page.locator('#fallback-nav nav a:visible').count()==6,(route,width,'fallback link count')
+                    page.locator('#fallback-nav summary').click()
+                    assert not page.locator('#fallback-nav nav').is_visible()
+                else:
+                    assert page.locator('.primary-nav').is_visible(),(route,width,'desktop navigation unavailable')
+                    assert page.locator('.primary-nav a:visible').count()==5,(route,width,'navigation link count')
                 assert not page.locator('.theme-toggle').is_visible(),(route,width,'inert theme control')
                 assert not page.locator('.menu-toggle').is_visible(),(route,width,'inert mobile menu')
                 assert not page.locator('.search-toggle').is_visible(),(route,width,'inert global search')

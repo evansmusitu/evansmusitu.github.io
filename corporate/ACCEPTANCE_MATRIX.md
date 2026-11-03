@@ -40,3 +40,6 @@ Automated checks are useful regression evidence, not third-party certification o
 | Semantic deep-link breadcrumbs and SSR nav state | `breadcrumbs(page)`, `header(page)`, static tests | Verified without JavaScript |
 | Computed solid-background text contrast | `browser_color_contrast.py`, 88 theme/view/route checks | Automated sub-scope; complex painted elements and independent WCAG audit pending |
 | Locked-down review CI dependencies | Exact official GitHub Action release commit SHAs; no persisted checkout token | Read-only CI; staging only |
+
+| Mobile first-paint layout stability | Native closed-by-default no-JS disclosure menu; `browser_perf.py` hard-fails CLS >0.1 | Prior failure recorded; new real-HTTP CI result required |
+| Performance failure traceability | `performance-lab.json` written before assertion | Prevents loss of failing measurements |

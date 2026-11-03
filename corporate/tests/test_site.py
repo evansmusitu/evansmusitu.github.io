@@ -257,11 +257,17 @@ def test_javascript_disabled_controls_are_not_inert():
 
 def test_primary_nav_survives_failed_javascript_asset():
     css=(DIST/'assets/site.css').read_text()
-    assert 'html:not(.has-js) .primary-nav{display:flex' in css
-    assert 'html:not(.has-js) .header-row{height:auto' in css
+    assert 'html:not(.has-js) .fallback-nav{display:block' in css
+    assert 'html:not(.has-js) .fallback-nav[open]>nav{display:flex' in css
+    # The initial mobile header must not become a tall block before JS loads.
+    assert 'html:not(.has-js) .header-row{height:auto' not in css
     for page in DIST.rglob('index.html'):
         soup=BeautifulSoup(page.read_text(),'html.parser')
         assert len(soup.select('nav[aria-label="Main navigation"] a'))==5
+        fallback=soup.select_one('details#fallback-nav.fallback-nav')
+        assert fallback and not fallback.has_attr('open'),page
+        assert fallback.select_one('summary[aria-label="Open navigation without JavaScript"]')
+        assert len(fallback.select('nav[aria-label="Navigation without JavaScript"] a'))==6
 
 def test_single_file_review_embeds_favicon_instead_of_broken_absolute_asset():
     script=(ROOT/'scripts/make_portable_preview.py').read_text()

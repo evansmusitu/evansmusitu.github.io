@@ -72,3 +72,10 @@
 - The computed browser contrast audit checks **solid-background text only**, currently 88 route/size/theme views. It intentionally skips complex painted backgrounds; the figures must not be presented as certified WCAG compliance or accessibility conformance.
 - The review workflow uses fixed GitHub action commit IDs validated against official GitHub release tags, with `persist-credentials: false`; a passing CI build does not establish full dependency-chain integrity or production hosting security.
 - Production release remains blocked pending independent accessibility, security and legal review, confirmed contact, verified domain/response headers, real-user field performance and separate explicit owner merge/deploy authorization.
+
+## Build 7 navigation stability and layout-shift incident
+
+- Previous read-only CI run 41587211958 measured mobile `/products/` staging CLS 0.2815, which violates the 0.1 lab gate. The evidence is retained; it has not been rewritten as passing.
+- Root-cause candidate: a pre-script mobile navigation expanded the header until `has-js` was assigned by deferred JavaScript. The staged correction uses a closed native `<details>` menu with stable header geometry and a no-JavaScript navigation overlay.
+- This is subject to fresh real-HTTP CI verification. A successful static or injected-DOM test alone does not close the browser CLS gate.
+- The performance script now writes `performance-lab.json` before failing when a layout-shift observation exceeds the budget. A failed release gate must not be suppressed or relabeled as success.

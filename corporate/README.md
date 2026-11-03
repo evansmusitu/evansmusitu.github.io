@@ -69,7 +69,7 @@ Private research repositories are never presented as public evidence links. The 
 
 ## Missing-script resilience
 
-`python3 tests/browser_nojs.py` checks every route at 320, 390, and 1440 CSS pixels with the corporate script absent. The five-link primary navigation remains usable, and interaction-only theme/menu/filter/evidence controls do not become dead buttons. In real HTTP CI, `browser_hosted.py` additionally checks navigation with JavaScript explicitly disabled at mobile and desktop sizes. These two checks cover separate failure mechanisms.
+`python3 tests/browser_nojs.py` checks every route at 320, 390, and 1440 CSS pixels with the corporate script absent. On mobile, a stable native disclosure menu exposes the same navigation without shifting the header; on desktop, the primary navigation remains visible. Interaction-only theme/filter/evidence controls do not become dead buttons. In real HTTP CI, `browser_hosted.py` additionally checks navigation with JavaScript explicitly disabled at mobile and desktop sizes. These two checks cover separate failure mechanisms.
 
 ## Corporate site-wide search (review only)
 
@@ -93,3 +93,9 @@ The search control uses a compact public-route index embedded at build time. No 
 - Site search announces capped result counts correctly and supports ArrowUp/ArrowDown navigation through the result links. The query field is bounded to 120 characters; queries stay in the local browser.
 - `tests/browser_color_contrast.py` adds a computed text-contrast regression across all 22 routes at two widths in light and dark modes. It evaluates solid, resolved backgrounds; **gradient/image/translucent areas and real assistive technology still require review**.
 - Review GitHub Actions are pinned to exact upstream-verified commit SHAs, checkout credentials are not persisted, and the workflow remains read-only. No production or live app changes.
+
+## Build 7 mobile layout-shift correction
+
+A real GitHub Actions performance observation once recorded staging mobile `/products/` CLS **0.2815**. The first implementation exposed the entire horizontal primary navigation on narrow screens until a deferred script added `has-js`; that header then collapsed after the script loaded. This is a concrete layout-stability risk, not a generic test flake.
+
+The staged correction replaces the expanding pre-script header with a closed native `<details>` fallback menu. It uses a stable 42px slot equivalent to the JS menu button, and the details panel opens as an overlay only upon user interaction. With the script disabled or missing, the native menu still provides all product and company links. Browser/CI performance checks remain hard-gated at measured staging CLS ≤0.1 per route; do not infer production field CLS from these lab checks. Failed checks write the full performance report before exiting to aid diagnosis.

@@ -21,7 +21,7 @@ def server():
     finally:srv.shutdown();srv.server_close();t.join(timeout=3)
 
 report={'scope':'STAGING localhost chromium lab-only observations; not real-user Core Web Vitals',
-        'routes':{},'third_party_requests':[],'errors':[]}
+        'routes':{},'third_party_requests':[],'errors':[],'layout_shift_violations':[]}
 OBSERVER="""(()=>{
  window.__musitu_perf={cls:0,lcp:0};
  try{new PerformanceObserver(list=>{for(const e of list.getEntries())if(!e.hadRecentInput)window.__musitu_perf.cls+=e.value;}).observe({type:'layout-shift',buffered:true});}catch(e){}
@@ -55,11 +55,13 @@ with server() as origin,sync_playwright() as p:
                      asset_bytes:resources.filter(x=>x.name.includes('/assets/')).reduce((sum,x)=>sum+(x.decodedBodySize||0),0)};
                 }""")
                 report['routes'][label+route]=data
-                assert data['cls_observed']<=.1,(label,route,data,'Significant staging layout shift')
+                if data['cls_observed']>.1:
+                    report['layout_shift_violations'].append({'viewport':label,'route':route,'cls_observed':data['cls_observed']})
                 assert data['asset_bytes']<150000,(label,route,'asset payload unexpectedly large')
             page.close()
     finally:browser.close()
+(OUT/'performance-lab.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
 assert not report['third_party_requests'],report['third_party_requests']
 assert not report['errors'],report['errors']
-(OUT/'performance-lab.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
+assert not report['layout_shift_violations'],report['layout_shift_violations']
 print('PASS staging performance lab:',json.dumps(report,sort_keys=True))

@@ -37,7 +37,7 @@ results = {'scope': 'real HTTP Chromium on CI localhost', 'route_count': len(ROU
            'viewports': {}, 'html_responses': 0, 'asset_responses': 0, 'external_requests': [],
            'page_errors': [], 'failed_requests': [], 'csp_rejected_inline': False,
            'navigation': False, 'catalog': False, 'modal': False, 'global_search': False, 'mobile_menu': False,
-           'javascript_disabled_navigation': False, 'javascript_disabled_desktop': False}
+           'javascript_disabled_navigation': False, 'javascript_disabled_desktop': False, 'javascript_missing_asset_navigation': False}
 
 with website_server() as origin, sync_playwright() as playwright:
     kwargs = {'headless': True, 'args': ['--no-sandbox']}
@@ -132,15 +132,30 @@ with website_server() as origin, sync_playwright() as playwright:
         page = browser.new_page(java_script_enabled=False,viewport={'width':390,'height':844})
         response=page.goto(origin+'/products/',wait_until='load')
         assert response and response.status==200
-        assert page.locator('nav[aria-label="Main navigation"]').is_visible()
+        assert not page.locator('nav[aria-label="Main navigation"]').is_visible()
+        assert page.locator('#fallback-nav summary').is_visible()
+        assert not page.locator('#fallback-nav nav').is_visible()
+        page.locator('#fallback-nav summary').click()
+        assert page.locator('#fallback-nav nav').is_visible()
         assert not page.locator('#menu-toggle').is_visible()
         assert not page.locator('#theme-toggle').is_visible()
         assert not page.locator('#search-toggle').is_visible()
         assert not page.locator('.catalog-controls').is_visible()
         assert not page.locator('.evidence-trigger').first.is_visible()
-        page.locator('nav[aria-label="Main navigation"]').get_by_role('link',name='Company').click()
+        page.locator('#fallback-nav nav').get_by_role('link',name='Company').click()
         assert page.url.endswith('/company/')
         results['javascript_disabled_navigation'] = True
+        page.close()
+        # A blocked script resource must not strand visitors even when JS is enabled.
+        page = browser.new_page(viewport={'width':390,'height':844})
+        page.route('**/assets/site.js',lambda route:route.abort())
+        page.goto(origin+'/products/',wait_until='load')
+        assert page.locator('#fallback-nav summary').is_visible()
+        page.locator('#fallback-nav summary').click()
+        assert page.locator('#fallback-nav nav').is_visible()
+        page.locator('#fallback-nav nav').get_by_role('link',name='Company').click()
+        assert page.url.endswith('/company/')
+        results['javascript_missing_asset_navigation']=True
         page.close()
         page = browser.new_page(java_script_enabled=False,viewport={'width':1440,'height':900})
         page.goto(origin+'/products/',wait_until='load')

@@ -43,11 +43,19 @@ html:not(.has-js) .evidence-trigger{display:none!important}
 
 /* If JavaScript is disabled OR the script fails to load, the ordinary primary
    navigation remains usable on mobile. No duplicate secondary nav is needed. */
+/* Native <details> fallback avoids a large header collapse when the deferred
+   site script becomes ready: closed menu uses the same 42px slot as the JS menu. */
+.fallback-nav{display:none}
+.fallback-nav>summary{list-style:none;display:grid;place-items:center;width:42px;min-height:42px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text);font-size:22px;cursor:pointer;user-select:none}
+.fallback-nav>summary::-webkit-details-marker{display:none}
+.fallback-nav>summary::marker{content:''}
+.fallback-nav>nav{display:none}
 @media(max-width:820px){
-  html:not(.has-js) .header-row{height:auto;min-height:67px;flex-wrap:wrap;padding-block:10px}
-  html:not(.has-js) .primary-nav{display:flex;order:3;flex:1 0 100%;flex-wrap:wrap;gap:8px 16px;border-top:1px solid var(--line);padding-block:8px}
-  html:not(.has-js) .primary-nav .nav-link{min-height:44px}
+  html:not(.has-js) .fallback-nav{display:block}
+  html:not(.has-js) .fallback-nav[open]>nav{display:flex;position:absolute;left:0;right:0;top:100%;max-height:calc(100dvh - 67px);overflow-y:auto;flex-direction:column;gap:9px;padding:14px 28px 22px;border-bottom:1px solid var(--line);background:var(--bg);box-shadow:0 18px 35px rgba(0,0,0,.18);z-index:70}
+  .fallback-nav .nav-link{display:inline-flex;min-height:44px;align-items:center;font-size:16px}
 }
+@media(forced-colors:active){.fallback-nav>summary,.fallback-nav>nav{background:Canvas;color:CanvasText;border-color:CanvasText}}
 
 /* Build-time site-wide search: no remote requests, usable without a backend. */
 .search-toggle{display:inline-grid;place-items:center;flex:none;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text)}
