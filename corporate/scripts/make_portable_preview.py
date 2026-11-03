@@ -35,6 +35,9 @@ router=r'''
  }
  function render(){
   const route=pathFromHash(); const entry=data[route]||data['/404/'];
+  // Close any open discovery dialog so a selected result does not hide its destination.
+  const dialog=document.getElementById('site-search');
+  if(dialog&&dialog.open)dialog.close();
   document.getElementById('main').outerHTML=entry.main;
   document.title=entry.title+' · Portable preview';
   const desc=document.querySelector('meta[name="description"]');if(desc)desc.content=entry.description;
@@ -45,6 +48,8 @@ router=r'''
   document.getElementById('menu-toggle').setAttribute('aria-label','Open navigation');
   bindCatalog();
   window.scrollTo({top:0,behavior:'instant'});
+  // A single-file hash route is still navigation for keyboard and screen-reader users.
+  requestAnimationFrame(()=>document.getElementById('main')?.focus({preventScroll:true}));
  }
  document.addEventListener('click',e=>{
    const a=e.target.closest('a[href]');if(!a||e.defaultPrevented||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||a.target)return;

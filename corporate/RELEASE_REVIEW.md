@@ -53,3 +53,9 @@
 - Search dialog has a labeled search input, status announcements, semantic list of results, keyboard shortcuts, ArrowDown/ArrowUp focus management, Escape dismissal, and trigger focus restoration.
 - With JavaScript disabled or missing, the search button is hidden and ordinary navigation remains functional.
 - This capability is a staged corporate-site interface, not a general MUSITU AI or research search service.
+
+## Reviewer functionality and browser-engine gates (Build 6)
+- Added four explicit audience navigation paths, using linked product maturity and evidence rather than invented customer segments or case studies.
+- Portable reviewer closes open search dialogs when internal navigation occurs and places focus on the replacement page's `main` landmark.
+- Chromium, Firefox and WebKit coverage is configured as a required CI test; each engine tests 22 routes at three viewport sizes, mobile navigation and search. A local Chromium-only success cannot be described as a three-engine success.
+- Search is documented in the preview privacy section, does not transmit queries, and is excluded when JavaScript is unavailable.

@@ -11,6 +11,11 @@ python3 scripts/build.py
 python3 -m pytest -q tests/test_site.py
 python3 tests/browser_smoke.py
 python3 tests/browser_extended.py
+python3 tests/browser_search.py
+python3 tests/browser_crossengine.py --engines chromium # use all engines in CI
+python3 tests/browser_accessibility.py
+python3 tests/browser_nojs.py
+python3 tests/browser_hosted.py # GitHub CI with permitted localhost navigation
 python3 scripts/make_portable_preview.py
 python3 -m http.server --directory dist 8000
 ```
@@ -69,3 +74,9 @@ Private research repositories are never presented as public evidence links. The 
 ## Corporate site-wide search (review only)
 
 The search control uses a compact public-route index embedded at build time. No remote requests, private Drive content, prompt text, or client analytics are involved. It shows ranked results across approved public corporate and product pages, excluding gated legal/status and error routes. Keyboard shortcuts: Ctrl+K / Cmd+K and `/` outside inputs. Escape closes and returns focus to the trigger. Without JavaScript, the search control disappears while ordinary navigation remains available.
+
+## Portable reviewer and cross-engine acceptance
+
+`python3 scripts/make_portable_preview.py` followed by `python3 tests/browser_portable.py` verifies search-result navigation, dialog closure and focus transfer into the new route, and catalog filtering after client-side route swapping. The portable preview is self-contained but **never a production deploy artifact**.
+
+`python3 tests/browser_crossengine.py` is a required staging CI gate for current Chromium, Firefox and WebKit; it tests all 22 routes at three sizes, verifies search and mobile navigation, and records engine-specific failures. The container-only single-engine invocation does not certify the other engines. Local real HTTP behavior remains verified in Chromium CI; production HTTP headers and independent manual accessibility assessments remain owner/reviewer gates.

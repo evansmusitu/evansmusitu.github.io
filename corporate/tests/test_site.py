@@ -298,3 +298,13 @@ def test_site_search_build_time_index_is_public_sanitized_and_consistent():
     assert 'document.createElement' in js and not 'innerHTML' in js
     css=(DIST/'assets/site.css').read_text(encoding='utf-8')
     assert 'html:not(.has-js) .search-toggle' in css
+
+
+def test_audience_paths_are_real_navigation_not_unsupported_marketing_claims():
+    soup=BeautifulSoup((DIST/'index.html').read_text(),'html.parser')
+    cards=soup.select('#find-your-path a.audience-card')
+    assert len(cards)==4
+    assert {a['href'] for a in cards}=={'/products/axiom/','/evidence/','/products/education/','/products/foundry/'}
+    assert any('controlled pilots' in a.get_text() for a in cards)
+    assert any('pending independent qualification' in a.get_text() for a in cards)
+    assert all(a.select_one('h3') for a in cards)
