@@ -52,7 +52,7 @@ def test_claim_safety_and_stage_labels():
 
 def test_no_sensitive_or_remote_services():
     js=(DIST/'assets/site.js').read_text()
-    for token in ['fetch(', 'localStorage','sessionStorage','document.cookie','XMLHttpRequest','sendBeacon','analytics']:
+    for token in ['fetch(', 'localStorage','document.cookie','XMLHttpRequest','sendBeacon','analytics']:
         assert token not in js.replace('no analytics',''),token
     assert 'prefers-reduced-motion' in (DIST/'assets/site.css').read_text()
 
@@ -172,7 +172,8 @@ def test_claim_register_is_complete_and_traces_public_sources():
     assert len(set(names))==6
     for family in register['families']:
         assert family['maturity'] and family['limits'] and family['claims']
-        assert family['evidence']['url'].startswith('https://github.com/')
+        assert family['evidence']['url'].startswith(('https://github.com/','/evidence/'))
+        assert family['evidence']['access'] in ('public_record','summary_only')
         body=(DIST/'products'/family['slug']/'index.html').read_text()
         assert family['name'] in body and family['limits'] in html.unescape(body)
 
@@ -205,3 +206,41 @@ def test_dialog_source_fallback_is_named_and_safe():
         link=soup.select_one('dialog#evidence-dialog a#evidence-source')
         assert link and link.get('href')=='/evidence/' and link.get_text(strip=True),p
         assert soup.select_one('main#main[tabindex="-1"]'),p
+
+
+def test_private_repository_links_never_appear_in_public_html_or_claims():
+    private_slugs=('mft-gpu-training','musitu-foundry-forge')
+    for p in list(DIST.rglob('*.html'))+[DIST/'claim-register.json']:
+        source=p.read_text(encoding='utf-8')
+        for private in private_slugs:
+            assert private not in source,(p,private)
+    register=json.loads((DIST/'claim-register.json').read_text())
+    private_summary={r['slug'] for r in register['families'] if r['evidence']['access']=='summary_only'}
+    assert private_summary=={'fmi','foundry'}
+
+
+def test_no_unreviewed_remote_assets_or_unverified_plugin_link():
+    css=(DIST/'assets/site.css').read_text()
+    assert '@import' not in css
+    assert 'url(http' not in css.lower()
+    assert 'plugin_asdk_app_' not in (DIST/'products/axiom/index.html').read_text()
+    for page in DIST.rglob('index.html'):
+        soup=BeautifulSoup(page.read_text(),'html.parser')
+        for tag in soup.select('script[src],link[rel=stylesheet]'):
+            assert tag.get('src',tag.get('href','')).startswith('/assets/'),(page,tag)
+        for a in soup.select('a[href]'):
+            assert not a.get('href','').startswith(('http://','//','javascript:')), (page,a)
+
+
+def test_favicon_and_tab_only_theme_preference():
+    svg=(DIST/'assets/favicon.svg').read_text()
+    assert '<svg' in svg and 'MUSITU' in svg
+    js=(DIST/'assets/site.js').read_text()
+    assert "sessionStorage.getItem(themeKey)" in js
+    assert "sessionStorage.setItem(themeKey,next)" in js
+    assert 'localStorage' not in js
+    assert 'musitu_corporate_theme_v1' in js
+    for page in DIST.rglob('index.html'):
+        soup=BeautifulSoup(page.read_text(),'html.parser')
+        assert soup.select_one('link[rel="icon"][href="/assets/favicon.svg"]')
+        assert soup.select_one('meta[name="theme-color"]')

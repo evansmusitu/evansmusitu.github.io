@@ -55,3 +55,9 @@ Note: the ChatGPT container's managed browser policy blocks Chromium URL navigat
 ## Accessibility regression checks (not certification)
 
 `python3 tests/browser_accessibility.py` runs DOM-name, duplicate-ID, ARIA-reference, skip-focus, 320px reflow, and WCAG 1.4.12 text-spacing-style regression checks at 320, 390, and 1440 CSS pixels. All pages are checked without calling live services. The output `review-artifacts/accessibility-regressions.json` is uploaded as a review-only artifact. This does not claim complete WCAG 2.2 AA conformance or replace a screen-reader/manual audit.
+
+## Design continuity and privacy
+
+All 22 routes use the same tiny local SVG favicon and the canonical MUSITU navy, violet, and mint palette. Choosing light or dark mode saves only the visual preference in the browser tab's `sessionStorage` under `musitu_corporate_theme_v1`; no preference is sent to a server. If storage is disabled, theme switching still works for the current page. No cookies, analytics, browser localStorage, or customer data are used by the corporate shell. Existing Intelligence local encrypted workspaces are unrelated and never touched.
+
+Private research repositories are never presented as public evidence links. The FMI and Foundry cards direct visitors to a public research/evidence summary until their primary materials receive explicit publication approval. Unverified direct ChatGPT app URLs are not included in this preview; AXIOM's action goes to its published release evidence.

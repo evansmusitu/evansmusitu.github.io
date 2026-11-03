@@ -14,7 +14,7 @@
 - All content is escaped, programmatically generated from audited static product records; external link schemes are allowlisted to HTTPS or mailto.
 - Evidence records use safe textContent assignment and explicit source-review dates; recorded maturity must not be confused with a production certification.
 - All outbound HTTPS links opening new tabs include noopener and noreferrer.
-- No server-side tracking, client localStorage, sessionStorage, remote JavaScript, remote fonts, or contact form exists.
+- No server-side tracking, localStorage, remote JavaScript, remote fonts, or contact form exists. The only sessionStorage key is the optional tab-scoped visual theme preference (`musitu_corporate_theme_v1`), which contains no user content and is not transmitted.
 
 ## CSP limitation and hosting requirements
 - A CSP `<meta>` element supports only a subset of response-header security policy. In particular, `frame-ancestors` and reporting requirements must be set at the hosting response layer, where supported.

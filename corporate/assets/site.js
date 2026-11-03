@@ -8,17 +8,25 @@
   const mobile=qs('#mobile-nav');
   if(themeBtn){
     const preference=window.matchMedia('(prefers-color-scheme: light)');
-    let explicitChoice=false;
+    // This tab-scoped visual preference contains no identity or user content.
+    const themeKey='musitu_corporate_theme_v1';
+    let storedTheme=null;
+    try{storedTheme=window.sessionStorage.getItem(themeKey);}catch(_){/* unavailable storage is fine */}
+    let explicitChoice=storedTheme==='light'||storedTheme==='dark';
     const setTheme=(next)=>{
       document.documentElement.dataset.theme=next;
       themeBtn.setAttribute('aria-label',`Switch to ${next==='dark'?'light':'dark'} mode`);
       themeBtn.setAttribute('aria-pressed',String(next==='light'));
       themeBtn.title=`Switch to ${next==='dark'?'light':'dark'} mode`;
+      const bar=qs('meta[name="theme-color"]');
+      if(bar)bar.content=next==='light'?'#f4f7fd':'#090e1b';
     };
-    setTheme(preference.matches?'light':'dark');
+    setTheme(explicitChoice?storedTheme:(preference.matches?'light':'dark'));
     themeBtn.addEventListener('click',()=>{
       explicitChoice=true;
-      setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+      const next=document.documentElement.dataset.theme==='dark'?'light':'dark';
+      setTheme(next);
+      try{window.sessionStorage.setItem(themeKey,next);}catch(_){/* preference is optional */}
     });
     preference.addEventListener('change',event=>{
       if(!explicitChoice)setTheme(event.matches?'light':'dark');

@@ -37,7 +37,7 @@ results = {'scope': 'real HTTP Chromium on CI localhost', 'route_count': len(ROU
            'viewports': {}, 'html_responses': 0, 'asset_responses': 0, 'external_requests': [],
            'page_errors': [], 'failed_requests': [], 'csp_rejected_inline': False,
            'navigation': False, 'catalog': False, 'modal': False, 'mobile_menu': False,
-           'javascript_disabled_navigation': False}
+           'javascript_disabled_navigation': False, 'javascript_disabled_desktop': False}
 
 with website_server() as origin, sync_playwright() as playwright:
     kwargs = {'headless': True, 'args': ['--no-sandbox']}
@@ -89,6 +89,17 @@ with website_server() as origin, sync_playwright() as playwright:
                 assert page.locator('h1').inner_text().strip().startswith('MUSITU')
                 results['navigation'] = True
                 page.goto(origin+'/',wait_until='load')
+                original=page.locator('html').get_attribute('data-theme')
+                page.locator('#theme-toggle').click()
+                selected=page.locator('html').get_attribute('data-theme')
+                assert selected in ('light','dark') and selected!=original
+                expectedBar='#f4f7fd' if selected=='light' else '#090e1b'
+                assert page.locator('meta[name="theme-color"]').get_attribute('content')==expectedBar
+                page.goto(origin+'/products/',wait_until='load')
+                assert page.locator('html').get_attribute('data-theme')==selected, 'Theme not retained across page navigation'
+                page.reload(wait_until='load')
+                assert page.locator('html').get_attribute('data-theme')==selected, 'Theme not retained on reload'
+                page.goto(origin+'/',wait_until='load')
                 page.evaluate("""() => {const e=document.createElement('script');e.textContent='window.__injected_inline_js=true';document.body.append(e);}""")
                 assert page.evaluate('window.__injected_inline_js !== true'), 'Meta CSP failed to block inline injected JavaScript'
                 results['csp_rejected_inline'] = True
@@ -109,6 +120,14 @@ with website_server() as origin, sync_playwright() as playwright:
         page.locator('nav[aria-label="Navigation without JavaScript"]').get_by_role('link',name='Company').click()
         assert page.url.endswith('/company/')
         results['javascript_disabled_navigation'] = True
+        page.close()
+        page = browser.new_page(java_script_enabled=False,viewport={'width':1440,'height':900})
+        page.goto(origin+'/products/',wait_until='load')
+        assert page.locator('nav[aria-label="Main navigation"]').is_visible()
+        assert not page.locator('nav[aria-label="Navigation without JavaScript"]').is_visible()
+        page.locator('nav[aria-label="Main navigation"]').get_by_role('link',name='Company').click()
+        assert page.url.endswith('/company/')
+        results['javascript_disabled_desktop']=True
         page.close()
     finally:
         browser.close()
