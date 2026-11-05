@@ -1,0 +1,9 @@
+# Local Static Security Review — bounded results
+
+**Observed:** 34 routes generated with staging noindex; no backend, cookies, third-party analytics, uploads, customer logins, payments, remote inference or order processing. All executable website scripts are same-origin static assets; the public record corpus contains seven bounded evidence entries and no private Drive source material. Source import excludes the embedded Studio video and PNG poster. The isolated review server adds noindex and defense-in-depth response headers for local HTTP tests.
+
+**Executable checks:** 115 static/HTTP/sitemap tests and 34-route Chromium in-memory DOM suite; 12 local interactive use-cases. The comparison buttons were initially inert and were corrected to generate a structured comparison panel; Escape in search dialogs was corrected to dismiss consistently; mobile theme was made available through the mobile menu. The successful regression evidence is recorded in `review-artifacts/`.
+
+**Not tested or not established:** authenticated production Cloudflare account security, real DNS/hosting settings, response headers on real origins, deployment pipeline permissions, HSTS, HTTP-to-HTTPS behavior, actual form delivery, independent penetration testing, real Safari/Firefox/WebKit browser conformance, independent WCAG audit, real-user traffic/performance, source rights, privacy/terms legal compliance and live Intelligence workspace preservation. These are release blockers, not exceptions to acceptance criteria.
+
+**Security boundaries:** the portable preview removes the meta CSP solely to embed local CSS/JS, and must never be deployed. The production package is not authorized. Do not attempt secrets extraction from GitHub workflows or use public PRs as a substitute for source-disclosure review.

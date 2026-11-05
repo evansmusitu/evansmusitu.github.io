@@ -1,0 +1,76 @@
+{
+  "review_date": "2026-11-05",
+  "package": "A",
+  "implementation_local_only": true,
+  "source_origin": "owner uploaded 34-route offline preview",
+  "owner_approved_remote_push": true,
+  "owner_approved_deployment": false,
+  "owner_approved_package_b": false,
+  "local_static_tests": {
+    "passed": 115,
+    "report": "review-artifacts/pytest-results.txt"
+  },
+  "local_chromium_dom": {
+    "routes": 34,
+    "responsive_viewports": 102,
+    "theme_views": 204,
+    "no_javascript_routes": 34,
+    "interactions_passed": 12,
+    "errors": 0,
+    "report": "review-artifacts/browser-dom-results.json"
+  },
+  "gates": [
+    {
+      "id": 1,
+      "name": "Production domain and hosting",
+      "status": "blocked",
+      "required": "owner-approved canonical domain, authorized Cloudflare/DNS inventory, hosted routing and security header read-back"
+    },
+    {
+      "id": 2,
+      "name": "Privacy, Terms and legal",
+      "status": "blocked",
+      "required": "qualified legal sign-off on actual operator, data practices and policies"
+    },
+    {
+      "id": 3,
+      "name": "Contact and support",
+      "status": "blocked",
+      "required": "confirmed corporate delivery, verified support route and escalation tests"
+    },
+    {
+      "id": 4,
+      "name": "Final brand and media rights",
+      "status": "blocked",
+      "required": "approved master visual identity, asset rights, media safety/captions/metadata review"
+    },
+    {
+      "id": 5,
+      "name": "Independent security, accessibility, hosted performance",
+      "status": "partially_evidenced",
+      "required": "third-party security and WCAG reviews, real Chrome/Firefox/Safari tests, hosted LCP/INP/CLS data; prior mobile CLS issue revalidated on exact release source"
+    },
+    {
+      "id": 6,
+      "name": "Existing Intelligence preservation",
+      "status": "partially_evidenced",
+      "required": "owner-approved diff/real live app regression/origin/workspace preservation"
+    },
+    {
+      "id": 7,
+      "name": "Production monitoring, backup and rollback",
+      "status": "blocked",
+      "required": "service/account owner, alerts, backups, tested restore/rollback rehearsal"
+    }
+  ],
+  "production_release_decision": "HOLD",
+  "missing_owner_decisions": [
+    "Hosting/origin architecture for mftintelligence.com without disrupting existing applications",
+    "Public legal content approval",
+    "Verified corporate contact",
+    "Final brand/media rights",
+    "Package B optional backend provider/model/budget if desired",
+    "Explicit separate merge and production release authorization"
+  ],
+  "owner_approved_corporate_domain": "mftintelligence.com"
+}

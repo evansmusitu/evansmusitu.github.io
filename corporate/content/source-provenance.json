@@ -1,0 +1,12 @@
+{
+  "source_file": "MUSITU_34_PAGE_OFFLINE_PREVIEW.html",
+  "sha256": "c30e0ae55938ea9324aec8ac0998041a7c0a804ef28110c70b38408fa6cf8909",
+  "imported_routes": 34,
+  "modifications": [
+    "Separated repeated CSS and browser-local scripts into shared files",
+    "Removed portable iframe postMessage navigation shim",
+    "Withheld unapproved embedded Studio video and poster assets",
+    "Preserved noindex and conditional editorial content"
+  ],
+  "rights_status": "media not cleared for publication"
+}
