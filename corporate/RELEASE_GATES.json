@@ -1,7 +1,6 @@
 {
   "review_date": "2026-11-05",
   "package": "A",
-  "implementation_local_only": true,
   "source_origin": "owner uploaded 34-route offline preview",
   "owner_approved_remote_push": true,
   "owner_approved_deployment": false,
@@ -24,7 +23,7 @@
       "id": 1,
       "name": "Production domain and hosting",
       "status": "blocked",
-      "required": "owner-approved canonical domain, authorized Cloudflare/DNS inventory, hosted routing and security header read-back"
+      "required": "Owner-selected domain mftintelligence.com; verify apex/www DNS and origin ownership, custom domain route safety, live headers and hosting account authorization before deployment"
     },
     {
       "id": 2,
@@ -48,7 +47,7 @@
       "id": 5,
       "name": "Independent security, accessibility, hosted performance",
       "status": "partially_evidenced",
-      "required": "third-party security and WCAG reviews, real Chrome/Firefox/Safari tests, hosted LCP/INP/CLS data; prior mobile CLS issue revalidated on exact release source"
+      "required": "Independent WCAG/security acceptance, Chrome/Firefox/WebKit/Safari on exact PR #32 artifact, hosted Web Vitals, prior mobile CLS resolution, manual axe/AT review; previous protected preview tests do not transfer"
     },
     {
       "id": 6,
@@ -72,5 +71,11 @@
     "Package B optional backend provider/model/budget if desired",
     "Explicit separate merge and production release authorization"
   ],
-  "owner_approved_corporate_domain": "mftintelligence.com"
+  "owner_approved_corporate_domain": "mftintelligence.com",
+  "implementation_performed_locally": true,
+  "public_draft_pr_opened": true,
+  "draft_pr": "https://github.com/evansmusitu/evansmusitu.github.io/pull/32",
+  "draft_branch": "feature/musitu-corporate-34-route-20261105",
+  "initial_commit": "85e94ad46eadbd863023d069be6cc8faba4f452a",
+  "review_note": "Cloudflare protected-preview and hosted QA runs on 2026-11-03/04 are historical evidence from a different artifact, not QA for this draft PR."
 }

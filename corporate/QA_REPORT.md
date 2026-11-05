@@ -1,6 +1,6 @@
 # MUSITU Package A — Actual Local QA Report
 
-Date: **4 November 2026**. Source SHA-256: `c30e0ae55938ea9324aec8ac0998041a7c0a804ef28110c70b38408fa6cf8909`. This report covers the local 34-route candidate, **not GitHub PR #31**.
+Date: **4 November 2026**. Source SHA-256: `c30e0ae55938ea9324aec8ac0998041a7c0a804ef28110c70b38408fa6cf8909`. This report covers the local 34-route candidate subsequently shared as draft PR #32; it is **not a fresh GitHub CI result for PR #32** and does not describe PR #31.
 
 | Test category | Actual observed evidence | Limits |
 |---|---|---|
@@ -12,7 +12,7 @@ Date: **4 November 2026**. Source SHA-256: `c30e0ae55938ea9324aec8ac0998041a7c0a
 | Functional interactions | **12 / 12 passed** | Search, Navigator, Atlas, Evidence Lens, local Ask, theme desktop/mobile, filters, comparison, NPV, chemistry, no-JS menu |
 | Runtime errors and network | **0 JS exceptions, 0 external requests** in DOM runner | Only instrumented during runner; no hosted scan |
 | HTTP responses | 34 routes: 33 × HTTP 200 and 1 × HTTP 404; unknown route × HTTP 404; local header checks pass | Real local Python HTTP server only, **not production host** |
-| Source manifest repeat build | SHA-256 matches between two local builds | No public git commit or deployed artifact tested |
+| Source manifest repeat build | SHA-256 matches between two local builds | Local checks are not a hosted run for the public draft PR commit |
 | Portable single-file review navigation | 34 options, selector and internal link smoke PASS | Nondeployable `srcdoc` artifact; CSP intentionally removed |
 | Release media | Studio original video and EXIF-bearing PNG **excluded** | Publishing requires independent rights/provenance/caption review |
 

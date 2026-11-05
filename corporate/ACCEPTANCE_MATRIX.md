@@ -1,6 +1,6 @@
 # MUSITU Corporate Website — Local Implementation Acceptance Matrix
 
-Review date: 4 November 2026. **Local-only source; not an authorization to push, merge or deploy.**
+Review date: 5 November 2026. **Source shared for review in draft PR #32; not an authorization to merge or deploy.**
 
 ## Master route inventory
 
@@ -65,4 +65,4 @@ All routes below exist as actual generated static HTML and were covered by the 1
 
 ## Interpretation
 
-All observed local results have test logs and reproducible source. **Production-ready is NO.** A passing in-memory browser test or isolated static preview cannot close legal, brand-rights, operational or live-infrastructure gates. Current PR #31 covers 22 routes, not this local 34-route candidate.
+All observed local results have test logs and reproducible source. **Production-ready is NO.** A passing in-memory browser test or isolated static preview cannot close legal, brand-rights, operational or live-infrastructure gates. Existing PR #31 covers 22 routes; new draft PR #32 contains the separate 34-route source candidate. Hosted V4 QA performed earlier covers a different source/artifact and is not a CI pass for PR #32.

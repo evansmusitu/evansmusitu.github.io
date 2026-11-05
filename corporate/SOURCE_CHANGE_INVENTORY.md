@@ -1,6 +1,6 @@
 # Isolated Package A local source inventory
 
-All source objects below were created/modified within the isolated `corporate/` workspace from the approved 34-route preview. **No Git remote diff, commit, PR update, merge or deployment occurred.** Do not interpret this as the changed-file list of PR #31.
+All source objects below were created/modified within the isolated `corporate/` workspace from the approved 34-route preview. **A source-only commit was pushed to a dedicated branch and draft PR #32 opened on 5 November 2026.** The first remote commit is `85e94ad46eadbd863023d069be6cc8faba4f452a`; this inventory is not the changed-file list of PR #31. No merge, deployment, DNS or Cloudflare modification occurred.
 
 - `corporate/ACCEPTANCE_MATRIX.md`
 - `corporate/BRAND_MEDIA_REGISTER.md`
@@ -23,7 +23,6 @@ All source objects below were created/modified within the isolated `corporate/` 
 - `corporate/scripts/make_portable_preview.py`
 - `corporate/scripts/preview_server.py`
 - `corporate/scripts/sitemap.py`
-- `corporate/scripts/write_review_docs.py`
 - `corporate/templates/dialogs.html`
 - `corporate/templates/footer.html`
 - `corporate/templates/review-ribbon.html`
@@ -36,3 +35,5 @@ All source objects below were created/modified within the isolated `corporate/` 
 - `corporate/SOURCE_CHANGE_INVENTORY.md` (this file)
 
 Generated, reproducible build outputs are under `corporate/dist/` (34 page files plus static assets, robots and manifests). Nondeployed visual and QA evidence is under `corporate/review-artifacts/`. The portable owner review HTML is nondeployable because it embeds script/style content without production CSP.
+
+Final review-draft source excludes generated outputs, the portable HTML, screenshots and the one-time report-authoring script. All draft PR paths remain inside `corporate/`.

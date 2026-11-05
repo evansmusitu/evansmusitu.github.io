@@ -1,6 +1,6 @@
 # MUSITU Corporate Website — Release Review and Change Control
 
-**Current disposition: HOLD / REVIEW ONLY**. Package A local implementation is produced; owner approval to publish reviewed Package A source to a dedicated draft PR is recorded on 5 November 2026. Production merge and publishing authorizations remain absent.
+**Current disposition: HOLD / REVIEW ONLY**. Package A source is shared only via draft PR #32 following owner approval on 5 November 2026. Production merge and publishing authorizations remain absent.
 
 ## What Package A local implementation establishes
 
@@ -19,7 +19,7 @@ A generated 34-route, static-first review site with the approved six-family port
 
 ## Source reconciliation
 
-Connected GitHub PR #31 (`feature/musitu-corporate-v1-20261102` at reviewed SHA `d48a3752b3de2df7dbdf5d073bccc1ee5a158144`) is a 22-route review branch. This 34-route candidate was reconstructed from the owner-supplied 34-route file locally and is **not represented as an update of PR #31**. The next source integration may use a dedicated public draft PR following source disclosure review, with a fresh exact SHA/diff review; do not overwrite PR #31. No workflow changes were performed.
+Connected GitHub PR #31 (`feature/musitu-corporate-v1-20261102` at reviewed SHA `d48a3752b3de2df7dbdf5d073bccc1ee5a158144`) is a 22-route review branch. This 34-route candidate was reconstructed from the owner-supplied 34-route file locally and is **not represented as an update of PR #31**. Owner-approved public draft PR #32 now contains the distinct 34-route source-only candidate. The source change inventory is constrained to `corporate/`; do not overwrite PR #31. No workflow changes were performed.
 
 ## Product and editorial controls
 
@@ -30,3 +30,7 @@ Axiom direct listing needs independently verified access; historical release/cor
 No publication-approved canonical `sitemap.xml`, no noindex removal, no production CSP/HSTS/DNS change, no live status feed, no contact backend, no user accounts, no payments, no AI provider configuration, no rollout or redirect and no disclosure of private source material. The rights-gated Studio media remain excluded. Package B for live Ask MUSITU has not been authorized.
 
 **Decision rule:** no promotion or publishing until all seven external release gates are passed with independent evidence and the owner issues separate explicit merge/deploy instructions. The completed local review packet is available, but a production-release decision is not implied.
+
+## Cloudflare staging evidence and non-transferability
+
+Connected GitHub Actions logs dated 3–4 November 2026 support successful Cloudflare Access-protected 34-route previews and a 4 November provider inventory. The inventory returned no production deployments, no attached custom domains, and zero DNS records for `corporate.mftintelligence.com`; it did **not** audit all existing apex records. A 4 November Chromium/axe run sampled 10 routes with no automated WCAG violations. These results describe a **different, already deployed staging artifact**, not the 5 November draft PR #32 source. Cloudflare credential use is not permission to copy secret values into the codebase or to promote a release.

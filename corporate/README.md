@@ -1,8 +1,8 @@
 # MUSITU corporate website — isolated Package A review candidate
 
 **Authority:** MUSITU-WEB-MASTER-1.0; MUSITU-WEB-AUTH-001.  
-**Mode:** Package A owner-approved source-sharing review. **No production merge or deployment authorized.**  
-**Review:** 4 November 2026. Reconstructed from the owner-supplied 34-route portable preview (SHA-256 documented in `content/source-provenance.json`), not from a clone of GitHub PR #31.
+**Mode:** Package A published-source draft review (PR #32). **No production merge or deployment authorized.**  
+**Review:** 5 November 2026. Reconstructed from the owner-supplied 34-route portable preview (SHA-256 documented in `content/source-provenance.json`), not from a clone of GitHub PR #31.
 
 ## What is included
 
@@ -48,4 +48,4 @@ Open `review-artifacts/MUSITU_34_ROUTE_PORTABLE_OWNER_REVIEW_LOCAL_ONLY.html` di
 
 ## Authority boundaries
 
-The 34-route candidate is authorized for a dedicated public GitHub draft PR after source-disclosure review; no production merge or deployment is authorized. The live `evansmusitu/evansmusitu.github.io` root site, existing MUSITU Intelligence workspaces, product repositories, Cloudflare services, DNS, deployments, emails, payments and provider billing are not modified. The old remote PR #31 is a separate **22-route** baseline and must not be described as containing this new local 34-route implementation. See `RELEASE_REVIEW.md` and `RELEASE_GATES.json` before any remote sharing, merge or publication.
+The 34-route candidate is published for source review in [draft PR #32](https://github.com/evansmusitu/evansmusitu.github.io/pull/32) at commit `85e94ad46eadbd863023d069be6cc8faba4f452a`, with no merge or production deployment authorization. The live `evansmusitu/evansmusitu.github.io` root site, existing MUSITU Intelligence workspaces, product repositories, Cloudflare services, DNS, deployments, emails, payments and provider billing are not modified. The old remote PR #31 is a separate **22-route** baseline and must not be described as containing this new local 34-route implementation. See `RELEASE_REVIEW.md` and `RELEASE_GATES.json` before any merge or publication.
