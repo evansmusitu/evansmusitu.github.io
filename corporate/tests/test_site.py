@@ -70,11 +70,15 @@ def test_families_and_public_info():
  assert 'customer billing' not in soup_for('/products/axiom/').title.get_text().lower()
 
 
-def test_rights_gate():
+def test_owner_cleared_studio_media_gate():
  p=soup_for('/products/foundry/studio/')
- assert p.select_one('.video-clearance-gate')
- assert not p.select('video,source[src],img[src^="data:"]')
- assert not list(DIST.rglob('*.mp4')) and not list(DIST.rglob('*.png'))
+ video=p.select_one('video.studio-demo-player')
+ assert video and video.get('poster')=='/assets/studio-poster.png'
+ assert p.select_one('video.studio-demo-player source[src="/assets/studio-demo-82s.mp4"][type="video/mp4"]')
+ mp4=DIST/'assets/studio-demo-82s.mp4'; poster=DIST/'assets/studio-poster.png'
+ assert hashlib.sha256(mp4.read_bytes()).hexdigest()=='afd6dfd3c73668e544f3f8a857697fed0abaadccd4927202bb3a185612c2dea0'
+ assert hashlib.sha256(poster.read_bytes()).hexdigest()=='0ea5e961d916375029010dbae01bf8a1783e5fd6b90f74c006dc852df1c285d0'
+ assert not p.select('img[src^="data:"]')
 
 
 def test_master_hash_and_no_external_runtime():
@@ -110,7 +114,9 @@ def test_mobile_theme_access():
   assert b.select_one('.mobile-menu-panel .mobile-theme-control')['type']=='button'
 
 
-def test_no_private_media_source_migration():
+def test_generated_asset_size_policy():
+ allowed_large={'assets/studio-demo-82s.mp4'}
  for p in DIST.rglob('*'):
-  if p.is_file() and p.name!='manifest.json':
+  if p.is_file() and p.name!='manifest.json' and p.relative_to(DIST).as_posix() not in allowed_large:
    assert p.stat().st_size < 250000, p
+ assert (DIST/'assets/studio-demo-82s.mp4').stat().st_size==1540312
