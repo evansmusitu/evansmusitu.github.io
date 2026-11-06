@@ -12,18 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Identify available Cloudflare secret key names (never print values)
-        env:
-          SECRET_INVENTORY_JSON: ${{ toJSON(secrets) }}
-        run: |
-          python3 - <<'PY'
-          import os,json
-          keys=list(json.loads(os.environ.get('SECRET_INVENTORY_JSON','{}')).keys())
-          cf=[k for k in keys if any(term in k.upper() for term in ('CLOUDFLARE','CF_','WRANGLER','PAGES','MUSITU'))]
-          print('Available scoped Cloudflare-related Actions secret NAMES:', json.dumps(cf))
-          print('Total visible Actions secret key names:',len(keys))
-          print('Secret VALUES are not printed, persisted or transmitted.')
-          PY
       - name: Inspect only Cloudflare Pages token capability
         env:
           CF_TOKEN_A: ${{ secrets.CLOUDFLARE_API_TOKEN }}
