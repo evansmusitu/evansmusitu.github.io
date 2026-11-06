@@ -40,8 +40,9 @@ jobs:
               raise RuntimeError(f'HTTP check failed for {url}: {type(last).__name__}: {last}')
           status,final,headers,home=get(ROOT+'/')
           assert status==200 and b'MUSITU' in home and b'Intelligence with evidence' in home,(status,final)
-          assert 'content-security-policy' in {k.lower() for k in headers},'Missing production CSP'
-          assert headers.get('X-Content-Type-Options','').lower()=='nosniff','Missing nosniff'
+          lower_headers={k.lower():v for k,v in headers.items()}
+          assert 'content-security-policy' in lower_headers,'Missing production CSP'
+          assert lower_headers.get('x-content-type-options','').lower()=='nosniff','Missing nosniff'
           for route,expected in [
               ('/legal/privacy/',b'Privacy Policy'),
               ('/legal/terms/',b'Terms of Use'),
