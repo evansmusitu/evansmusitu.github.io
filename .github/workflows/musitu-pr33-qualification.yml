@@ -126,6 +126,14 @@ jobs:
               results[engine_name]=count
           print('HTTP BROWSER ACCEPTANCE:',json.dumps({'routes':len(routes),'viewport_checks':results,'errors':0}))
           PY
+      - name: Preserve complete qualified production artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MUSITU-CORPORATE-PR33-PRODUCTION-87cc21fc
+          path: corporate/dist/
+          retention-days: 30
+          if-no-files-found: error
+          compression-level: 0
       - name: Safety boundary
         run: |
           echo 'QUALIFICATION ONLY: no deploy, DNS mutation, merge, secret access, or Pages project change.'
