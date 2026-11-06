@@ -93,5 +93,12 @@
     "evidence_packets": [
       "corporate/BRAND_MEDIA_VERIFICATION_20261106.md"
     ]
-  }
+  },
+  "owner_approved_policy_copy": true,
+  "policy_copy_approved_on": "2026-11-06",
+  "policy_copy_status": "Owner authorizes publishing current Privacy Policy and Terms wording; actual hosting publication and statutory/compliance checks remain separate.",
+  "policy_copy_paths": [
+    "/legal/privacy/",
+    "/legal/terms/"
+  ]
 }
