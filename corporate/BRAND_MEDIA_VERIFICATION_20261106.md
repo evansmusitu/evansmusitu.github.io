@@ -7,7 +7,7 @@
 | Asset | Actual bytes and provenance checked | SHA-256 | Result |
 |---|---|---|---|
 | Axis Knot master SVG at `corporate/assets/favicon.svg` | 924-byte current GitHub draft artifact compared byte-for-byte to the master SVG embedded in the owner's MUSITU Visual Operating System Drive source | `f0e73478176b335bf3cfb5afd8bd7249d5aa39f2627798af7c71d9f13972c2fd` | **PASS:** exact match to owner master and brand register. SVG namespace valid; no script/remote reference detected in inspected text. |
-| Studio poster, former public PR object | 30,375 raw decoded bytes from GitHub historical revision `df87c9b`; PNG 320 × 200; parsed chunk sequence `IHDR/IDAT/IEND`; no `eXIf`, `tEXt`, `iTXt` or `zTXt` chunks | `0ea5e961d916375029010dbae01bf8a1783e5fd6b90f74c006dc852df1c285d0` | **PASS:** byte checksum and inspected metadata-chunk criterion. Poster visual contents and third-party art not independently inspected in this test. |
+| Studio poster, former public PR object | 30,375 raw decoded bytes from GitHub historical revision `df87c9b`; PNG 320 × 200; parsed chunk sequence `IHDR/IDAT/IEND`; no `eXIf`, `tEXt`, `iTXt` or `zTXt` chunks | `0ea5e961d916375029010dbae01bf8a1783e5fd6b90f74c006dc852df1c285d0` | **PASS:** byte checksum and inspected metadata-chunk criterion. Poster render independently inspected at native resolution: stylized 3D geometric scene on a dark background, no visible text, brand logo, person or obvious third-party symbol. This bounded visual scan does not establish copyright ownership or comprehensive third-party clearance. |
 | Studio 82-second H.264 MP4 | Historical public Git blob `79a43a75ed7ac50deb0ca45a6eee49736737d86e` (previous recorded size 1,540,312 bytes); owner demo notes reviewed. Full binary could not be streamed through this repository connection (>1 MB textual contents limit). | **Expected only:** `afd6dfd3c73668e544f3f8a857697fed0abaadccd4927202bb3a185612c2dea0` | **PENDING actual-byte hash, codec/duration/frame check, frame-by-frame third-party and personal-information inspection.** Do not claim independently verified video SHA. |
 
 The owner-authorized register approves website use of the exact logo, video and scrubbed poster. This record is not a trademark clearance opinion, statutory legal approval, independent media license review, or publication GO.
@@ -48,6 +48,7 @@ The media reviewer must compare this text against the complete 82 seconds, verif
 - Master logo exact-byte check: **PASS**
 - Poster checksum and structural metadata scan: **PASS**
 - MP4 SHA/duration/codecs and full-frame privacy/IP inspection: **PENDING**
+- Poster visual scan for visible text/people/logos: **PASS (bounded inspection only)**
 - Full accessibility equivalent, video/player/manual assistive technology: **PENDING**
 - Trademark similarity/third-party marks rights assessment: **PENDING**
 - Raw Git history/remediation owner decision: **PENDING**
