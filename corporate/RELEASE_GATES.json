@@ -85,6 +85,14 @@
     "plan": "corporate/PHASE_08_FINAL_RELEASE_COMPLETION_PLAN.md",
     "status": "in_progress_hold",
     "acceptance": "all seven existing gates independently evidenced and explicitly signed off before production deployment",
-    "production_authorization": false
+    "production_authorization": false,
+    "started_workstreams": [
+      "W1",
+      "W2"
+    ],
+    "evidence_packets": [
+      "corporate/LEGAL_PRIVACY_COUNSEL_PACKET_20261106.md",
+      "corporate/BRAND_MEDIA_VERIFICATION_20261106.md"
+    ]
   }
 }

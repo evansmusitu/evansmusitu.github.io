@@ -53,3 +53,9 @@
 `PRODUCTION_GO = W1_PASS && W2_PASS && W3_PASS && W4_PASS && W5_PASS && W6_PASS && W7_OWNER_AUTHORIZED`
 
 If any term is false, the disposition remains **HOLD**. One phase does **not** mean skipping external review or silently waiving existing seven gates. This plan is a draft-branch governance update only, **not** consent to perform production-impacting actions.
+
+## Phase 08 W1/W2 execution started — 6 November 2026
+
+- **W1 legal:** Draft site data-flows and exact Privacy/Terms sections extracted for counsel review in `LEGAL_PRIVACY_COUNSEL_PACKET_20261106.md`. Existing counsel outreach verified; no written sign-off received. No legal copy published or legal gate passed.
+- **W2 media:** Exact GitHub favicon was matched to owner Visual Operating System master and SHA-256 checked. Historical PNG poster SHA-256 and PNG metadata chunks verified; raw video binary/frame review, rights/public Git history decision and accessibility equivalent remain pending. See `BRAND_MEDIA_VERIFICATION_20261106.md`.
+- The Studio/Lab placeholder language was adjusted in the draft source to recognize owner site-use approval while making unresolved independent release gates explicit. This requires a new build and affected-route regression before sign-off.
