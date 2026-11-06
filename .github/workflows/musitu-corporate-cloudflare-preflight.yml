@@ -50,3 +50,35 @@ jobs:
           print('Project domain count:',len(proj.get('domains') or []))
           print('Preflight is read only; no Cloudflare/DNS actions performed.')
           PY
+      - name: Inspect scoped legacy Cloudflare credentials (read only)
+        env:
+          CF_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
+          CF_GLOBAL_KEY: ${{ secrets.CLOUDFLARE_GLOBAL_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json,os,urllib.request,urllib.error
+          email=os.environ.get('CF_EMAIL','')
+          key=os.environ.get('CF_GLOBAL_KEY','')
+          print('GitHub Actions Cloudflare email secret configured:',bool(email))
+          print('GitHub Actions Cloudflare global API secret configured:',bool(key))
+          if not (email and key):raise SystemExit(0)
+          def req(path):
+              h={'X-Auth-Email':email,'X-Auth-Key':key,'Accept':'application/json'}
+              r=urllib.request.Request('https://api.cloudflare.com/client/v4/'+path,headers=h)
+              try:
+                  with urllib.request.urlopen(r,timeout=15) as resp:return json.loads(resp.read())
+              except urllib.error.HTTPError as e:
+                  print('Cloudflare read-only response code:',e.code)
+                  return {'success':False,'result':None}
+          zones=req('zones?name=mftintelligence.com&per_page=5')
+          zone=next((z for z in (zones.get('result') or []) if z.get('name')=='mftintelligence.com'),None)
+          print('Exact corporate zone accessible:',bool(zone))
+          if not zone:raise SystemExit(0)
+          account_id=(zone.get('account') or {}).get('id')
+          print('Zone account matches known MUSITU integration:',account_id=='93f395f5121954671f92fffa453d6b61')
+          if not account_id:raise SystemExit(0)
+          res=req('accounts/'+account_id+'/pages/projects')
+          projects=[p.get('name') for p in (res.get('result') or []) if isinstance(p,dict)]
+          print('Accessible corporate Pages project names:',[p for p in projects if 'musitu' in (p or '').lower() or 'corporate' in (p or '').lower()])
+          print('Preflight read-only; no DNS, Pages or security changes.')
+          PY
