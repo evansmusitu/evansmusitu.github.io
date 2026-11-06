@@ -1,0 +1,86 @@
+name: MUSITU Corporate Public Production Watch
+
+on:
+  push:
+    branches: [main, ops/corporate-public-monitor-20261106]
+    paths:
+      - .github/workflows/musitu-corporate-public-monitor.yml
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: musitu-corporate-production-watch
+  cancel-in-progress: false
+
+jobs:
+  read-only-public-health:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Independently verify corporate routes, DNS, Access and Intelligence isolation
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import urllib.request, urllib.error, urllib.parse, json, time, xml.etree.ElementTree as ET
+          ROOT='https://mftintelligence.com'
+          def get(url, retries=3, max_read=2000000):
+              last=None
+              for attempt in range(retries):
+                  req=urllib.request.Request(url,headers={'User-Agent':'MUSITU-Public-Monitor/1.0 (read-only)'})
+                  try:
+                      with urllib.request.urlopen(req,timeout=18) as r:
+                          return r.status,r.url,dict(r.headers),r.read(max_read)
+                  except Exception as e:
+                      last=e
+                      if attempt<retries-1:time.sleep(3*(attempt+1))
+              raise RuntimeError(f'HTTP check failed for {url}: {type(last).__name__}: {last}')
+          status,final,headers,home=get(ROOT+'/')
+          assert status==200 and b'MUSITU' in home and b'Intelligence with evidence' in home,(status,final)
+          assert 'content-security-policy' in {k.lower() for k in headers},'Missing production CSP'
+          assert headers.get('X-Content-Type-Options','').lower()=='nosniff','Missing nosniff'
+          for route,expected in [
+              ('/legal/privacy/',b'Privacy Policy'),
+              ('/legal/terms/',b'Terms of Use'),
+              ('/products/foundry/studio/',b'MUSITU Studio'),
+              ('/contact/',b'Contact')]:
+              code,url,head,body=get(ROOT+route)
+              assert code==200 and expected in body,(route,code)
+          code,redirected,_,_=get('https://www.mftintelligence.com/legal/privacy/?watch=1')
+          assert redirected==ROOT+'/legal/privacy/?watch=1',('Bad canonical www redirect',redirected)
+          code,_,_,robots=get(ROOT+'/robots.txt')
+          assert code==200 and b'Allow: /' in robots and b'sitemap.xml' in robots.lower()
+          code,_,_,xml=get(ROOT+'/sitemap.xml')
+          locs=[x.text for x in ET.fromstring(xml).findall('{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc')]
+          assert len(locs)==33 and ROOT+'/' in locs and ROOT+'/404/' not in locs,('Wrong sitemap',len(locs))
+          for url in locs:
+              code,where,_,_=get(url)
+              assert code==200 and where.rstrip('/')==url.rstrip('/'),('Sitemap route failed',url,code,where)
+          code,_,_,intelligence=get('https://evansmusitu.github.io/')
+          assert code==200 and b'MUSITU' in intelligence,'Independent Intelligence origin unavailable'
+          dns=json.loads(get('https://dns.google/resolve?name=mftintelligence.com&type=MX')[3])
+          mx=[a for a in dns.get('Answer',[]) if a.get('type')==15]
+          assert len(mx)>=3 and all('cloudflare.net' in a.get('data','') for a in mx),('MX drift',mx)
+          # Fail closed on preview exposure; Cloudflare Access 403 or login interstitial is acceptable.
+          req=urllib.request.Request('https://corporate-private-20261103.musitu-corporate.pages.dev/',
+             headers={'User-Agent':'MUSITU-Public-Monitor/1.0 (read-only)'})
+          try:
+              with urllib.request.urlopen(req,timeout=18) as r:
+                  preview_status=r.status; preview_body=r.read(150000)
+          except urllib.error.HTTPError as e:
+              preview_status=e.code; preview_body=e.read(150000)
+          assert preview_status in (200,401,403),('Unexpected preview response',preview_status)
+          if preview_status==200:
+              assert not (b'Intelligence with evidence' in preview_body and b'MUSITU' in preview_body), 'Protected preview is anonymously exposed'
+              assert (b'login' in preview_body.lower() or b'cloudflare access' in preview_body.lower()),'Protected preview lacks access interstitial'
+          print(json.dumps({'status':'PASS','indexable_sitemap_routes':len(locs),'apex_and_www':'verified',
+            'security_headers':'verified','mx_records':len(mx),'intelligence_isolated':True,
+            'preview_protected':True,'writes':0}))
+          PY
+      - name: Incident alert source
+        if: failure()
+        run: |
+          echo "::error title=MUSITU corporate production health failure::A repeatable public health, Access isolation, DNS, or sitemap check failed. Investigate the run logs and current Cloudflare state; do not automatically alter DNS or production."
