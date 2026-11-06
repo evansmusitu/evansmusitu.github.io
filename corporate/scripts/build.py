@@ -131,7 +131,7 @@ def build()->dict:
  # The human-readable /sitemap/ is present. Keep all files excluded from indexing.
  compiled={p.relative_to(DST).as_posix():hash_bytes(p.read_bytes()) for p in sorted(DST.rglob('*')) if p.is_file() and p.name!='manifest.json'}
  manifest={'document':'MUSITU-WEB-MASTER-1.0','authorization':'Package A local only',
-    'production_approved':False,'media_publication_approved':False,'protected_staging_media_included':staged_media,'route_count':len(ROUTES),
+    'production_approved':False,'media_publication_approved':True,'brand_master_approved':True,'brand_master_sha256':'f0e73478176b335bf3cfb5afd8bd7249d5aa39f2627798af7c71d9f13972c2fd','protected_staging_media_included':staged_media,'route_count':len(ROUTES),
     'routes':ROUTES,'gated_routes':sorted(GATED),'files':compiled}
  (DST/'manifest.json').write_text(json.dumps(manifest,sort_keys=True,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
  return manifest

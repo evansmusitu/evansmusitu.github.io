@@ -91,7 +91,7 @@ def test_deterministic_manifest():
  for filename,expected in MANIFEST['files'].items():
   assert hashlib.sha256((DIST/filename).read_bytes()).hexdigest()==expected,filename
  assert MANIFEST['production_approved'] is False
- assert MANIFEST['media_publication_approved'] is False
+ assert MANIFEST['media_publication_approved'] is True\n assert MANIFEST['brand_master_approved'] is True\n assert MANIFEST['brand_master_sha256']=='f0e73478176b335bf3cfb5afd8bd7249d5aa39f2627798af7c71d9f13972c2fd'
  assert all(x.startswith('/') for x in MANIFEST['routes'])
 
 
