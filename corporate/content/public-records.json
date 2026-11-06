@@ -1,0 +1,349 @@
+{
+  "families": [
+    {
+      "id": "axiom",
+      "name": "MUSITU Axiom",
+      "short": "Axiom",
+      "intro": "MUSITU Axiom brings specialized mathematical operations into intelligent analytical workflows. It focuses on structured quantitative work whose inputs, methods and results can be examined.",
+      "path": "/products/axiom/",
+      "evidence": "Documented published ChatGPT integration v2.0.4; later corrections and broader enterprise features remain separate engineering work.",
+      "limits": "No live trading, promised financial outcome, independent superiority certification, unrestricted enterprise account service or generally available integrated billing is established.",
+      "category": "Quantitative intelligence"
+    },
+    {
+      "id": "education",
+      "name": "MUSITU Education",
+      "short": "Education",
+      "intro": "MUSITU Education develops and investigates software intended to make revision, knowledge and interactive learning more accessible and purposeful.",
+      "path": "/products/education/",
+      "evidence": "Chemistry Rescue pages and Chemistry Mastery release notes are public; current release notes document signed Android version 1.3.0.",
+      "limits": "No official examination-board endorsement, guaranteed academic outcomes, claimed school adoption or unrestricted institutional product launch.",
+      "category": "Learning technology"
+    },
+    {
+      "id": "foundry",
+      "name": "MUSITU Foundry",
+      "short": "Foundry",
+      "intro": "Foundry explores digital production, three-dimensional software and engineering systems that transform ideas into interactive assets.",
+      "path": "/products/foundry/",
+      "evidence": "An 82-second captured Studio recording and GLB reviewer notes document 13 meshes, 13 nodes, 13 materials and one animation clip.",
+      "limits": "Not a general-availability enterprise 3D editor, GPU-rendering cloud, completed Gemini-to-3D workflow or integrated Studio–Axiom pipeline.",
+      "category": "Creative systems"
+    },
+    {
+      "id": "markets",
+      "name": "MUSITU Markets",
+      "short": "Markets",
+      "intro": "MUSITU Markets explores the foundations of market-facing technology: useful discovery, structured catalog information and responsible software distribution.",
+      "path": "/products/markets/",
+      "evidence": "Store V2 architecture research exists, but an unrestricted public marketplace release has not been established.",
+      "limits": "No licensed retailer, authorized checkout service, general payment processor or publicly operational unrestricted marketplace is claimed.",
+      "category": "Digital markets"
+    },
+    {
+      "id": "fmi",
+      "name": "MUSITU Frontier Market Intelligence",
+      "short": "Frontier Market Intelligence",
+      "intro": "Frontier Market Intelligence studies quantitative approaches to changing market information, uncertainty and risk-aware financial analysis.",
+      "path": "/products/fmi/",
+      "evidence": "Technical research and experimental model work are documented in controlled development records, not as a public production trading system.",
+      "limits": "No broker execution, autonomous live trading, proven returns, licensed investment advisory service or current predictive guarantee.",
+      "category": "Market research"
+    },
+    {
+      "id": "worldfabric",
+      "name": "MUSITU WorldFabric",
+      "short": "WorldFabric",
+      "intro": "WorldFabric investigates how digital systems can communicate, exchange information and coordinate workflows within defined operational boundaries.",
+      "path": "/products/worldfabric/",
+      "evidence": "Controlled MUSITU Connect runtime work is documented; commercial general availability is not established.",
+      "limits": "No unrestricted enterprise deployment, telecommunications network, autonomous payment fabric or generally available cross-product operating layer is claimed.",
+      "category": "Connected systems"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "axiom",
+      "title": "Published Axiom integration",
+      "family": "MUSITU Axiom",
+      "kind": "Published release record",
+      "date": "2026-11-03",
+      "claim": "Axiom has a documented published ChatGPT integration.",
+      "establishes": "A published integration release was recorded and separately distinguished from development-stage changes.",
+      "limits": "Does not establish current app-listing access, enterprise general availability, independent superiority certification or trading.",
+      "link": "/products/axiom/"
+    },
+    {
+      "id": "education",
+      "title": "Chemistry Mastery public release",
+      "family": "MUSITU Education",
+      "kind": "Official public release notes",
+      "date": "2026-11-03",
+      "claim": "Chemistry Mastery release notes identify Android version 1.3.0.",
+      "establishes": "The official product pages publicly described version 1.3.0 as the stable signed Android release on the review date.",
+      "limits": "Public-page retrieval does not constitute downloading or independently validating the installed package. No guaranteed academic outcomes.",
+      "link": "https://payments.mftintelligence.com/chemistry/releases"
+    },
+    {
+      "id": "studio",
+      "title": "Studio offline editing and GLB export",
+      "family": "MUSITU Foundry",
+      "kind": "Recorded technical demonstration",
+      "date": "2026-10-25",
+      "claim": "An authentic offline Studio demo shows scene manipulation and animated GLB export.",
+      "establishes": "A recorded sequence shows camera manipulation, object creation, keyframe animation and an exported GLB artifact.",
+      "limits": "No generally available cloud/GPU service, Gemini-to-3D pipeline or connected Axiom–Studio production runtime.",
+      "link": "/products/foundry/studio/"
+    },
+    {
+      "id": "markets",
+      "title": "Markets research boundary",
+      "family": "MUSITU Markets",
+      "kind": "Research-stage summary",
+      "date": "2026-11-03",
+      "claim": "Markets investigates digital-product discovery and commerce architecture.",
+      "establishes": "A development and research direction is documented within the canonical family portfolio.",
+      "limits": "Does not establish an operating marketplace or authorized checkout.",
+      "link": "/products/markets/"
+    },
+    {
+      "id": "fmi",
+      "title": "Frontier market research boundary",
+      "family": "MUSITU Frontier Market Intelligence",
+      "kind": "Research-stage summary",
+      "date": "2026-11-03",
+      "claim": "FMI investigates risk-aware quantitative market analysis.",
+      "establishes": "A bounded research direction and controlled technical studies are documented.",
+      "limits": "No live broker execution, proven returns or public trading authority.",
+      "link": "/products/fmi/"
+    },
+    {
+      "id": "worldfabric",
+      "title": "WorldFabric controlled integration research",
+      "family": "MUSITU WorldFabric",
+      "kind": "Controlled engineering summary",
+      "date": "2026-11-03",
+      "claim": "WorldFabric includes documented controlled interoperability research.",
+      "establishes": "A software integration and infrastructure research direction exists, with controlled Connect runtime records.",
+      "limits": "Does not establish unrestricted commercial availability, authorized communications or live payment services.",
+      "link": "/products/worldfabric/"
+    },
+    {
+      "id": "intelligence",
+      "title": "Existing MUSITU Intelligence experience",
+      "family": "MUSITU Intelligence",
+      "kind": "Public page and historical test evidence",
+      "date": "2026-11-03",
+      "claim": "An existing public Intelligence experience is available at its separate origin.",
+      "establishes": "Public website content was successfully retrieved during the editorial review; historical application tests document bounded features.",
+      "limits": "Public page reachability alone does not retest every current AI inference, document workflow or local storage feature.",
+      "link": "https://evansmusitu.github.io/"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/",
+      "title": "MUSITU",
+      "headline": "Intelligence with evidence. Technology with purpose.",
+      "lead": "Advanced computation, intelligent software, creative technologies and connected digital systems—united by purposeful engineering."
+    },
+    {
+      "path": "/company/",
+      "title": "About MUSITU",
+      "headline": "Technology with a clear purpose.",
+      "lead": "MUSITU is a Zimbabwe-founded technology organization developing intelligent software, advanced computational systems and connected digital technologies for a rapidly evolving world."
+    },
+    {
+      "path": "/trust/",
+      "title": "Trust & Responsible Technology",
+      "headline": "Trust begins with what technology actually does.",
+      "lead": "Technical claims matter most when their evidence, limitations and operational boundaries are clear."
+    },
+    {
+      "path": "/accessibility/",
+      "title": "Accessibility",
+      "headline": "Technology should be accessible to more people.",
+      "lead": "MUSITU aims to make its corporate website understandable and usable across devices and interaction needs."
+    },
+    {
+      "path": "/products/",
+      "title": "Products & Technologies",
+      "headline": "One ecosystem. Many frontiers.",
+      "lead": "Explore advanced computation, learning technology, creative systems, digital markets, quantitative research and connected infrastructure."
+    },
+    {
+      "path": "/solutions/",
+      "title": "Solutions",
+      "headline": "Different challenges. Intelligent possibilities.",
+      "lead": "Discover the part of the MUSITU ecosystem relevant to your objective. Start with the question you want to answer, not the name of a product."
+    },
+    {
+      "path": "/experiences/",
+      "title": "Experiences",
+      "headline": "Discover MUSITU in action.",
+      "lead": "Explore documented public experiences, genuine prototype recordings and transparent, reproducible examples."
+    },
+    {
+      "path": "/experiences/intelligence/",
+      "title": "MUSITU Intelligence",
+      "headline": "Explore intelligence through practical interaction.",
+      "lead": "Visit the existing MUSITU Intelligence application for conversational assistance, bounded computation, selected research and supported browser-local documents."
+    },
+    {
+      "path": "/experiences/lab/",
+      "title": "Experience Lab",
+      "headline": "Technology you can inspect.",
+      "lead": "Explore a local quantitative walkthrough, an authentic Studio recording and a chemistry learning explanation—each clearly labeled by evidence type."
+    },
+    {
+      "path": "/ecosystem/",
+      "title": "Living Ecosystem Atlas",
+      "headline": "Six families. One shared direction.",
+      "lead": "Explore each family, its capabilities and its relationships—without mistaking conceptual connections for existing technical integrations."
+    },
+    {
+      "path": "/research/",
+      "title": "Research",
+      "headline": "Researching technology with purpose.",
+      "lead": "Understand the technical questions guiding MUSITU’s quantitative, educational, creative, market and infrastructure programs."
+    },
+    {
+      "path": "/evidence/",
+      "title": "Evidence",
+      "headline": "Know what a result really proves.",
+      "lead": "Review public-safe claim records, methodological context and limitations rather than relying on unqualified product promises."
+    },
+    {
+      "path": "/resources/",
+      "title": "Resources",
+      "headline": "Resources for deeper understanding.",
+      "lead": "Find approved public explanations, research summaries, demonstrations and documentation without requiring access to restricted technical systems."
+    },
+    {
+      "path": "/developers/",
+      "title": "Developers",
+      "headline": "Build understanding before integration.",
+      "lead": "Explore technical references and approved published interfaces. An internal development endpoint is not a public API."
+    },
+    {
+      "path": "/news/",
+      "title": "News & Updates",
+      "headline": "Updates worth sharing, evidence worth reading.",
+      "lead": "Genuine product announcements, engineering progress and research updates—published only when their dates and claims have been reviewed."
+    },
+    {
+      "path": "/contact/",
+      "title": "Contact",
+      "headline": "Start a meaningful conversation.",
+      "lead": "Find the relevant product or research team through a verified channel. Corporate enquiry delivery remains subject to an explicit acceptance test."
+    },
+    {
+      "path": "/support/",
+      "title": "Support",
+      "headline": "Find support with the right context.",
+      "lead": "Support paths vary across MUSITU products. Use the specific product destination when available, and understand the differences in data and recovery behavior."
+    },
+    {
+      "path": "/status/",
+      "title": "Service Status",
+      "headline": "Live status requires real monitoring.",
+      "lead": "A public status page must report only verified services, observed monitoring data and accurately dated incidents."
+    },
+    {
+      "path": "/legal/privacy/",
+      "title": "Privacy Policy",
+      "headline": "Clear information. Respectful data handling.",
+      "lead": "This corporate privacy draft describes the intended data boundaries. Actual provider disclosures, retention and legally required operator details must be verified before publication."
+    },
+    {
+      "path": "/legal/terms/",
+      "title": "Terms of Use",
+      "headline": "Understand the scope of this website.",
+      "lead": "The corporate site provides information and exploratory experiences, not unrestricted commercial access or binding professional advice."
+    },
+    {
+      "path": "/sitemap/",
+      "title": "Sitemap",
+      "headline": "Explore the MUSITU website.",
+      "lead": "Navigate the approved corporate architecture. Publication-gated routes remain clearly distinguished in this nonproduction preview."
+    },
+    {
+      "path": "/404/",
+      "title": "Page Not Found",
+      "headline": "We could not find that page.",
+      "lead": "The destination may have changed or the link may be incorrect. Search the site or explore the product portfolio."
+    },
+    {
+      "path": "/products/axiom/",
+      "title": "MUSITU Axiom",
+      "headline": "Complex questions deserve more than confident answers.",
+      "lead": "MUSITU Axiom brings specialized mathematical operations into intelligent analytical workflows. It focuses on structured quantitative work whose inputs, methods and results can be examined."
+    },
+    {
+      "path": "/products/education/",
+      "title": "MUSITU Education",
+      "headline": "Learning experiences built for understanding.",
+      "lead": "MUSITU Education develops and investigates software intended to make revision, knowledge and interactive learning more accessible and purposeful."
+    },
+    {
+      "path": "/products/foundry/",
+      "title": "MUSITU Foundry",
+      "headline": "Give creative ideas a practical digital form.",
+      "lead": "Foundry explores digital production, three-dimensional software and engineering systems that transform ideas into interactive assets."
+    },
+    {
+      "path": "/products/markets/",
+      "title": "MUSITU Markets",
+      "headline": "Researching more dependable digital markets.",
+      "lead": "MUSITU Markets explores the foundations of market-facing technology: useful discovery, structured catalog information and responsible software distribution."
+    },
+    {
+      "path": "/products/fmi/",
+      "title": "MUSITU Frontier Market Intelligence",
+      "headline": "Investigating markets through disciplined computation.",
+      "lead": "Frontier Market Intelligence studies quantitative approaches to changing market information, uncertainty and risk-aware financial analysis."
+    },
+    {
+      "path": "/products/worldfabric/",
+      "title": "MUSITU WorldFabric",
+      "headline": "Engineering software for connected environments.",
+      "lead": "WorldFabric investigates how digital systems can communicate, exchange information and coordinate workflows within defined operational boundaries."
+    },
+    {
+      "path": "/products/education/chemistry-rescue/",
+      "title": "Chemistry Rescue",
+      "headline": "Chemistry understanding begins with the questions that matter.",
+      "lead": "A documented A-Level chemistry revision experience within MUSITU Chemistry Mastery—designed for more focused practice and study."
+    },
+    {
+      "path": "/products/foundry/studio/",
+      "title": "MUSITU Studio",
+      "headline": "Create, animate and explore in three dimensions.",
+      "lead": "See the authentic offline Studio prototype manipulating a scene, creating keyframe animation and exporting an animated GLB."
+    },
+    {
+      "path": "/solutions/finance-research/",
+      "title": "Finance & Research",
+      "headline": "Make complex analysis easier to examine.",
+      "lead": "Understand how mathematical computation and market-research methods can help structure a difficult question—without confusing an output with financial advice."
+    },
+    {
+      "path": "/solutions/learning/",
+      "title": "Learning & Education",
+      "headline": "Learning tools for understanding, practice and exploration.",
+      "lead": "Discover the public chemistry learning experience and MUSITU research into accessible, interactive and offline-first educational software."
+    },
+    {
+      "path": "/solutions/creative-production/",
+      "title": "Creative Production",
+      "headline": "Give creative ideas a practical digital form.",
+      "lead": "Explore how three-dimensional editing, animation and structured digital artifacts can connect imagination with functional software."
+    },
+    {
+      "path": "/solutions/enterprise-systems/",
+      "title": "Enterprise Systems",
+      "headline": "Make complex software systems easier to connect.",
+      "lead": "Understand the governance, interoperability and reliability concerns behind modern digital workflows."
+    }
+  ]
+}

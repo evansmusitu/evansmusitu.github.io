@@ -1,0 +1,7 @@
+# Existing MUSITU Intelligence Preservation — source boundary
+
+Owner authority: `MUSITU-WEB-AUTH-001`, Package A, with owner-approved remote source-only draft review. Local implementation was isolated, and 33 source files were published exclusively under `corporate/` in draft PR #32. No existing repository-root source file or workflow was changed. Root-level production `index.html`, root `assets/`, Workers, AI provider configuration, local encrypted workspaces, DNS, Cloudflare, hosting, payment systems, mailboxes and product repositories were outside the operations performed.
+
+Read-only GitHub evidence earlier in the review established that [PR #31](https://github.com/evansmusitu/evansmusitu.github.io/pull/31) remains a draft 22-route candidate, with head `d48a3752b3de2df7dbdf5d073bccc1ee5a158144`; its changed files were corporate/* plus a read-only review workflow. The separate 34-route source is now in [draft PR #32](https://github.com/evansmusitu/evansmusitu.github.io/pull/32), without changing PR #31 or merging into main.
+
+**Remaining mandatory preservation acceptance:** owner-authorized original-vs-new source diff; actual live application smoke and storage/export compatibility checks; confirmation that any approved corporate domain does not shadow the Intelligence origin; and rollback rehearsal. No live application behavior or private stored user workspaces were accessed or modified.

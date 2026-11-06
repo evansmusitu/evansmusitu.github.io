@@ -1,0 +1,104 @@
+{
+  "review_date": "2026-11-06",
+  "package": "A",
+  "source_origin": "owner uploaded 34-route offline preview",
+  "owner_approved_remote_push": true,
+  "owner_approved_deployment": false,
+  "owner_approved_package_b": false,
+  "local_static_tests": {
+    "passed": 115,
+    "report": "review-artifacts/pytest-results.txt"
+  },
+  "local_chromium_dom": {
+    "routes": 34,
+    "responsive_viewports": 102,
+    "theme_views": 204,
+    "no_javascript_routes": 34,
+    "interactions_passed": 12,
+    "errors": 0,
+    "report": "review-artifacts/browser-dom-results.json"
+  },
+  "gates": [
+    {
+      "id": 1,
+      "name": "Production domain and hosting",
+      "status": "blocked",
+      "required": "Owner-selected domain mftintelligence.com; verify apex/www DNS and origin ownership, custom domain route safety, live headers and hosting account authorization before deployment"
+    },
+    {
+      "id": 2,
+      "name": "Privacy, Terms and legal",
+      "status": "partially_evidenced",
+      "required": "Verify that the final Privacy Policy and Terms match actual hosting and email data flows; satisfy mandatory controller name/address disclosure, applicable POTRAZ licensing/DPO/notifications, international transfer and security duties, retention schedules, data-subject rights and any applicable Consumer Protection Act electronic-transaction particulars. Do not claim compliance without evidence. Source-level 2026-11-06 policy draft has 13 privacy and 12 terms sections, but operator particulars, retention schedule, vendor arrangements and statutory compliance evidence are not yet verified."
+    },
+    {
+      "id": 3,
+      "name": "Contact and support",
+      "status": "blocked",
+      "required": "confirmed corporate delivery, verified support route and escalation tests"
+    },
+    {
+      "id": 4,
+      "name": "Final brand and media rights",
+      "status": "partially_evidenced",
+      "required": "Owner approval of Axis Knot mark, 82-second Studio recording and scrubbed poster is recorded. Verify exact hashes in the authorized build, accessible video text alternative, third-party marks/rights, raw-media distribution scope, and historical public Git object exposure."
+    },
+    {
+      "id": 5,
+      "name": "Independent security, accessibility, hosted performance",
+      "status": "partially_evidenced",
+      "required": "Independent WCAG/security acceptance, Chrome/Firefox/WebKit/Safari on exact PR #32 artifact, hosted Web Vitals, prior mobile CLS resolution, manual axe/AT review; previous protected preview tests do not transfer"
+    },
+    {
+      "id": 6,
+      "name": "Existing Intelligence preservation",
+      "status": "partially_evidenced",
+      "required": "owner-approved diff/real live app regression/origin/workspace preservation"
+    },
+    {
+      "id": 7,
+      "name": "Production monitoring, backup and rollback",
+      "status": "blocked",
+      "required": "service/account owner, alerts, backups, tested restore/rollback rehearsal"
+    }
+  ],
+  "production_release_decision": "HOLD",
+  "missing_owner_decisions": [
+    "Hosting/origin architecture for mftintelligence.com without disrupting existing applications",
+    "Public legal content approval",
+    "Verified corporate contact",
+    "Review historical raw-media Git exposure and approve exact publication/distribution channels; confirm accessible alternatives and third-party rights",
+    "Package B optional backend provider/model/budget if desired",
+    "Explicit separate merge and production release authorization"
+  ],
+  "owner_approved_corporate_domain": "mftintelligence.com",
+  "implementation_performed_locally": true,
+  "public_draft_pr_opened": true,
+  "draft_pr": "https://github.com/evansmusitu/evansmusitu.github.io/pull/32",
+  "draft_branch": "feature/musitu-corporate-34-route-20261105",
+  "initial_commit": "85e94ad46eadbd863023d069be6cc8faba4f452a",
+  "review_note": "Cloudflare protected-preview and hosted QA runs on 2026-11-03/04 are historical evidence from a different artifact, not QA for this draft PR. On 2026-11-06, current branch-tip raw Studio media were excluded from review source by a corrective draft commit; earlier Git history is not purged, and production/hosted QA remains unverified. The 2026-11-06 draft privacy/terms text was substantively expanded using the current corporate site scope and applicable Zimbabwe primary legal sources; operational verification and statutory particulars remain required. Website copy has strengthened disclosure of security cookies and local session storage. Policy source checks alone do not certify legal or operational compliance.",
+  "final_phase": {
+    "id": "08",
+    "name": "Final Release Qualification & Production Launch",
+    "single_phase": true,
+    "plan": "corporate/PHASE_08_FINAL_RELEASE_COMPLETION_PLAN.md",
+    "status": "in_progress_hold",
+    "acceptance": "all seven existing statutory, operational and quality gates factually evidenced, with appropriate operator authorization before production deployment",
+    "production_authorization": false,
+    "started_workstreams": [
+      "W1",
+      "W2"
+    ],
+    "evidence_packets": [
+      "corporate/BRAND_MEDIA_VERIFICATION_20261106.md"
+    ]
+  },
+  "owner_approved_policy_copy": true,
+  "policy_copy_approved_on": "2026-11-06",
+  "policy_copy_status": "Owner authorizes publishing current Privacy Policy and Terms wording; actual hosting publication and statutory/compliance checks remain separate.",
+  "policy_copy_paths": [
+    "/legal/privacy/",
+    "/legal/terms/"
+  ]
+}
