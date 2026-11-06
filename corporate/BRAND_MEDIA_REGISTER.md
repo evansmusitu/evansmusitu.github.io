@@ -15,3 +15,7 @@ As of 6 November 2026. The owner has authorized the exact MUSITU master mark and
 The approved Studio recording demonstrates the offline editor, keyframing, GLB export and a separately labeled Axiom calculation. It does **not** establish live AI-to-3D generation, integrated Axiom-to-Studio operation, Google/OpenAI endorsement, or production cloud rendering. Third-party names are used only to identify the historical application/service context.
 
 The approved master mark replaces the earlier provisional geometric favicon. Production publication remains subject to the separate legal, accessibility/security, domain and operational release gates.
+
+## Distribution-channel control — 6 November 2026
+
+Owner-approved **corporate website publication** must not automatically be treated as authorization to include raw MP4/PNG binaries in a public source-control history. Those binaries appeared in earlier public PR #32 revisions and are omitted from the current review tip. A normal Git file deletion does **not** erase older objects or cached copies. A repository owner must separately decide whether any history/cache remediation is warranted, after checking downstream consumers. Do not represent this correction as a complete removal from Git history. All public website publication remains gated by legal, accessibility, security and operator acceptance.

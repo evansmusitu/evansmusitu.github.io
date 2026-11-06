@@ -1,5 +1,5 @@
 {
-  "review_date": "2026-11-05",
+  "review_date": "2026-11-06",
   "package": "A",
   "source_origin": "owner uploaded 34-route offline preview",
   "owner_approved_remote_push": true,
@@ -40,8 +40,8 @@
     {
       "id": 4,
       "name": "Final brand and media rights",
-      "status": "blocked",
-      "required": "approved master visual identity, asset rights, media safety/captions/metadata review"
+      "status": "partially_evidenced",
+      "required": "Owner approval of Axis Knot mark, 82-second Studio recording and scrubbed poster is recorded. Verify exact hashes in the authorized build, accessible video text alternative, third-party marks/rights, raw-media distribution scope, and historical public Git object exposure."
     },
     {
       "id": 5,
@@ -67,7 +67,7 @@
     "Hosting/origin architecture for mftintelligence.com without disrupting existing applications",
     "Public legal content approval",
     "Verified corporate contact",
-    "Final brand/media rights",
+    "Review historical raw-media Git exposure and approve exact publication/distribution channels; confirm accessible alternatives and third-party rights",
     "Package B optional backend provider/model/budget if desired",
     "Explicit separate merge and production release authorization"
   ],
@@ -77,5 +77,5 @@
   "draft_pr": "https://github.com/evansmusitu/evansmusitu.github.io/pull/32",
   "draft_branch": "feature/musitu-corporate-34-route-20261105",
   "initial_commit": "85e94ad46eadbd863023d069be6cc8faba4f452a",
-  "review_note": "Cloudflare protected-preview and hosted QA runs on 2026-11-03/04 are historical evidence from a different artifact, not QA for this draft PR."
+  "review_note": "Cloudflare protected-preview and hosted QA runs on 2026-11-03/04 are historical evidence from a different artifact, not QA for this draft PR. On 2026-11-06, current branch-tip raw Studio media were excluded from review source by a corrective draft commit; earlier Git history is not purged, and production/hosted QA remains unverified."
 }

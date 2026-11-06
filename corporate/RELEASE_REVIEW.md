@@ -11,7 +11,7 @@ A generated 34-route, static-first review site with the approved six-family port
 1. Qualified legal approval of the public privacy and terms notices and applicable statutory obligations.
 2. Corporate domain chosen as `mftintelligence.com`; DNS/Cloudflare/hosting account authority, tenant-safe routing, and real response headers remain to be verified.
 3. Actual delivery/replies from contact and support channels.
-4. Rights to the final emblem, photographs, Studio videos, screenshots and audio/captions.
+4. Exact owner-approved emblem and Studio masters are recorded; independent third-party/accessible-alternative review and source-distribution scope remain unclosed.
 5. Independent WCAG/security review, real-device and Safari/Firefox acceptance, hosted Web Vitals (including CLS requalification).
 6. Live MUSITU Intelligence application preservation and user workspace recovery under any domain migration.
 7. Production monitoring, backup, incident ownership and successful rollback rehearsal.
@@ -27,7 +27,7 @@ Axiom direct listing needs independently verified access; historical release/cor
 
 ## Release-only actions intentionally withheld
 
-No publication-approved canonical `sitemap.xml`, no noindex removal, no production CSP/HSTS/DNS change, no live status feed, no contact backend, no user accounts, no payments, no AI provider configuration, no rollout or redirect and no disclosure of private source material. The rights-gated Studio media remain excluded. Package B for live Ask MUSITU has not been authorized.
+No publication-approved canonical `sitemap.xml`, no noindex removal, no production CSP/HSTS/DNS change, no live status feed, no contact backend, no user accounts, no payments, no AI provider configuration, no rollout or redirect and no disclosure of private source material. The build excludes Studio media unless exact checksum-verified files are explicitly supplied to a controlled staging environment. Earlier PR revisions contained raw media in Git history; the current branch tip no longer tracks these binaries and this is not a history purge. Package B for live Ask MUSITU has not been authorized.
 
 **Decision rule:** no promotion or publishing until all seven external release gates are passed with independent evidence and the owner issues separate explicit merge/deploy instructions. The completed local review packet is available, but a production-release decision is not implied.
 

@@ -11,7 +11,8 @@
 - Browser-local search, Navigator, Evidence Lens, Ecosystem Atlas, Experience Lab, catalog filters, comparisons, accessible modal interaction and mobile theme control.
 - Local-only Ask MUSITU guide, **not live AI**; no analytics, remote fonts, customer accounts, payments or form posting.
 - Deterministic manifest, source-controlled public evidence records, 404 local-server handling, staging CSP and noindex controls.
-- Rights-gated Studio media and legally/operationally gated review pages.
+- Owner-approved Studio demonstration can be enabled only by supplying checksum-verified media in a protected build; raw MP4/PNG are not part of the current review branch tip. Earlier Git history may contain the binaries and is not removed by this correction.
+- Legally/operationally gated review pages.
 
 ## Reproduce without external services
 
@@ -37,7 +38,7 @@ Open `review-artifacts/MUSITU_34_ROUTE_PORTABLE_OWNER_REVIEW_LOCAL_ONLY.html` di
 - `content/pages.json` — per-route reviewed copy, semantic body and page-specific navigation states.
 - `content/public-records.json` — six families, seven bounded evidence entries, 34-route local knowledge corpus.
 - `templates/` — shared footer, dialogs, skip control and review ribbon.
-- `assets/` — visual system, browser-local features and **provisional** favicon.
+- `assets/` — visual system, browser-local features and owner-approved Axis Knot SVG favicon.
 - `scripts/build.py` — deterministic local `dist/` compilation and claim-register generation.
 - `scripts/import_preview.py` — one-time original importer, guarded against accidentally overwriting curated source; **not** part of normal builds.
 - `scripts/preview_server.py` — loopback-only manual test server with staging headers and true 404.
@@ -48,4 +49,4 @@ Open `review-artifacts/MUSITU_34_ROUTE_PORTABLE_OWNER_REVIEW_LOCAL_ONLY.html` di
 
 ## Authority boundaries
 
-The 34-route candidate is published for source review in [draft PR #32](https://github.com/evansmusitu/evansmusitu.github.io/pull/32) at commit `85e94ad46eadbd863023d069be6cc8faba4f452a`, with no merge or production deployment authorization. The live `evansmusitu/evansmusitu.github.io` root site, existing MUSITU Intelligence workspaces, product repositories, Cloudflare services, DNS, deployments, emails, payments and provider billing are not modified. The old remote PR #31 is a separate **22-route** baseline and must not be described as containing this new local 34-route implementation. See `RELEASE_REVIEW.md` and `RELEASE_GATES.json` before any merge or publication.
+The 34-route candidate is published for source review in [draft PR #32](https://github.com/evansmusitu/evansmusitu.github.io/pull/32) initially at commit `85e94ad46eadbd863023d069be6cc8faba4f452a` (current head may be later), with no merge or production deployment authorization. The live `evansmusitu/evansmusitu.github.io` root site, existing MUSITU Intelligence workspaces, product repositories, Cloudflare services, DNS, deployments, emails, payments and provider billing are not modified. The old remote PR #31 is a separate **22-route** baseline and must not be described as containing this new local 34-route implementation. See `RELEASE_REVIEW.md` and `RELEASE_GATES.json` before any merge or publication.

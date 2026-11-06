@@ -37,3 +37,7 @@ All source objects below were created/modified within the isolated `corporate/` 
 Generated, reproducible build outputs are under `corporate/dist/` (34 page files plus static assets, robots and manifests). Nondeployed visual and QA evidence is under `corporate/review-artifacts/`. The portable owner review HTML is nondeployable because it embeds script/style content without production CSP.
 
 Final review-draft source excludes generated outputs, the portable HTML, screenshots and the one-time report-authoring script. All draft PR paths remain inside `corporate/`.
+
+## 6 November 2026 source correction
+
+The original 5 November inventory above remains a historical local-source list, not a complete description of later PR commits. Raw Studio video and poster binary objects were observed in the public draft PR history. They are excluded from the current branch tip, while earlier reachable Git history is not rewritten. This correction changes only `corporate/` paths and does not authorize deployment.

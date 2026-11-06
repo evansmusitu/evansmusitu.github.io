@@ -14,7 +14,7 @@ Date: **4 November 2026**. Source SHA-256: `c30e0ae55938ea9324aec8ac0998041a7c0a
 | HTTP responses | 34 routes: 33 × HTTP 200 and 1 × HTTP 404; unknown route × HTTP 404; local header checks pass | Real local Python HTTP server only, **not production host** |
 | Source manifest repeat build | SHA-256 matches between two local builds | Local checks are not a hosted run for the public draft PR commit |
 | Portable single-file review navigation | 34 options, selector and internal link smoke PASS | Nondeployable `srcdoc` artifact; CSP intentionally removed |
-| Release media | Studio original video and EXIF-bearing PNG **excluded** | Publishing requires independent rights/provenance/caption review |
+| Release media | Media **excluded from the 4 November local default build** | Historical report is not evidence that no raw binaries entered later Git commits. The 6 November review found earlier public PR media objects; current tip excludes them, but historical object exposure remains for owner assessment. |
 
 **Recorded functional fixes during the local review:** inserted a real product comparison panel for previously inert Compare buttons; corrected Escape handling in search dialogs; added a working mobile theme control. All were verified by browser-local regressions.
 
