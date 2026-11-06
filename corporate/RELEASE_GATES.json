@@ -29,7 +29,7 @@
       "id": 2,
       "name": "Privacy, Terms and legal",
       "status": "blocked",
-      "required": "Verified final accurate Privacy Policy, Terms and all applicable mandatory website, data-protection, consumer and operator disclosures; actual processing practices, rights routes and retention documented before publication"
+      "required": "Verify that the final Privacy Policy and Terms match actual hosting and email data flows; satisfy mandatory controller name/address disclosure, applicable POTRAZ licensing/DPO/notifications, international transfer and security duties, retention schedules, data-subject rights and any applicable Consumer Protection Act electronic-transaction particulars. Do not claim compliance without evidence."
     },
     {
       "id": 3,
@@ -77,7 +77,7 @@
   "draft_pr": "https://github.com/evansmusitu/evansmusitu.github.io/pull/32",
   "draft_branch": "feature/musitu-corporate-34-route-20261105",
   "initial_commit": "85e94ad46eadbd863023d069be6cc8faba4f452a",
-  "review_note": "Cloudflare protected-preview and hosted QA runs on 2026-11-03/04 are historical evidence from a different artifact, not QA for this draft PR. On 2026-11-06, current branch-tip raw Studio media were excluded from review source by a corrective draft commit; earlier Git history is not purged, and production/hosted QA remains unverified.",
+  "review_note": "Cloudflare protected-preview and hosted QA runs on 2026-11-03/04 are historical evidence from a different artifact, not QA for this draft PR. On 2026-11-06, current branch-tip raw Studio media were excluded from review source by a corrective draft commit; earlier Git history is not purged, and production/hosted QA remains unverified. The 2026-11-06 draft privacy/terms text was substantively expanded using the current corporate site scope and applicable Zimbabwe primary legal sources; operational verification and statutory particulars remain required.",
   "final_phase": {
     "id": "08",
     "name": "Final Release Qualification & Production Launch",
