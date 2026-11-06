@@ -2,9 +2,9 @@
 
 **Decision: HOLD.** Draft PR #32 remains unmerged and must not be promoted on the strength of this document.
 
-## Legal approval
-- External review request sent; no formal sign-off evidenced at this review. Do not treat emailed outreach as legal clearance.
-- Privacy/Terms remain conditional until a qualified reviewer approves exact published text and applicable obligations.
+## Privacy and Terms readiness
+- Privacy Policy and Terms remain conditional until the actual website processing practices and applicable mandatory disclosure obligations are verified.
+- Record the final public copy, approved source version and responsible operator's acceptance before publication; never infer compliance from a draft.
 
 ## Brand and Studio media
 - Exact Axis Knot SVG, 82-second silent Studio demonstration and scrubbed poster are recorded as owner-approved for corporate website use.
@@ -23,4 +23,4 @@
 - Confirm corporate inbound email and outbound reply workflow independently.
 - Name monitoring owner, incident escalation and backup/rollback testers; collect completed rehearsal evidence.
 
-**No public production authorization, domain/DNS change, PR merge, media publication, legal approval, or independent security/WCAG certification is granted here.**
+**No public production authorization, domain/DNS change, PR merge, media publication, statutory compliance certification, or independent security/WCAG certification is granted here.**

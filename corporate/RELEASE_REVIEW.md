@@ -8,7 +8,7 @@ A generated 34-route, static-first review site with the approved six-family port
 
 ## What it cannot establish
 
-1. Qualified legal approval of the public privacy and terms notices and applicable statutory obligations.
+1. Evidence that final published Privacy Policy and Terms are accurate and applicable statutory notice and operator obligations are met.
 2. Corporate domain chosen as `mftintelligence.com`; DNS/Cloudflare/hosting account authority, tenant-safe routing, and real response headers remain to be verified.
 3. Actual delivery/replies from contact and support channels.
 4. Exact owner-approved emblem and Studio masters are recorded; independent third-party/accessible-alternative review and source-distribution scope remain unclosed.
