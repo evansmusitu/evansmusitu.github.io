@@ -56,3 +56,16 @@ def test_production_legal_identity_and_media():
  assert hashlib.sha256(video.read_bytes()).hexdigest()=='afd6dfd3c73668e544f3f8a857697fed0abaadccd4927202bb3a185612c2dea0'
  assert hashlib.sha256(poster.read_bytes()).hexdigest()=='0ea5e961d916375029010dbae01bf8a1783e5fd6b90f74c006dc852df1c285d0'
  assert soup('/products/foundry/studio/').select_one('video.studio-demo-player source[src="/assets/studio-demo-82s.mp4"]')
+def test_production_copy_does_not_reference_private_review():
+ stale={
+  '/products/foundry/studio/':('STAGING-ONLY MEDIA','can be enabled in an authorized protected preview'),
+  '/experiences/lab/':('available in the owner-approved offline reviewer',),
+  '/sitemap/':('nonproduction preview','private review build'),
+  '/status/':('The status of this preview','No corporate production monitoring','This route remains noindex'),
+  '/experiences/intelligence/':('corporate staging website',),
+  '/contact/':('Publication gate',),
+ }
+ for route,phrases in stale.items():
+  text=soup(route).get_text(' ',strip=True)
+  for phrase in phrases:
+   assert phrase not in text,(route,phrase)
