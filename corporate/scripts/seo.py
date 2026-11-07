@@ -69,6 +69,30 @@ def schemas(route: str, records: dict, origin: str = ORIGIN) -> list[dict]:
         result.append({"@type": "SoftwareApplication", "name": "MUSITU Axiom" if route.endswith("/axiom/") else "MUSITU Studio", "url": origin + route, "description": info["description"], "publisher": {"@id": origin + "/#organization"}})
     return result
 
+def approved_article_schema(article: dict, origin: str = ORIGIN) -> dict:
+    """Return Article JSON-LD only for separately authorized, actually published research.
+
+    Existing editorial .md drafts intentionally do not meet this contract.
+    """
+    if origin != ORIGIN:
+        raise ValueError("Unapproved article publication origin")
+    if article.get("review_status") != "approved" or article.get("publication_status") != "published":
+        raise ValueError("Unreviewed or unlaunched research must not receive public Article markup")
+    route = article.get("path")
+    if not isinstance(route, str) or not route.startswith("/research/articles/") or not route.endswith("/"):
+        raise ValueError("Article requires canonical research URL")
+    for key in ("headline", "description", "date_published"):
+        if not isinstance(article.get(key), str) or not article[key].strip():
+            raise ValueError("Article missing verified " + key)
+    # Publisher and author are organizational until an actual named reviewer
+    # explicitly approves a personal public author credit.
+    return {"@context": "https://schema.org", "@type": "Article",
+        "headline": article["headline"], "description": article["description"],
+        "datePublished": article["date_published"], "inLanguage": "en",
+        "mainEntityOfPage": {"@type": "WebPage", "@id": origin + route},
+        "author": {"@type": "Organization", "name": "MUSITU"},
+        "publisher": {"@id": origin + "/#organization"}}
+
 def seo_head(route: str, info: dict, records: dict, origin: str = ORIGIN) -> str:
     if route == "/404/":
         return ""
