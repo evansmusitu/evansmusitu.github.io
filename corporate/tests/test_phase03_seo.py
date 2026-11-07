@@ -50,7 +50,7 @@ class Phase03SEOTests(unittest.TestCase):
 
     def test_jsonld_is_valid_json_with_safe_html_boundaries(self):
         h = seo_head("/", self.records["/"], self.records)
-        payload = re.search(r'<script type="application/ld\\+json">(.*?)</script>', h, flags=re.S)
+        payload = re.search(r'<script type="application/ld\+json">(.*?)</script>', h, flags=re.S)
         self.assertIsNotNone(payload)
         graph = json.loads(payload.group(1))
         self.assertEqual(graph["@context"], "https://schema.org")
@@ -59,7 +59,7 @@ class Phase03SEOTests(unittest.TestCase):
         hostile["description"] = "</script><script>alert(1)</script>"
         rendered = seo_head("/", hostile, {**self.records, "/": hostile})
         self.assertNotIn("</script><script>", rendered)
-        self.assertIn(r"\\u003c/script>", rendered)
+        self.assertIn(r"\u003c/script>", rendered)
 
     def test_production_only_and_404_exclusion(self):
         self.assertFalse(seo_head("/404/", self.records["/404/"], self.records))
