@@ -73,6 +73,24 @@ class Phase03SEOTests(unittest.TestCase):
         self.assertEqual(review.count("<script "), 2)
         self.assertIn("script-src 'self'", META_CSP)
 
+    def test_every_production_page_has_expected_index_and_schema_signals(self):
+        from public_seo_observer import MetadataParser
+        catalog = validate_catalog(ROUTES)
+        for route in sorted(catalog["routes"]):
+            with self.subTest(route=route):
+                seo = seo_head(route, self.records[route], self.records)
+                content = render(route, self.records[route], self.shared, mode="production", origin=ORIGIN, seo_html=seo)
+                parser = MetadataParser()
+                parser.feed(content)
+                self.assertEqual(parser.canonical, [ORIGIN + route])
+                self.assertEqual(parser.robots, ["index,follow"])
+                self.assertEqual(len(parser.jsonld), 1)
+                kinds = {x.get("@type") for x in parser.jsonld[0].get("@graph", [])}
+                self.assertTrue(({"Organization","WebSite"} if route == "/" else {"BreadcrumbList"}).issubset(kinds))
+                if route in ("/products/axiom/", "/products/foundry/studio/"):
+                    self.assertIn("SoftwareApplication", kinds)
+                self.assertNotIn("Mhundwa Village", seo)
+
     def test_unknown_origin_fails_closed(self):
         with self.assertRaises(ValueError):
             schemas("/", self.records, "https://fake.example")
