@@ -79,5 +79,46 @@ class Phase03SEOTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             seo_head("/", self.records["/"], self.records, "https://fake.example")
 
+
+    def test_twelve_editorial_drafts_are_complete_and_gated(self):
+        folder = BASE / "editorial" / "research-drafts"
+        drafts = sorted(folder.glob("*.md"))
+        self.assertEqual(len(drafts), 12)
+        required = ("## Research question", "## Method and reproducibility",
+            "## Worked conceptual example", "## Failure modes and how to challenge the result",
+            "## Reviewer checklist", "## Scope and limitations", "## Background reference")
+        for path in drafts:
+            with self.subTest(article=path.name):
+                content = path.read_text(encoding="utf-8")
+                self.assertIn("not approved for public release", content)
+                self.assertGreaterEqual(len(content.split()), 350)
+                for heading in required:
+                    self.assertIn(heading, content)
+                self.assertIn("https://", content)
+                self.assertNotIn("http://", content)
+                self.assertIn("## Related MUSITU page", content)
+
+    def test_language_pilot_is_explicitly_unpublished(self):
+        data = json.loads((BASE / "content" / "localization-pilot.json").read_text(encoding="utf-8"))
+        self.assertEqual(data["routing"]["default_language"], "en")
+        self.assertFalse(data["routing"]["auto_translate"])
+        self.assertFalse(data["routing"]["location_redirects"])
+        self.assertEqual([x["language"] for x in data["published"]], ["en"])
+        self.assertEqual({p["language"] for p in data["pilots"]}, {"fr","pt"})
+        for p in data["pilots"]:
+            self.assertTrue("DRAFT" in p["status"] or "PLANNED" in p["status"])
+        self.assertEqual(len(next(p for p in data["pilots"] if p["language"]=="fr")["sample"]), 3)
+
+    def test_public_observer_parser_is_read_only_and_jsonld_aware(self):
+        from public_seo_observer import MetadataParser
+        observer = MetadataParser()
+        observer.feed('<meta name="robots" content="index,follow">'
+                      '<link rel="canonical" href="https://mftintelligence.com/">'
+                      '<script type="application/ld+json">'
+                      '{"@context":"https://schema.org","@graph":[]}</script>')
+        self.assertEqual(observer.robots, ["index,follow"])
+        self.assertEqual(observer.canonical, [ORIGIN + "/"])
+        self.assertEqual(observer.jsonld[0]["@context"], "https://schema.org")
+
 if __name__ == "__main__":
     unittest.main()
