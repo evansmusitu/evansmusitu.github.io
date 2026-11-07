@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "domain": "https://mftintelligence.com",
+  "routing": {
+    "default": "/",
+    "pattern": "/{language}/.../",
+    "default_language": "en",
+    "translate_canonical": true,
+    "require_self_referencing_canonical": true,
+    "require_reciprocal_hreflang": true,
+    "x_default": "/",
+    "location_redirects": false,
+    "auto_translate": false
+  },
+  "published": [
+    {
+      "language": "en",
+      "pages": "Existing 33 public canonical pages",
+      "verified": true
+    }
+  ],
+  "pilots": [
+    {
+      "language": "fr",
+      "status": "DRAFT — independent native-language review and product approval required; do not deploy or include in XML sitemap",
+      "sample": [
+        {
+          "source": "/",
+          "localized_path": "/fr/",
+          "title": "MUSITU — Une intelligence fondée sur des preuves.",
+          "description": "Technologies numériques, logiciels intelligents et systèmes informatiques développés avec rigueur et transparence.",
+          "h1": "Une intelligence fondée sur des preuves. Une technologie au service d’un objectif clair."
+        },
+        {
+          "source": "/products/axiom/",
+          "localized_path": "/fr/products/axiom/",
+          "title": "MUSITU Axiom — Analyse quantitative",
+          "description": "Découvrez l’approche de MUSITU Axiom pour l’analyse mathématique structurée, ses méthodes et ses limites documentées.",
+          "h1": "Examiner les questions complexes avec méthode."
+        },
+        {
+          "source": "/research/",
+          "localized_path": "/fr/research/",
+          "title": "Recherche et méthodes — MUSITU",
+          "description": "Explorez les thèmes de recherche quantitative et technologique de MUSITU, ainsi que leurs hypothèses et leurs limites.",
+          "h1": "La recherche guidée par la méthode et les preuves."
+        }
+      ]
+    },
+    {
+      "language": "pt",
+      "status": "PLANNED — no translation published or approved",
+      "sample": []
+    }
+  ],
+  "release_checks": [
+    "Independent subject-matter and native-language review",
+    "Verify local legal and product claims",
+    "Translated headings, descriptions, navigation and accessibility labels",
+    "Self-canonical and reciprocal hreflang including x-default",
+    "Language selector without forced geolocation redirects",
+    "Published-only sitemap URLs",
+    "Screen-reader language and keyboard QA",
+    "Manual hosted validation in Chrome, Firefox and WebKit"
+  ]
+}
