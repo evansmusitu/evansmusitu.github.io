@@ -7,6 +7,9 @@ on:
       - 'corporate/scripts/seo.py'
       - 'corporate/content/seo-routes.json'
       - 'corporate/tests/test_phase03_seo.py'
+      - 'corporate/content/localization-pilot.json'
+      - 'corporate/editorial/research-drafts/**'
+      - 'corporate/scripts/public_seo_observer.py'
       - '.github/workflows/corporate-phase03-seo.yml'
   workflow_dispatch:
 
@@ -25,7 +28,7 @@ jobs:
         working-directory: corporate
         run: |
           set -euo pipefail
-          python3 -m py_compile scripts/build.py scripts/seo.py tests/test_phase03_seo.py
+          python3 -m py_compile scripts/build.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py
           MUSITU_BUILD_MODE=review python3 scripts/build.py
           test "$(find dist -name index.html | wc -l)" -eq 34
           test ! -e dist/sitemap.xml
