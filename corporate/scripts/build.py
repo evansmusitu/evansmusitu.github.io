@@ -7,6 +7,7 @@ Keep conditional routes noindex; canonical production domain must be approved se
 from __future__ import annotations
 import hashlib, html, json, re, shutil, os
 from pathlib import Path
+from seo import seo_head, validate_catalog
 
 BASE=Path(__file__).resolve().parents[1]
 SRC=BASE/'content/pages.json'
@@ -92,7 +93,7 @@ def add_protected_studio_player(body:str)->str:
  if count!=1:raise ValueError('Studio media gate is missing in target route')
  return result
 
-def render(route:str,info:dict,shared:dict,staged_media:bool=False,mode:str='review',origin:str|None=None)->str:
+def render(route:str,info:dict,shared:dict,staged_media:bool=False,mode:str='review',origin:str|None=None,seo_html:str='')->str:
  title=html.escape(info['title'],quote=True)
  desc=html.escape(info['description'],quote=True)
  production=mode=='production'
@@ -120,7 +121,7 @@ def render(route:str,info:dict,shared:dict,staged_media:bool=False,mode:str='rev
  f'<meta property="og:title" content="{title}">\n'
  f'<meta property="og:description" content="{desc}">\n'
  '<meta property="og:type" content="website">\n'
- +ogurl+canonical+stage+
+  +ogurl+canonical+stage+seo_html+
  f'<meta http-equiv="Content-Security-Policy" content="{html.escape(META_CSP,quote=True)}">\n'
  f'<title>{title}</title>\n'
  '<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">\n'
@@ -135,6 +136,7 @@ def build()->dict:
  origin=canonical_origin(mode)
  records=json.loads(SRC.read_text(encoding='utf-8'))
  validate(records)
+ if mode=='production':validate_catalog(ROUTES)
  shared={p.stem:p.read_text(encoding='utf-8') for p in TEMPLATES.glob('*.html')}
  if set(shared)!={'skip','review-ribbon','footer','dialogs'}:raise ValueError('Unexpected shared templates')
  if DST.exists():shutil.rmtree(DST)
@@ -160,7 +162,8 @@ def build()->dict:
  for route in ROUTES:
   dest=DST/route.lstrip('/')/'index.html'
   dest.parent.mkdir(parents=True,exist_ok=True)
-  dest.write_text(render(route,records[route],shared,staged_media=staged_media,mode=mode,origin=origin),encoding='utf-8')
+  seo_html=seo_head(route,records[route],records,origin) if mode=='production' else ''
+  dest.write_text(render(route,records[route],shared,staged_media=staged_media,mode=mode,origin=origin,seo_html=seo_html),encoding='utf-8')
  if mode=='production':
   (DST/'robots.txt').write_text(f'User-agent: *\nAllow: /\nSitemap: {origin}/sitemap.xml\n',encoding='utf-8')
   urls=''.join(f'<url><loc>{origin}{route}</loc></url>' for route in ROUTES if route!='/404/')
