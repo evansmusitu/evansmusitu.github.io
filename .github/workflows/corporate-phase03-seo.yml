@@ -1,0 +1,35 @@
+name: MUSITU Corporate Phase 03 SEO Source Qualification
+
+on:
+  pull_request:
+    paths:
+      - 'corporate/scripts/build.py'
+      - 'corporate/scripts/seo.py'
+      - 'corporate/content/seo-routes.json'
+      - 'corporate/tests/test_phase03_seo.py'
+      - '.github/workflows/corporate-phase03-seo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-and-review-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Syntax and isolated review build
+        working-directory: corporate
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/build.py scripts/seo.py tests/test_phase03_seo.py
+          MUSITU_BUILD_MODE=review python3 scripts/build.py
+          test "$(find dist -name index.html | wc -l)" -eq 34
+          test ! -e dist/sitemap.xml
+          grep -Fq 'Disallow: /' dist/robots.txt
+      - name: Phase 03 SEO contract and isolation tests
+        working-directory: corporate
+        run: python3 -m unittest discover -s tests -p 'test_phase03_seo.py' -v
