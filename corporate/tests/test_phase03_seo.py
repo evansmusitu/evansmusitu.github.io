@@ -91,6 +91,29 @@ class Phase03SEOTests(unittest.TestCase):
                     self.assertIn("SoftwareApplication", kinds)
                 self.assertNotIn("Mhundwa Village", seo)
 
+    def test_article_schema_requires_actual_publication_approval(self):
+        from seo import approved_article_schema
+        fixture = {
+            "path": "/research/articles/synthetic-check/",
+            "headline": "Synthetic research example",
+            "description": "A synthetic editorial test, not a public article.",
+            "date_published": "2026-11-07",
+            "review_status": "approved",
+            "publication_status": "published",
+        }
+        graph = approved_article_schema(fixture)
+        self.assertEqual(graph["@type"], "Article")
+        self.assertEqual(graph["mainEntityOfPage"]["@id"], ORIGIN + fixture["path"])
+        self.assertEqual(graph["publisher"]["@id"], ORIGIN + "/#organization")
+        for field, invalid in (
+            ("review_status", "draft"), ("publication_status", "draft"),
+            ("path", "/private/"), ("date_published", "")
+        ):
+            rejected = dict(fixture)
+            rejected[field] = invalid
+            with self.assertRaises(ValueError):
+                approved_article_schema(rejected)
+
     def test_unknown_origin_fails_closed(self):
         with self.assertRaises(ValueError):
             schemas("/", self.records, "https://fake.example")
