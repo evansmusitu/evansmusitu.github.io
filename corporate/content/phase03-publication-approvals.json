@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "scope": "MUSITU corporate research content only",
+  "approved_by": "MUSITU website owner — explicit instruction on 2026-11-08",
+  "approval_date": "2026-11-08",
+  "reference_note": "Educational methodology; external references are contextual, not independent product endorsement",
+  "publication_gate": "Only source-locked reviewed article cohort; actual release requires separate hosted accessibility, security, rollback, legal and deployment admission",
+  "articles": [
+    {
+      "slug": "ai-assisted-research-verification",
+      "source_git_blob_sha": "e2a7d9bb3679f27ea64149b8e75f3a691a1775cf",
+      "title": "How to verify an AI-assisted financial research answer"
+    },
+    {
+      "slug": "backtesting-overfitting",
+      "source_git_blob_sha": "6d8a7f7fc546ecb2f69fbab961b08227f6770b30",
+      "title": "Why a strong backtest can be a weak investment hypothesis"
+    },
+    {
+      "slug": "financial-data-lineage",
+      "source_git_blob_sha": "c30b778673483e9c32937ee4b805ada99dd9af47",
+      "title": "Financial data lineage: tracing every result to its origin"
+    },
+    {
+      "slug": "human-oversight-in-financial-ai",
+      "source_git_blob_sha": "77b8eed6dd6823bc73901a5a063dd7eaa813cb18",
+      "title": "Human oversight for AI-supported analytical decisions"
+    },
+    {
+      "slug": "missing-data-and-leakage",
+      "source_git_blob_sha": "8c3fdec2f44f9125ca1881d0a88bb13458590db0",
+      "title": "Missing values and data leakage in quantitative machine learning"
+    },
+    {
+      "slug": "model-risk-governance-2026",
+      "source_git_blob_sha": "77efc2e5ebef33f305230a96cfcdb2ff711839d1",
+      "title": "Model risk governance after the 2026 US guidance revision"
+    },
+    {
+      "slug": "portfolio-risk-metrics",
+      "source_git_blob_sha": "5d09b741b16441879b3ed3a32e1c7c668be08e5e",
+      "title": "Interpreting portfolio volatility, drawdown and tail risk"
+    },
+    {
+      "slug": "reproducible-analysis",
+      "source_git_blob_sha": "d5db0237079487442144e7df7fd197ad49e655d4",
+      "title": "Reproducible quantitative analysis: a practical evidence chain"
+    },
+    {
+      "slug": "scenario-stress-testing",
+      "source_git_blob_sha": "a7be8159102df483c7d084e7946405371faff9e5",
+      "title": "Scenario analysis and financial stress tests that can be audited"
+    },
+    {
+      "slug": "source-citations-and-provenance",
+      "source_git_blob_sha": "072fd58fdd1c46e654df27fde142db5cde808ddf",
+      "title": "Source citations versus provenance: what an evidence link proves"
+    },
+    {
+      "slug": "survivorship-bias",
+      "source_git_blob_sha": "c2c3e7dae22a605eeeef54e86f000326f1b46d58",
+      "title": "Survivorship bias in financial research datasets"
+    },
+    {
+      "slug": "walk-forward-validation",
+      "source_git_blob_sha": "9b3f33fa19844893b7e7f7ccbaa8239ec36e9a5d",
+      "title": "Walk-forward validation without hidden leakage"
+    }
+  ],
+  "french_pilot": {
+    "approved_by_owner": true,
+    "paths": [
+      "/fr/",
+      "/fr/products/axiom/",
+      "/fr/research/"
+    ],
+    "native_language_qa": "AI editorial review only; independent proficient human reviewer not yet evidenced",
+    "legal_and_hosted_conformance": "not established"
+  },
+  "private_registration_disclosure": "No private company registration content added"
+}
