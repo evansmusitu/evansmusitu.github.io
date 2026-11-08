@@ -229,5 +229,26 @@ class Phase03SEOTests(unittest.TestCase):
                 self.assertEqual(entry["source_sha256"], article["sha256"])
                 self.assertEqual(entry["status"], "draft")
 
+    def test_public_marketing_and_contact_footer_omit_granular_location(self):
+        pages = self.records
+        for route in ("/", "/company/", "/contact/"):
+            for field in ("description", "main"):
+                text = pages[route][field]
+                self.assertNotIn("Zimbabwe-founded", text, (route, field))
+                self.assertNotIn("Originating in Zimbabwe", text, (route, field))
+                self.assertNotIn("Mhundwa Village", text, (route, field))
+        footer = self.shared["footer"]
+        self.assertNotIn("Zimbabwe-founded", footer)
+        self.assertNotIn("Mhundwa Village", footer)
+        self.assertIn('href="mailto:support@mftintelligence.com"', footer)
+        records = json.loads((BASE / "content" / "public-records.json").read_text(encoding="utf-8"))
+        company = next(x for x in records["routes"] if x["path"] == "/company/")
+        self.assertNotIn("Zimbabwe-founded", company["lead"])
+        # Legal content is unchanged until a genuine replacement address is authorized
+        # and legally sufficient; marketing cleanup must never silently remove it.
+        for route in ("/legal/privacy/", "/legal/terms/"):
+            self.assertIn("Service and correspondence address:", pages[route]["main"])
+            self.assertIn('href="mailto:support@mftintelligence.com"', pages[route]["main"])
+
 if __name__ == "__main__":
     unittest.main()
