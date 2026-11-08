@@ -130,7 +130,7 @@ jobs:
           assert manifest["build_mode"]=="review"
           assert manifest["studio_media_included"] is True
           assert not (artifact/"sitemap.xml").exists()
-          assert (artifact/"robots.txt").read_text()=="User-agent: *\\nDisallow: /\\n"
+          assert (artifact/"robots.txt").read_text().splitlines()==["User-agent: *","Disallow: /"]
           print("Inherited review suite checked exact 34-route source with approved Studio media. No deployment.")
           PY
       - name: Qualify immutable production-mode candidate (local artifact, not deployed)
