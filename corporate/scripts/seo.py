@@ -108,7 +108,7 @@ def approved_hreflang_links(
     ]
     lines.append('<link rel="alternate" hreflang="x-default" href="'
                  + html.escape(origin + equivalents["en"], quote=True) + '">')
-    return "\\n".join(lines) + "\\n"
+    return "\n".join(lines) + "\n"
 
 def approved_article_schema(article: dict, origin: str = ORIGIN) -> dict:
     """Return Article JSON-LD only for separately authorized, actually published research.
