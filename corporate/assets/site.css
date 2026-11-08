@@ -59,3 +59,18 @@ html:not(.has-js) .navigator-panel,html:not(.has-js) .atlas-component{grid-templ
 /* Ensure theme selection remains available within the mobile navigation. */
 .mobile-menu-panel .mobile-theme-control{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:44px;height:auto;padding:10px 12px;font-size:13px;text-align:left;color:var(--text);background:var(--surface-2);border:1px solid var(--line);border-radius:9px}
 @media(max-width:540px){.mobile-menu-panel .mobile-theme-control{display:flex!important}}
+
+/* Phase 03 owner-approved research and accessible French pilot. */
+.phase03-article{max-width:930px;margin-inline:auto;line-height:1.82}
+.phase03-article h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.2;letter-spacing:-.035em;margin:0 0 1.8rem}
+.phase03-article h2{font-size:clamp(1.25rem,2.5vw,1.75rem);line-height:1.35;margin:2.2rem 0 .8rem}
+.phase03-article p{max-width:75ch;margin:0 0 1.1rem;overflow-wrap:anywhere}
+.phase03-article a,.phase03-language a,.phase03-fr-nav a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em}
+.phase03-article a:hover,.phase03-language a:hover,.phase03-fr-nav a:hover{text-decoration-thickness:2px}
+.phase03-language{display:flex;flex-wrap:wrap;align-items:center;gap:1rem;margin:2rem auto;padding:1rem 0;max-width:var(--max);width:min(var(--max),calc(100% - 56px));border-top:1px solid var(--line)}
+.phase03-language a{display:inline-block;color:var(--mint-strong);font-weight:680}
+.phase03-fr-header{display:flex;align-items:center;justify-content:space-between;gap:1.4rem;min-height:82px}
+.phase03-fr-nav{display:flex;align-items:center;gap:1.3rem;flex-wrap:wrap}
+.phase03-fr-nav a{display:inline-block;padding:.4rem 0;color:var(--text);font-weight:650}
+.phase03-publications .proof-card h3 a{display:inline-block;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:.2em}
+@media (max-width:640px){.phase03-fr-header{flex-wrap:wrap;padding-block:16px}.phase03-fr-nav{gap:1rem;font-size:.95rem}.phase03-language{width:calc(100% - 36px)}.phase03-article{padding-inline:18px}}
