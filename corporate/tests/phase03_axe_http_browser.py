@@ -20,15 +20,19 @@ TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa",
         "wcag22a", "wcag22aa", "best-practice"]
 
 
-def audit(engine: str, axe_path: Path) -> dict:
+def audit(engine: str, axe_path: Path, publication_only: bool = False) -> dict:
     if engine not in ("chromium", "firefox", "webkit"):
         raise ValueError("Unsupported engine")
     script = axe_path.resolve(strict=True)
     if not script.is_file() or script.stat().st_size < 100_000:
         raise ValueError("A genuine locally installed axe-core asset is required")
     manifest = json.loads((DIST / "manifest.json").read_text(encoding="utf-8"))
-    if manifest.get("build_mode") != "production" or manifest.get("route_count") != 34:
-        raise AssertionError("Expected the 34-page generated production candidate")
+    expected_routes = 49 if publication_only else 34
+    if manifest.get("build_mode") != "production" or manifest.get("route_count") != expected_routes:
+        raise AssertionError("Unexpected production candidate route count")
+    routes = manifest.get("phase03_publication_routes", []) if publication_only else manifest["routes"]
+    if len(routes) != (15 if publication_only else 34):
+        raise AssertionError("Accessibility audit route cohort mismatch")
     header_type = type("LocalAxeHandler", (Handler,), {"response_headers": parse_headers()})
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), partial(header_type, directory=str(DIST)))
     worker = threading.Thread(target=httpd.serve_forever, daemon=True)
@@ -53,7 +57,7 @@ def audit(engine: str, axe_path: Path) -> dict:
                 reduced_motion="reduce", bypass_csp=True)
             page = context.new_page()
             page.set_default_timeout(10000)
-            for route in manifest["routes"]:
+            for route in routes:
                 response = page.goto(base + route, wait_until="load", timeout=20000)
                 if not response or response.status != 200:
                     raise AssertionError("Local audit route was not served: " + route)
@@ -89,7 +93,7 @@ def audit(engine: str, axe_path: Path) -> dict:
     if result["axe_version"] != "4.14.0":
         raise AssertionError("Unapproved/unpinned axe-core version")
     result["passed"] = (
-        result["routes"] == 34 and result["scans"] == 68
+        result["routes"] == len(routes) and result["scans"] == len(routes)*2
         and not result["violations"])
     return result
 
@@ -98,10 +102,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--engine", choices=["chromium", "firefox", "webkit"], required=True)
     parser.add_argument("--axe-path", type=Path, required=True)
+    parser.add_argument("--publication-only", action="store_true")
     args = parser.parse_args()
-    result = audit(args.engine, args.axe_path)
+    result = audit(args.engine, args.axe_path, publication_only=args.publication_only)
     OUTPUT.mkdir(exist_ok=True)
-    artifact = OUTPUT / f"phase03-axe-{args.engine}.json"
+    artifact = OUTPUT / (f"phase03-axe-publication-{args.engine}.json" if args.publication_only else f"phase03-axe-{args.engine}.json")
     artifact.write_text(json.dumps(result, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "classification": result["classification"], "engine": result["engine"],
