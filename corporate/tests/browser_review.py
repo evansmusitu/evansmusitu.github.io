@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""No-network Chromium DOM verification for all 34 generated MUSITU review routes.
+"""No-network cross-engine DOM verification for all 34 generated MUSITU review routes.
 
-The managed Chromium cannot navigate to localhost. To avoid false claims, this
+Managed runners may prohibit loopback navigation. To avoid false claims, this
 suite loads each generated HTML document using set_content, substitutes its
 local CSS/JS inline and removes staging CSP *for this test only*. HTTP response
 headers and production hosted behavior are NOT covered by this test.
@@ -9,7 +9,7 @@ headers and production hosted behavior are NOT covered by this test.
 from __future__ import annotations
 from pathlib import Path
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
-import json, re, time
+import json, re, time, os, shutil
 
 ROOT=Path(__file__).resolve().parents[1]
 DIST=ROOT/'dist'
@@ -29,12 +29,20 @@ def offline(route,js=True):
     return html
 
 def main():
-  results={'method':'offline DOM: self-contained content, inline local assets; CSP removed for runner only',
+  engine=os.environ.get('MUSITU_BROWSER_ENGINE','chromium').strip().lower()
+  if engine not in ('chromium','firefox','webkit'):raise ValueError('Invalid browser engine')
+  results={'browser_engine':engine,'method':'offline DOM: self-contained content, inline local assets; CSP removed for runner only',
            'production_http_tested':False,'external_services_called':False,
            'routes_tested':0,'responsive_checks':0,'theme_checks':0,'nojs_checks':0,
            'interactions':{},'errors':[],'overflow':[],'runtime_exceptions':[]}
   with sync_playwright() as pw:
-    browser=pw.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
+    browser_type=getattr(pw,engine)
+    launch={'headless':True}
+    if engine=='chromium':
+      executable=os.environ.get('MUSITU_CHROMIUM_EXECUTABLE') or shutil.which('chromium')
+      if executable:launch['executable_path']=executable
+      launch['args']=['--no-sandbox']
+    browser=browser_type.launch(**launch)
     ctx=browser.new_context(viewport={'width':1280,'height':800},java_script_enabled=True, reduced_motion='reduce')
     page=ctx.new_page();page.set_default_timeout(2500)
     def pageerror(e):results['runtime_exceptions'].append(str(e))
