@@ -147,6 +147,6 @@ jobs:
           print(json.dumps({"production_candidate":"QUALIFIED_IN_SOURCE_ONLY",
             "article_publication":False,"deployed":False,"base_routes":34,
             "verified_jsonld_routes":len(routes),
-            "manifest_sha256":"${{ github.sha }}"}))
+            "source_commit":"${{ github.sha }}"}))
           PY
           echo "Reproducible manifest SHA-256: $second; no deployment performed"
