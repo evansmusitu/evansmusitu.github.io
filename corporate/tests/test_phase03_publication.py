@@ -128,6 +128,19 @@ class PublicObserverReleaseRegression(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError,"Phase 03"):
                 audit()
 
+    def test_article_without_security_headers_cannot_qualify(self):
+        from public_seo_observer import validate_page
+        path = "/research/articles/backtesting-overfitting/"
+        html = ('<html lang="en"><head><meta name="robots" content="index,follow">'
+                '<link rel="canonical" href="'+ORIGIN+path+'">'
+                '<script type="application/ld+json">'
+                '{"@context":"https://schema.org","@graph":['
+                '{"@type":"Article"},{"@type":"BreadcrumbList"}]}'
+                '</script></head></html>').encode()
+        with patch("public_seo_observer.get",return_value=(200,ORIGIN+path,{},html)):
+            with self.assertRaisesRegex(AssertionError,"security headers"):
+                validate_page(path)
+
     def test_article_without_article_schema_cannot_qualify(self):
         from public_seo_observer import validate_page
         path = "/research/articles/backtesting-overfitting/"
