@@ -143,6 +143,7 @@ def check(engine: str) -> dict:
                 if response.status != 200 or not response.body():
                     raise AssertionError("Local browser asset failed: " + resource)
             results["local_assets_real_network_loaded"] = True
+            page.set_viewport_size({"width": 1280, "height": 800})
             page.goto(base + "/", wait_until="load", timeout=16000)
             page.get_by_role("button", name="Search the website").click()
             if not page.locator("#search-dialog").evaluate("(e)=>e.open"):
@@ -152,7 +153,7 @@ def check(engine: str) -> dict:
             if page.locator("#search-dialog").evaluate("(e)=>e.open"):
                 raise AssertionError("Search modal cannot be dismissed")
             results["interactions_checked"] += 1
-            page.locator('a[href="/products/axiom/"]').first.click()
+            page.locator('main a[href="/products/axiom/"]').first.click()
             page.wait_for_url(base + "/products/axiom/")
             if page.locator("h1").count() != 1:
                 raise AssertionError("Same-origin product navigation failed")
