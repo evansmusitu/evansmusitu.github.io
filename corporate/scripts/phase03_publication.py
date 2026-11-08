@@ -28,7 +28,7 @@ FR_EN = {v: k for k, v in EN_FR.items()}
 FR_BODY = {
     "/fr/": [
         ("Une organisation technologique à vocation internationale",
-         "MUSITU est une organisation technologique fondée au Zimbabwe. Elle développe des logiciels intelligents, des outils de calcul, des technologies éducatives, des expériences créatives et des systèmes numériques. Les différentes familles de produits sont présentées selon leur état réel de développement, sans assimiler une démonstration à une fonction disponible dans tous les produits."),
+         "MUSITU est une organisation technologique. Elle développe des logiciels intelligents, des outils de calcul, des technologies éducatives, des expériences créatives et des systèmes numériques. Les différentes familles de produits sont présentées selon leur état réel de développement, sans assimiler une démonstration à une fonction disponible dans tous les produits."),
         ("Des méthodes que l’on peut examiner",
          "Nos pages publiques distinguent les faits documentés, les démonstrations, les travaux expérimentaux et les objectifs de recherche. Une analyse convaincante exige des données traçables, des hypothèses explicites, des résultats reproductibles et une description des limites. Les résultats présentés sur ce site ne constituent pas une garantie de performance."),
         ("Explorer les travaux publiés",
