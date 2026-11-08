@@ -46,7 +46,7 @@ Use aggregated query, country, page and search-impression data from verified web
 - [x] Source-side structured-data implementation and regression checks prepared.
 - [x] Twelve technical research article drafts created, publication gated.
 - [x] Locale routing contract and French draft pilot prepared, not published.
-- [ ] CI result for exact Phase 03 commit verified.
+- [x] Phase 03 exact-source 14-test regression CI passed on the implementation commit; full site/hosted acceptance remains separate.
 - [ ] Independent technical/editorial/native-language approval of expanded publications.
 - [ ] Production staging and accessibility, cross-browser, security and performance acceptance for the new candidate.
 - [ ] Controlled Cloudflare Pages deployment with verified rollback.
@@ -56,3 +56,9 @@ Use aggregated query, country, page and search-impression data from verified web
 - [ ] Public indexing evidence and international discovery baseline retained.
 
 Do not merge to `main` or deploy the draft branch based on documentation alone. Never use the separate GitHub Pages root site as a corporate deployment target.
+
+## 8 November 2026 implementation continuation
+
+A fail-closed `approved_hreflang_links` generator now refuses unapproved origins, missing translated publication evidence, malformed locale routes and non-reciprocal page groups. It deliberately emits no multilingual markup for the current English-only production corpus. Expected red tests and the corrective green run are recorded in `PHASE03_COMPLETION_EVIDENCE_20261108.md`.
+
+The existing corporate production watch last observed on 8 November 2026 (run 42434788640) confirmed 33 reachable sitemap URLs, canonical www redirection, security headers, email MX, protected staging and Intelligence separation. **That observation is of the prior public deployment**, not the unpublished SEO code. See the 12-row evidence ledger before treating any gate as complete.
