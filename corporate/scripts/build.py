@@ -8,6 +8,8 @@ from __future__ import annotations
 import hashlib, html, json, re, shutil, os
 from pathlib import Path
 from seo import seo_head, validate_catalog
+from phase03_publication import (approved_sources, article_routes, article_info, article_head,
+  localize_english_core, french_info, french_head, french_records, hreflang, FR_EN)
 
 BASE=Path(__file__).resolve().parents[1]
 SRC=BASE/'content/pages.json'
@@ -135,6 +137,14 @@ def build()->dict:
  mode=current_build_mode()
  origin=canonical_origin(mode)
  records=json.loads(SRC.read_text(encoding='utf-8'))
+ publication_flag=os.environ.get('MUSITU_PUBLISH_PHASE03','0')
+ if publication_flag not in ('0','1'):raise ValueError('MUSITU_PUBLISH_PHASE03 must be 0 or 1')
+ publication_enabled=publication_flag=='1'
+ articles=approved_sources() if publication_enabled else []
+ french=french_records() if publication_enabled else {}
+ extra_routes=article_routes(articles)+list(french)
+ if len(extra_routes)!=len(set(extra_routes)) or any(route in ROUTES for route in extra_routes):
+  raise ValueError('Publication route collision')
  validate(records)
  if mode=='production':validate_catalog(ROUTES)
  shared={p.stem:p.read_text(encoding='utf-8') for p in TEMPLATES.glob('*.html')}
@@ -162,11 +172,43 @@ def build()->dict:
  for route in ROUTES:
   dest=DST/route.lstrip('/')/'index.html'
   dest.parent.mkdir(parents=True,exist_ok=True)
-  seo_html=seo_head(route,records[route],records,origin) if mode=='production' else ''
-  dest.write_text(render(route,records[route],shared,staged_media=staged_media,mode=mode,origin=origin,seo_html=seo_html),encoding='utf-8')
+  info=localize_english_core(route,records[route],articles) if publication_enabled else records[route]
+  seo_html=seo_head(route,info,records,origin) if mode=='production' else ''
+  if publication_enabled and mode=='production':seo_html+=hreflang(route)
+  dest.write_text(render(route,info,shared,staged_media=staged_media,mode=mode,origin=origin,seo_html=seo_html),encoding='utf-8')
+ if publication_enabled:
+  for article in articles:
+   route='/research/articles/'+article['slug']+'/'
+   info=article_info(article,records['/research/']['header'])
+   dest=DST/route.lstrip('/')/'index.html'
+   dest.parent.mkdir(parents=True,exist_ok=True)
+   seo_html=article_head(article) if mode=='production' else ''
+   dest.write_text(render(route,info,shared,mode=mode,origin=origin,seo_html=seo_html),encoding='utf-8')
+  shared_fr={**shared,
+    'skip':'<a class="skip-link" href="#main">Aller au contenu principal</a>',
+    'review-ribbon':'<div class="review-ribbon" role="note">Aperçu protégé · non indexé</div>',
+    'dialogs':'',
+    'footer':('<footer class="site-footer"><div class="shell footer-main"><div class="footer-col">'
+      '<h2>MUSITU</h2><p>Intelligence fondée sur des preuves. Technologie au service d’un objectif.</p>'
+      '<a href="/fr/">Accueil</a><a href="/fr/research/">Recherche</a>'
+      '<a href="/fr/products/axiom/">Axiom</a></div>'
+      '<div class="footer-col"><h2>Informations et contact</h2>'
+      '<a href="/contact/" lang="en">Contact (English)</a>'
+      '<a href="/legal/privacy/" lang="en">Privacy Policy (English)</a>'
+      '<a href="/legal/terms/" lang="en">Terms (English)</a>'
+      '<a href="/accessibility/" lang="en">Accessibility (English)</a></div></div>'
+      '<div class="shell footer-bottom"><span>© 2026 MUSITU.</span></div></footer>')}
+  for route,pilot in french.items():
+   info=french_info(route,records[FR_EN[route]],pilot)
+   dest=DST/route.lstrip('/')/'index.html'
+   dest.parent.mkdir(parents=True,exist_ok=True)
+   seo_html=french_head(route,info) if mode=='production' else ''
+   rendered=render(route,info,shared_fr,mode=mode,origin=origin,seo_html=seo_html)
+   rendered=rendered.replace('<html lang="en"','<html lang="fr"',1)
+   dest.write_text(rendered,encoding='utf-8')
  if mode=='production':
   (DST/'robots.txt').write_text(f'User-agent: *\nAllow: /\nSitemap: {origin}/sitemap.xml\n',encoding='utf-8')
-  urls=''.join(f'<url><loc>{origin}{route}</loc></url>' for route in ROUTES if route!='/404/')
+  urls=''.join(f'<url><loc>{origin}{route}</loc></url>' for route in [r for r in ROUTES if r!='/404/']+extra_routes)
   (DST/'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+urls+'</urlset>\n',encoding='utf-8')
   (DST/'_headers').write_text(
    "/*\n"
@@ -180,7 +222,10 @@ def build()->dict:
  compiled={p.relative_to(DST).as_posix():hash_bytes(p.read_bytes()) for p in sorted(DST.rglob('*')) if p.is_file() and p.name!='manifest.json'}
  manifest={'document':'MUSITU-WEB-MASTER-1.0','authorization':'Package A production candidate' if mode=='production' else 'Package A local only',
     'build_mode':mode,'canonical_origin':origin,'indexing_enabled':mode=='production',
-    'production_approved':False,'media_publication_approved':True,'brand_master_approved':True,'brand_master_sha256':'f0e73478176b335bf3cfb5afd8bd7249d5aa39f2627798af7c71d9f13972c2fd','protected_staging_media_included':staged_media if mode=='review' else False,'studio_media_included':staged_media,'route_count':len(ROUTES),
+    'production_approved':False,'media_publication_approved':True,'brand_master_approved':True,'brand_master_sha256':'f0e73478176b335bf3cfb5afd8bd7249d5aa39f2627798af7c71d9f13972c2fd','protected_staging_media_included':staged_media if mode=='review' else False,'studio_media_included':staged_media,'route_count':len(ROUTES)+len(extra_routes),
+    'phase03_publication_source_approved':publication_enabled,
+    'phase03_publication_routes':extra_routes,
+    'phase03_publication_indexable':publication_enabled and mode=='production',
     'routes':ROUTES,'gated_routes':sorted(GATED),'files':compiled}
  (DST/'manifest.json').write_text(json.dumps(manifest,sort_keys=True,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
  return manifest
