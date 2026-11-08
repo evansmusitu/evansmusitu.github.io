@@ -58,6 +58,8 @@ class PublicationContract(unittest.TestCase):
             html=(ROOT/"dist"/path.lstrip("/")/"index.html").read_text()
             self.assertIn('<html lang="fr"',html)
             self.assertIn('aria-label="Navigation principale"',html)
+            self.assertNotIn("fondée au Zimbabwe",html)
+            self.assertNotIn("numéro d’enregistrement",html)
         for slug in ("model-risk-governance-2026","ai-assisted-research-verification"):
             html=(ROOT/"dist"/"research"/"articles"/slug/"index.html").read_text()
             self.assertIn("## Scope and limitations",approved_sources()[0]["text"] if False else "## Scope and limitations")
