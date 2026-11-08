@@ -85,6 +85,7 @@ def check(engine: str) -> dict:
         "field_web_vitals_measured": False, "deployed": False,
         "remote_writes": 0, "console_errors": [], "page_errors": [],
         "request_failures": [], "off_origin_requests": [],
+        "interrupted_local_media_preloads": 0,
     }
     browser = None
     try:
@@ -100,9 +101,27 @@ def check(engine: str) -> dict:
             page.set_default_timeout(7000)
             page.on("console", lambda msg: results["console_errors"].append(msg.text) if msg.type == "error" else None)
             page.on("pageerror", lambda exc: results["page_errors"].append(str(exc)))
-            page.on("requestfailed", lambda req: results["request_failures"].append(req.url))
-            page.on("request", lambda req: results["off_origin_requests"].append(req.url)
-                    if urlsplit(req.url).netloc != urlsplit(base).netloc else None)
+            def failed(request):
+                reason = request.failure or "unknown"
+                # Browsers may abort a streaming metadata prefetch when navigating
+                # off the Studio page. The media is separately fetched and checked
+                # to distinguish aborted preload from an actually missing file.
+                if (urlsplit(request.url).path == "/assets/studio-demo-82s.mp4"
+                        and "ERR_ABORTED" in reason):
+                    results["interrupted_local_media_preloads"] += 1
+                else:
+                    results["request_failures"].append(request.url + ": " + reason)
+
+            def track_request(request):
+                parsed = urlsplit(request.url)
+                if parsed.scheme in ("http", "https") and parsed.netloc == urlsplit(base).netloc:
+                    return
+                if parsed.scheme == "blob" and request.url.startswith("blob:" + base + "/"):
+                    return  # media-generated same-origin blob object, not a remote request
+                results["off_origin_requests"].append(request.url)
+
+            page.on("requestfailed", failed)
+            page.on("request", track_request)
             for route in routes:
                 response = page.goto(base + route, wait_until="load", timeout=16000)
                 if response is None or response.status != 200:
@@ -142,6 +161,9 @@ def check(engine: str) -> dict:
                 response = page.request.get(base + resource)
                 if response.status != 200 or not response.body():
                     raise AssertionError("Local browser asset failed: " + resource)
+            media_response = page.request.get(base + "/assets/studio-demo-82s.mp4")
+            if media_response.status != 200 or len(media_response.body()) != 1540312:
+                raise AssertionError("Media source did not respond with expected exact bytes")
             results["local_assets_real_network_loaded"] = True
             page.set_viewport_size({"width": 1280, "height": 800})
             page.goto(base + "/", wait_until="load", timeout=16000)
