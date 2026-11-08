@@ -13,6 +13,7 @@ on:
       - 'corporate/scripts/phase03_publication.py'
       - 'corporate/content/phase03-publication-approvals.json'
       - 'corporate/tests/test_phase03_publication.py'
+      - 'corporate/tests/phase03_publication_http_browser.py'
       - 'corporate/content/seo-routes.json'
       - 'corporate/tests/test_phase03_seo.py'
       - 'corporate/tests/browser_review.py'
@@ -368,6 +369,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/build.py
+          python3 tests/phase03_publication_http_browser.py --engine "$MUSITU_BROWSER_ENGINE"
           python3 tests/phase03_axe_http_browser.py \
             --engine "$MUSITU_BROWSER_ENGINE" \
             --axe-path "$RUNNER_TEMP/musitu-axe/node_modules/axe-core/axe.min.js" \
@@ -394,6 +396,7 @@ jobs:
             corporate/review-artifacts/phase03-production-local-http-${{ matrix.engine }}.json
             corporate/review-artifacts/phase03-axe-${{ matrix.engine }}.json
             corporate/review-artifacts/phase03-axe-publication-${{ matrix.engine }}.json
+            corporate/review-artifacts/phase03-publication-http-${{ matrix.engine }}.json
             corporate/review-artifacts/homepage-desktop-dom.png
             corporate/review-artifacts/homepage-mobile-dom.png
           if-no-files-found: warn
