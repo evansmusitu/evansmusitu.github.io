@@ -62,3 +62,11 @@ Do not merge to `main` or deploy the draft branch based on documentation alone. 
 A fail-closed `approved_hreflang_links` generator now refuses unapproved origins, missing translated publication evidence, malformed locale routes and non-reciprocal page groups. It deliberately emits no multilingual markup for the current English-only production corpus. Expected red tests and the corrective green run are recorded in `PHASE03_COMPLETION_EVIDENCE_20261108.md`.
 
 The existing corporate production watch last observed on 8 November 2026 (run 42434788640) confirmed 33 reachable sitemap URLs, canonical www redirection, security headers, email MX, protected staging and Intelligence separation. **That observation is of the prior public deployment**, not the unpublished SEO code. See the 12-row evidence ledger before treating any gate as complete.
+
+## 8 November — reviewable research packet and production-mode source qualification
+
+The editorial preview generator now produces a **12-document review-only HTML package** and a manifest keyed by SHA-256; it never creates canonical public research URLs or article JSON-LD. Download the `musitu-phase03-research-review-only` artifact from the latest [Phase 03 source qualification workflow](https://github.com/evansmusitu/evansmusitu.github.io/actions/workflows/corporate-phase03-seo.yml) for editorial assessment. This artifact is intentionally not a public hosting release.
+
+The qualification workflow also runs inherited local HTTP, sitemap and Store/Studio contracts, then reuses only the checksum-verified approved Studio video and poster from the immutable prior production qualification artifact to **rebuild** the updated corporate source in production mode. It tests actual rendered JSON-LD on each of the 33 core indexable-intent routes, checks the 404 exclusion and produces a byte-reproducible production manifest. **It does not deploy the generated production artifact, submit anything to search engines or authorize publication**.
+
+For the verified run history, media digests, 12-row acceptance ledger and explicit remaining gates, see `PHASE03_COMPLETION_EVIDENCE_20261108.md`. Rich-result eligibility remains separate from valid schema descriptions, especially because unverified product prices/offers must never be invented.
