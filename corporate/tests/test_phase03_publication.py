@@ -106,5 +106,59 @@ class PublicationContract(unittest.TestCase):
                 self.assertIn('hreflang="fr"',html)
         self.assertEqual(len(list((ROOT/"dist").rglob("index.html"))),49)
 
+class PublicObserverReleaseRegression(unittest.TestCase):
+    """The public acceptance check must not pass the pre-Phase-03 site."""
+
+    def test_legacy_33_url_sitemap_cannot_qualify_phase03(self):
+        from public_seo_observer import audit
+        from seo import read_catalog
+        core = sorted(read_catalog()["routes"])
+        xml = ('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+               + ''.join('<url><loc>'+ORIGIN+path+'</loc></url>' for path in core)
+               + '</urlset>').encode()
+        robots = ('User-agent: *\\nAllow: /\\nSitemap: '+ORIGIN+'/sitemap.xml').encode()
+        def response(path):
+            if path == "/robots.txt":
+                return 200, ORIGIN+path, {}, robots
+            if path == "/sitemap.xml":
+                return 200, ORIGIN+path, {}, xml
+            raise AssertionError("Unexpected public GET: "+path)
+        with patch("public_seo_observer.get", side_effect=response), \
+             patch("public_seo_observer.validate_page", side_effect=lambda path: path):
+            with self.assertRaisesRegex(AssertionError,"Phase 03"):
+                audit()
+
+    def test_article_without_article_schema_cannot_qualify(self):
+        from public_seo_observer import validate_page
+        path = "/research/articles/backtesting-overfitting/"
+        html = ('<html lang="en"><head><meta name="robots" content="index,follow">'
+                '<link rel="canonical" href="'+ORIGIN+path+'">'
+                '<script type="application/ld+json">'
+                '{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList"}]}'
+                '</script></head><body></body></html>').encode()
+        headers = {"content-security-policy":"default-src 'none'",
+                   "x-content-type-options":"nosniff","x-frame-options":"DENY",
+                   "referrer-policy":"strict-origin-when-cross-origin"}
+        with patch("public_seo_observer.get",return_value=(200,ORIGIN+path,headers,html)):
+            with self.assertRaisesRegex(AssertionError,"Article"):
+                validate_page(path)
+
+    def test_french_page_without_reciprocal_hreflang_cannot_qualify(self):
+        from public_seo_observer import validate_page
+        path = "/fr/research/"
+        html = ('<html lang="fr"><head><meta name="robots" content="index,follow">'
+                '<link rel="canonical" href="'+ORIGIN+path+'">'
+                '<script type="application/ld+json">'
+                '{"@context":"https://schema.org","@graph":['
+                '{"@type":"WebPage","inLanguage":"fr"},{"@type":"BreadcrumbList"}]}'
+                '</script></head></html>').encode()
+        headers = {"content-security-policy":"default-src 'none'",
+                   "x-content-type-options":"nosniff","x-frame-options":"DENY",
+                   "referrer-policy":"strict-origin-when-cross-origin"}
+        with patch("public_seo_observer.get",return_value=(200,ORIGIN+path,headers,html)):
+            with self.assertRaisesRegex(AssertionError,"hreflang"):
+                validate_page(path)
+
+
 if __name__=="__main__":
     unittest.main()
