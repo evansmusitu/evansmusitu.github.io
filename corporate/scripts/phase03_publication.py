@@ -70,7 +70,7 @@ def approved_sources() -> list[dict]:
         raise ValueError("Approved manuscripts differ from candidate corpus")
     for article in drafts:
         src = (BASE / "editorial" / "research-drafts" / (article["slug"] + ".md")).read_bytes()
-        git_sha = hashlib.sha1(b"blob " + str(len(src)).encode("ascii") + b"\\0" + src).hexdigest()
+        git_sha = hashlib.sha1(b"blob " + str(len(src)).encode("ascii") + b"\0" + src).hexdigest()
         match = expected[article["slug"]]
         if match.get("source_git_blob_sha") != git_sha or match.get("title") != article["title"]:
             raise ValueError("Research source changed after owner approval: " + article["slug"])
