@@ -10,6 +10,7 @@ on:
       - 'corporate/content/localization-pilot.json'
       - 'corporate/editorial/research-drafts/**'
       - 'corporate/scripts/public_seo_observer.py'
+      - 'corporate/scripts/research_review.py'
       - 'corporate/PHASE03_GLOBAL_DISCOVERY_EXECUTION.md'
       - 'corporate/PHASE03_COMPLETION_EVIDENCE_20261108.md'
       - '.github/workflows/corporate-phase03-seo.yml'
@@ -30,7 +31,7 @@ jobs:
         working-directory: corporate
         run: |
           set -euo pipefail
-          python3 -m py_compile scripts/build.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py
+          python3 -m py_compile scripts/build.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py scripts/research_review.py
           MUSITU_BUILD_MODE=review python3 scripts/build.py
           test "$(find dist -name index.html | wc -l)" -eq 34
           test ! -e dist/sitemap.xml
@@ -38,3 +39,33 @@ jobs:
       - name: Phase 03 SEO contract and isolation tests
         working-directory: corporate
         run: python3 -m unittest discover -s tests -p 'test_phase03_seo.py' -v
+      - name: Build twelve offline editorial review previews
+        working-directory: corporate
+        run: |
+          set -euo pipefail
+          python3 scripts/research_review.py --output review-artifacts/research-preview
+          test "$(find review-artifacts/research-preview -maxdepth 1 -name '*.html' | wc -l)" -eq 13
+          test ! -f review-artifacts/research-preview/sitemap.xml
+          grep -Fq 'noindex,nofollow' review-artifacts/research-preview/index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          root=Path("review-artifacts/research-preview")
+          m=json.loads((root/"manifest.json").read_text())
+          assert m["article_count"]==12 and m["publication_authorized"] is False
+          assert len(m["articles"])==12
+          print("Editorial preview bundle: 12 draft-only pages, no release authority")
+          PY
+      - name: Upload review-only research packet
+        uses: actions/upload-artifact@v4
+        with:
+          name: musitu-phase03-research-review-only
+          path: corporate/review-artifacts/research-preview/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Run inherited local HTTP, sitemap and Studio/Store contracts
+        working-directory: corporate
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'pytest>=8,<10'
+          python3 -m pytest -q tests/test_http.py tests/test_sitemap.py tests/test_studio_and_store.py
