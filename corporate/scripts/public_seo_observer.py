@@ -99,8 +99,10 @@ def validate_page(route: str):
             raise AssertionError(f"Missing or non-reciprocal hreflang: {route}")
     if not required.issubset(types):
         raise AssertionError(f"Incomplete structured metadata: {route}; expected {sorted(required)}")
-    if route == "/" and (not headers.get("content-security-policy") or headers.get("x-content-type-options", "").lower() != "nosniff"):
-        raise AssertionError("Missing public security headers")
+    # Cloudflare Pages _headers applies to every public document, not only /.
+    if (not headers.get("content-security-policy")
+            or headers.get("x-content-type-options", "").lower() != "nosniff"):
+        raise AssertionError("Missing public security headers: " + route)
     return route
 
 def audit():
