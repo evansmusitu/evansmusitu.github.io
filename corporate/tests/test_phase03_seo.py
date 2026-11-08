@@ -161,5 +161,31 @@ class Phase03SEOTests(unittest.TestCase):
         self.assertEqual(observer.canonical, [ORIGIN + "/"])
         self.assertEqual(observer.jsonld[0]["@context"], "https://schema.org")
 
+
+    def test_hreflang_requires_published_reciprocal_equivalents(self):
+        import seo as seo_module
+        fn = getattr(seo_module, "approved_hreflang_links", None)
+        self.assertTrue(callable(fn), "Missing reviewed-localization publishing contract")
+        approved = {
+            "en": {"/products/axiom/"},
+            "fr": {"/fr/products/axiom/"},
+        }
+        equivalents = {"en": "/products/axiom/", "fr": "/fr/products/axiom/"}
+        en_links = fn("/products/axiom/", equivalents, approved)
+        fr_links = fn("/fr/products/axiom/", equivalents, approved)
+        self.assertEqual(en_links, fr_links)
+        self.assertIn('hreflang="fr" href="https://mftintelligence.com/fr/products/axiom/"', en_links)
+        self.assertIn('hreflang="x-default" href="https://mftintelligence.com/products/axiom/"', en_links)
+        with self.assertRaises(ValueError):
+            fn("/products/axiom/", equivalents, {"en": {"/products/axiom/"}})
+        with self.assertRaises(ValueError):
+            fn("/products/axiom/", {"en": "/products/axiom/", "fr": "https://evil.example/"}, approved)
+        with self.assertRaises(ValueError):
+            fn("/fr/products/axiom/", equivalents, {"en": {"/products/axiom/"}, "fr": set()})
+        with self.assertRaises(ValueError):
+            fn("/private/", equivalents, approved)
+        with self.assertRaises(ValueError):
+            fn("/products/axiom/", equivalents, approved, origin="https://fake.example")
+
 if __name__ == "__main__":
     unittest.main()
