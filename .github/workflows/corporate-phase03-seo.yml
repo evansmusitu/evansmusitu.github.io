@@ -73,6 +73,8 @@ jobs:
           python3 -m pytest -q tests/test_http.py tests/test_sitemap.py tests/test_studio_and_store.py
 
   production-artifact-contract:
+    # Never expose approved media artifacts to arbitrary fork pull-request code.
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
     name: Rebuild exact candidate with previously approved media (NO DEPLOY)
     needs: source-and-review-contract
     runs-on: ubuntu-24.04
