@@ -10,6 +10,9 @@ on:
       - 'corporate/templates/**'
       - 'corporate/scripts/build.py'
       - 'corporate/scripts/seo.py'
+      - 'corporate/scripts/phase03_publication.py'
+      - 'corporate/content/phase03-publication-approvals.json'
+      - 'corporate/tests/test_phase03_publication.py'
       - 'corporate/content/seo-routes.json'
       - 'corporate/tests/test_phase03_seo.py'
       - 'corporate/tests/browser_review.py'
@@ -43,7 +46,7 @@ jobs:
         working-directory: corporate
         run: |
           set -euo pipefail
-          python3 -m py_compile scripts/build.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py scripts/research_review.py scripts/international_growth_report.py tests/test_phase03_growth.py tests/phase03_axe_http_browser.py
+          python3 -m py_compile scripts/build.py scripts/phase03_publication.py tests/test_phase03_publication.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py scripts/research_review.py scripts/international_growth_report.py tests/test_phase03_growth.py tests/phase03_axe_http_browser.py
           MUSITU_BUILD_MODE=review python3 scripts/build.py
           test "$(find dist -name index.html | wc -l)" -eq 34
           test ! -e dist/sitemap.xml
@@ -84,6 +87,15 @@ jobs:
           set -euo pipefail
           python3 -m pip install --disable-pip-version-check 'pytest>=8,<10'
           python3 -m pytest -q tests/test_http.py tests/test_sitemap.py tests/test_studio_and_store.py
+
+      - name: Verify source-locked 12 English and 3 French review routes, noindex by default
+        working-directory: corporate
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_phase03_publication.py' -v
+          grep -Fq 'Disallow: /' dist/robots.txt
+          test ! -e dist/sitemap.xml
+          test "$(find dist -name index.html | wc -l)" -eq 49
 
   production-artifact-contract:
     # Never expose approved media artifacts to arbitrary fork pull-request code.
@@ -191,6 +203,31 @@ jobs:
             "source_commit":"${{ github.event.pull_request.head.sha || github.sha }}"}))
           PY
           echo "Reproducible manifest SHA-256: $second; no deployment performed"
+      - name: Verify owner-approved publication mode against real production media (NO DEPLOY)
+        working-directory: corporate
+        env:
+          MUSITU_PUBLISH_PHASE03: '1'
+          MUSITU_BUILD_MODE: production
+          MUSITU_CANONICAL_ORIGIN: https://mftintelligence.com
+          MUSITU_INCLUDE_STUDIO_MEDIA: '1'
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_phase03_publication.py' -v
+          python3 scripts/build.py
+          test "$(find dist -name index.html | wc -l)" -eq 49
+          grep -Fq '/fr/research/' dist/sitemap.xml
+          grep -Fq '/research/articles/model-risk-governance-2026/' dist/sitemap.xml
+          test "$(grep -o '<loc>' dist/sitemap.xml | wc -l)" -eq 48
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          manifest=json.loads(Path('dist/manifest.json').read_text())
+          assert manifest['phase03_publication_source_approved'] is True
+          assert manifest['phase03_publication_indexable'] is True
+          assert manifest['production_approved'] is False
+          print('49 approved route publication candidate rendered; 48 sitemap entries. NOT DEPLOYED.')
+          PY
+
 
   offline-cross-browser-qa:
     name: Candidate DOM and local HTTP browser acceptance (${{ matrix.engine }})
