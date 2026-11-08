@@ -3,6 +3,11 @@ name: MUSITU Corporate Phase 03 SEO Source Qualification
 on:
   pull_request:
     paths:
+      - 'corporate/content/pages.json'
+      - 'corporate/content/public-records.json'
+      - 'corporate/assets/site.css'
+      - 'corporate/assets/site.js'
+      - 'corporate/templates/**'
       - 'corporate/scripts/build.py'
       - 'corporate/scripts/seo.py'
       - 'corporate/content/seo-routes.json'
