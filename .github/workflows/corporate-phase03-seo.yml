@@ -10,6 +10,8 @@ on:
       - 'corporate/content/localization-pilot.json'
       - 'corporate/editorial/research-drafts/**'
       - 'corporate/scripts/public_seo_observer.py'
+      - 'corporate/PHASE03_GLOBAL_DISCOVERY_EXECUTION.md'
+      - 'corporate/PHASE03_COMPLETION_EVIDENCE_20261108.md'
       - '.github/workflows/corporate-phase03-seo.yml'
   workflow_dispatch:
 
