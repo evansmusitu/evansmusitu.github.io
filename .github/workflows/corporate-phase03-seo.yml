@@ -8,6 +8,7 @@ on:
       - 'corporate/content/seo-routes.json'
       - 'corporate/tests/test_phase03_seo.py'
       - 'corporate/tests/browser_review.py'
+      - 'corporate/tests/phase03_production_http_browser.py'
       - 'corporate/content/localization-pilot.json'
       - 'corporate/editorial/research-drafts/**'
       - 'corporate/scripts/public_seo_observer.py'
@@ -186,7 +187,7 @@ jobs:
           echo "Reproducible manifest SHA-256: $second; no deployment performed"
 
   offline-cross-browser-qa:
-    name: Offline DOM acceptance (${{ matrix.engine }})
+    name: Candidate DOM and local HTTP browser acceptance (${{ matrix.engine }})
     needs: production-artifact-contract
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -196,6 +197,7 @@ jobs:
         engine: [chromium, firefox, webkit]
     permissions:
       contents: read
+      actions: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -230,6 +232,60 @@ jobs:
             'nojs_checks':34,'interactions_passed':len(result['interactions']),'hosted_http_tested':False,
             'certified_wcag':False,'deployed':False},sort_keys=True))
           PY
+      - name: Extract previous qualified media for isolated candidate test
+        uses: actions/download-artifact@v4
+        with:
+          name: MUSITU-CORPORATE-PR33-PRODUCTION-87cc21fc
+          repository: ${{ github.repository }}
+          run-id: 42287099983
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/pr33-browser-media-source
+      - name: Verify exact permitted Studio media hashes (no upload)
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+          source=Path("${{ runner.temp }}")/"pr33-browser-media-source"/"assets"
+          dest=Path("corporate/assets")
+          expected={
+             "studio-demo-82s.mp4":"afd6dfd3c73668e544f3f8a857697fed0abaadccd4927202bb3a185612c2dea0",
+             "studio-poster.png":"0ea5e961d916375029010dbae01bf8a1783e5fd6b90f74c006dc852df1c285d0"
+          }
+          for name,digest in expected.items():
+              data=(source/name).read_bytes()
+              assert hashlib.sha256(data).hexdigest()==digest,"Unexpected media hash"
+              (dest/name).write_bytes(data)
+          print("Pinned approved media restored for in-run candidate testing only")
+          PY
+      - name: Run actual local HTTP production artifact contract (not hosted)
+        working-directory: corporate
+        env:
+          MUSITU_BROWSER_ENGINE: ${{ matrix.engine }}
+          MUSITU_BUILD_MODE: production
+          MUSITU_CANONICAL_ORIGIN: https://mftintelligence.com
+          MUSITU_INCLUDE_STUDIO_MEDIA: '1'
+        run: |
+          set -euo pipefail
+          python3 scripts/build.py
+          python3 tests/phase03_production_http_browser.py --engine "${MUSITU_BROWSER_ENGINE}"
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          eng=os.environ['MUSITU_BROWSER_ENGINE']
+          path=Path('review-artifacts')/f'phase03-production-local-http-{eng}.json'
+          result=json.loads(path.read_text(encoding='utf-8'))
+          assert result['checked_routes']==34
+          assert result['headers_checked']==34
+          assert result['jsonld_checked']==33
+          assert result['interactions_checked']==3
+          assert result['local_assets_real_network_loaded'] is True
+          assert result['hosted_cloudflare_verified'] is False
+          assert not result['off_origin_requests'] and not result['request_failures']
+          assert not result['page_errors'] and not result['console_errors']
+          assert result['remote_writes']==0 and result['deployed'] is False
+          print('Local HTTP transport, generated security headers, real assets and JSON-LD passed; NOT Cloudflare hosted acceptance')
+          PY
       - name: Retain offline browser review evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -237,6 +293,7 @@ jobs:
           name: musitu-phase03-offline-browser-${{ matrix.engine }}
           path: |
             corporate/review-artifacts/browser-dom-results.json
+            corporate/review-artifacts/phase03-production-local-http-${{ matrix.engine }}.json
             corporate/review-artifacts/homepage-desktop-dom.png
             corporate/review-artifacts/homepage-mobile-dom.png
           if-no-files-found: warn
