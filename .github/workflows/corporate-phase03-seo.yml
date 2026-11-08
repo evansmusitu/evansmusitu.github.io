@@ -357,6 +357,33 @@ jobs:
           assert report['manual_wcag_22_aa_certified'] is False
           print('Automated axe-core A/AA and best-practice checks passed; manual hosted accessibility remains open')
           PY
+      - name: Run pinned WCAG 2.2 A/AA automated scan on 12 new articles and 3 French pages
+        working-directory: corporate
+        env:
+          MUSITU_BROWSER_ENGINE: ${{ matrix.engine }}
+          MUSITU_BUILD_MODE: production
+          MUSITU_CANONICAL_ORIGIN: https://mftintelligence.com
+          MUSITU_INCLUDE_STUDIO_MEDIA: '1'
+          MUSITU_PUBLISH_PHASE03: '1'
+        run: |
+          set -euo pipefail
+          python3 scripts/build.py
+          python3 tests/phase03_axe_http_browser.py \
+            --engine "$MUSITU_BROWSER_ENGINE" \
+            --axe-path "$RUNNER_TEMP/musitu-axe/node_modules/axe-core/axe.min.js" \
+            --publication-only
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          engine=os.environ['MUSITU_BROWSER_ENGINE']
+          result=json.loads((Path('review-artifacts')/f'phase03-axe-publication-{engine}.json').read_text())
+          assert result['axe_version']=='4.14.0'
+          assert result['routes']==15 and result['scans']==30
+          assert result['passed'] and not result['violations']
+          assert result['manual_wcag_22_aa_certified'] is False
+          print('New 15-page cohort axe scan passed; native human reader and manual WCAG remain open')
+          PY
+
       - name: Retain offline browser review evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -366,6 +393,7 @@ jobs:
             corporate/review-artifacts/browser-dom-results.json
             corporate/review-artifacts/phase03-production-local-http-${{ matrix.engine }}.json
             corporate/review-artifacts/phase03-axe-${{ matrix.engine }}.json
+            corporate/review-artifacts/phase03-axe-publication-${{ matrix.engine }}.json
             corporate/review-artifacts/homepage-desktop-dom.png
             corporate/review-artifacts/homepage-mobile-dom.png
           if-no-files-found: warn
