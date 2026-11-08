@@ -188,5 +188,46 @@ class Phase03SEOTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             fn("/products/axiom/", equivalents, approved, origin="https://fake.example")
 
+
+    def test_research_review_bundle_is_private_and_content_addressed(self):
+        import tempfile
+        from pathlib import Path
+        import sys
+        sys.path.insert(0, str(BASE / "scripts"))
+        try:
+            import research_review
+        except ImportError:
+            self.fail("Missing research review bundle generator")
+        articles = research_review.load_drafts(BASE / "editorial" / "research-drafts")
+        self.assertEqual(len(articles), 12)
+        self.assertEqual(len({x["slug"] for x in articles}), 12)
+        for article in articles:
+            self.assertEqual(article["status"], "draft")
+            self.assertEqual(len(article["sha256"]), 64)
+            self.assertGreaterEqual(article["word_count"], 350)
+            self.assertTrue(article["title"])
+        with tempfile.TemporaryDirectory() as workspace:
+            destination = Path(workspace) / "editorial"
+            manifest = research_review.write_review_bundle(articles, destination)
+            self.assertFalse(manifest["publication_authorized"])
+            self.assertEqual(manifest["article_count"], 12)
+            self.assertEqual(len(list(destination.glob("*.html"))), 13)
+            self.assertFalse((destination / "sitemap.xml").exists())
+            self.assertFalse((destination / "robots.txt").exists())
+            for article in articles:
+                path = destination / (article["slug"] + ".html")
+                html = path.read_text(encoding="utf-8")
+                self.assertIn('<meta name="robots" content="noindex,nofollow">', html)
+                self.assertIn("Editorial review preview", html)
+                self.assertIn(article["title"], html)
+                self.assertNotIn('rel="canonical"', html)
+                self.assertNotIn('application/ld+json', html)
+                self.assertNotIn("<script", html.lower())
+                self.assertNotIn("index,follow", html)
+                self.assertNotIn("published Article", html)
+                entry = next(x for x in manifest["articles"] if x["slug"] == article["slug"])
+                self.assertEqual(entry["source_sha256"], article["sha256"])
+                self.assertEqual(entry["status"], "draft")
+
 if __name__ == "__main__":
     unittest.main()
