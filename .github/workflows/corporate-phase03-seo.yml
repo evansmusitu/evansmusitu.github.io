@@ -14,6 +14,8 @@ on:
       - 'corporate/content/phase03-publication-approvals.json'
       - 'corporate/tests/test_phase03_publication.py'
       - 'corporate/tests/phase03_publication_http_browser.py'
+      - 'corporate/scripts/render_growth_dashboard.py'
+      - 'corporate/tests/test_phase03_dashboard.py'
       - 'corporate/content/seo-routes.json'
       - 'corporate/tests/test_phase03_seo.py'
       - 'corporate/tests/browser_review.py'
@@ -47,7 +49,7 @@ jobs:
         working-directory: corporate
         run: |
           set -euo pipefail
-          python3 -m py_compile scripts/build.py scripts/phase03_publication.py tests/test_phase03_publication.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py scripts/research_review.py scripts/international_growth_report.py tests/test_phase03_growth.py tests/phase03_axe_http_browser.py
+          python3 -m py_compile scripts/build.py scripts/phase03_publication.py tests/test_phase03_publication.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py scripts/research_review.py scripts/international_growth_report.py scripts/render_growth_dashboard.py tests/test_phase03_growth.py tests/test_phase03_dashboard.py tests/phase03_axe_http_browser.py
           MUSITU_BUILD_MODE=review python3 scripts/build.py
           test "$(find dist -name index.html | wc -l)" -eq 34
           test ! -e dist/sitemap.xml
@@ -58,6 +60,9 @@ jobs:
       - name: Private international search reporting contract (synthetic data only)
         working-directory: corporate
         run: python3 -m unittest discover -s tests -p 'test_phase03_growth.py' -v
+      - name: Privacy-preserving country dashboard contract (synthetic data only)
+        working-directory: corporate
+        run: python3 -m unittest discover -s tests -p 'test_phase03_dashboard.py' -v
       - name: Build twelve offline editorial review previews
         working-directory: corporate
         run: |
