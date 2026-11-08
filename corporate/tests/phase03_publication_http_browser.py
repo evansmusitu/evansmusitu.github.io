@@ -44,7 +44,7 @@ def audit(engine:str)->dict:
         for path in routes:
             for width in (390,1280):
                 page.set_viewport_size({"width":width,"height":820})
-                response=page.goto(base+path,wait_until="load",timeout=20000)
+                response=page.goto(base+path+"?viewport="+str(width),wait_until="load",timeout=20000)
                 assert response and response.status==200,(path,width)
                 headers={k.lower():v for k,v in response.headers.items()}
                 for key,value in response_headers.items():
