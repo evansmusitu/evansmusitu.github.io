@@ -69,3 +69,84 @@ jobs:
           set -euo pipefail
           python3 -m pip install --disable-pip-version-check 'pytest>=8,<10'
           python3 -m pytest -q tests/test_http.py tests/test_sitemap.py tests/test_studio_and_store.py
+
+  production-artifact-contract:
+    name: Rebuild exact candidate with previously approved media (NO DEPLOY)
+    needs: source-and-review-contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download immutable PR33 qualified build for media extraction only
+        uses: actions/download-artifact@v4
+        with:
+          name: MUSITU-CORPORATE-PR33-PRODUCTION-87cc21fc
+          repository: ${{ github.repository }}
+          run-id: 42287099983
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/pr33-review-source
+      - name: Verify exact approved media SHA-256 before reusing
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, shutil
+          prior=Path("${{ runner.temp }}")/"pr33-review-source"/"assets"
+          out=Path("corporate/assets")
+          expected={
+            "studio-demo-82s.mp4":"afd6dfd3c73668e544f3f8a857697fed0abaadccd4927202bb3a185612c2dea0",
+            "studio-poster.png":"0ea5e961d916375029010dbae01bf8a1783e5fd6b90f74c006dc852df1c285d0",
+          }
+          for name, digest in expected.items():
+              content=(prior/name).read_bytes()
+              assert hashlib.sha256(content).hexdigest()==digest,"Approved media hash mismatch"
+              (out/name).write_bytes(content)
+          print("Approved Studio media verified twice; no external upload or publication")
+          PY
+      - name: Qualify immutable production-mode candidate (local artifact, not deployed)
+        working-directory: corporate
+        env:
+          MUSITU_BUILD_MODE: production
+          MUSITU_CANONICAL_ORIGIN: https://mftintelligence.com
+          MUSITU_INCLUDE_STUDIO_MEDIA: '1'
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'pytest>=8,<10' 'beautifulsoup4>=4.12,<5'
+          python3 scripts/build.py
+          python3 -m pytest -q tests/test_production_build.py
+          first="$(sha256sum dist/manifest.json | awk '{print $1}')"
+          python3 scripts/build.py
+          second="$(sha256sum dist/manifest.json | awk '{print $1}')"
+          test "$first" = "$second"
+          python3 - <<'PY'
+          import sys, json
+          from pathlib import Path
+          sys.path.insert(0, "scripts")
+          from public_seo_observer import MetadataParser
+          from seo import ORIGIN, read_catalog
+          routes=read_catalog()["routes"]
+          assert len(routes)==33
+          for route in routes:
+              raw=(Path("dist")/route.lstrip("/")/"index.html").read_text()
+              p=MetadataParser()
+              p.feed(raw)
+              assert p.canonical==[ORIGIN+route],route
+              assert p.robots==["index,follow"],route
+              assert len(p.jsonld)==1,route
+              assert p.jsonld[0]["@context"]=="https://schema.org",route
+          missing=Path("dist/404/index.html").read_text()
+          assert 'type="application/ld+json"' not in missing
+          assert len(list(Path("dist").rglob("index.html")))==34
+          manifest=json.loads(Path("dist/manifest.json").read_text())
+          assert manifest["production_approved"] is False
+          print(json.dumps({"production_candidate":"QUALIFIED_IN_SOURCE_ONLY",
+            "article_publication":False,"deployed":False,"base_routes":34,
+            "verified_jsonld_routes":len(routes),
+            "manifest_sha256":"${{ github.sha }}"}))
+          PY
+          echo "Reproducible manifest SHA-256: $second; no deployment performed"
