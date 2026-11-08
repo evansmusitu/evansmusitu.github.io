@@ -74,3 +74,7 @@ For the verified run history, media digests, 12-row acceptance ledger and explic
 ## 8 November — cross-engine offline browser evidence
 
 The [source qualification run 42449477762](https://github.com/evansmusitu/evansmusitu.github.io/actions/runs/42449477762) passed the full inherited 118-test review suite with pinned Studio media, the 15 Phase 03 tests, five production-mode tests with matching output manifests and all three offline browser engines (Chromium, Firefox, WebKit): 34 routes × 102 viewport checks, 204 theme checks, 34 no-JavaScript checks and 12 scenarios per engine. Rebuilt production output remains **unpublished**. The offline browser runner strips CSP only for `set_content`; host-specific security and real-device/performance/accessibility review remain open. Sensitive previously-approved media artifacts must not be downloaded into untrusted fork PR code; the qualification workflow now restricts that job accordingly.
+
+## 8 November — growth observability
+
+A private normalized-export processor (see `PHASE03_INTERNATIONAL_GROWTH_MONITORING.md`) has been added for source qualification; this is **not** a live Google/Bing dashboard. Existing provider verification notifications are historical evidence only; successful direct readback and sitemap status are still necessary. An owner-enabled daily alert watch checks new provider indexing notices, while existing public GitHub checks continue. Site deployment, DNS mutation, provider submission and conversion tracking remain gated.

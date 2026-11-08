@@ -12,6 +12,9 @@ on:
       - 'corporate/editorial/research-drafts/**'
       - 'corporate/scripts/public_seo_observer.py'
       - 'corporate/scripts/research_review.py'
+      - 'corporate/scripts/international_growth_report.py'
+      - 'corporate/tests/test_phase03_growth.py'
+      - 'corporate/PHASE03_INTERNATIONAL_GROWTH_MONITORING.md'
       - 'corporate/PHASE03_GLOBAL_DISCOVERY_EXECUTION.md'
       - 'corporate/PHASE03_COMPLETION_EVIDENCE_20261108.md'
       - '.github/workflows/corporate-phase03-seo.yml'
@@ -33,7 +36,7 @@ jobs:
         working-directory: corporate
         run: |
           set -euo pipefail
-          python3 -m py_compile scripts/build.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py scripts/research_review.py
+          python3 -m py_compile scripts/build.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py scripts/research_review.py scripts/international_growth_report.py tests/test_phase03_growth.py
           MUSITU_BUILD_MODE=review python3 scripts/build.py
           test "$(find dist -name index.html | wc -l)" -eq 34
           test ! -e dist/sitemap.xml
@@ -41,6 +44,9 @@ jobs:
       - name: Phase 03 SEO contract and isolation tests
         working-directory: corporate
         run: python3 -m unittest discover -s tests -p 'test_phase03_seo.py' -v
+      - name: Private international search reporting contract (synthetic data only)
+        working-directory: corporate
+        run: python3 -m unittest discover -s tests -p 'test_phase03_growth.py' -v
       - name: Build twelve offline editorial review previews
         working-directory: corporate
         run: |
