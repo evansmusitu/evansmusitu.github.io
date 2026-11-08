@@ -7,6 +7,7 @@ on:
       - 'corporate/scripts/seo.py'
       - 'corporate/content/seo-routes.json'
       - 'corporate/tests/test_phase03_seo.py'
+      - 'corporate/tests/browser_review.py'
       - 'corporate/content/localization-pilot.json'
       - 'corporate/editorial/research-drafts/**'
       - 'corporate/scripts/public_seo_observer.py'
@@ -175,3 +176,60 @@ jobs:
             "source_commit":"${{ github.event.pull_request.head.sha || github.sha }}"}))
           PY
           echo "Reproducible manifest SHA-256: $second; no deployment performed"
+
+  offline-cross-browser-qa:
+    name: Offline DOM acceptance (${{ matrix.engine }})
+    needs: production-artifact-contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Install Playwright browser dependencies
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'playwright>=1.56,<1.61'
+          python3 -m playwright install --with-deps '${{ matrix.engine }}'
+      - name: Run offline review-mode 34-route responsive and interaction checks
+        working-directory: corporate
+        env:
+          MUSITU_BROWSER_ENGINE: ${{ matrix.engine }}
+          MUSITU_BUILD_MODE: review
+        run: |
+          set -euo pipefail
+          python3 scripts/build.py
+          python3 tests/browser_review.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          result=json.loads(Path('review-artifacts/browser-dom-results.json').read_text(encoding='utf-8'))
+          assert result['passed'] is True
+          assert result['routes_tested']==34
+          assert result['responsive_checks']==102
+          assert result['theme_checks']==204
+          assert result['nojs_checks']==34
+          assert not result['errors'] and not result['runtime_exceptions'] and not result['overflow']
+          assert len(result['interactions'])>=12
+          print(json.dumps({'engine':result['browser_engine'],'routes':34,'responsive_checks':102,'theme_checks':204,
+            'nojs_checks':34,'interactions_passed':len(result['interactions']),'hosted_http_tested':False,
+            'certified_wcag':False,'deployed':False},sort_keys=True))
+          PY
+      - name: Retain offline browser review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: musitu-phase03-offline-browser-${{ matrix.engine }}
+          path: |
+            corporate/review-artifacts/browser-dom-results.json
+            corporate/review-artifacts/homepage-desktop-dom.png
+            corporate/review-artifacts/homepage-mobile-dom.png
+          if-no-files-found: warn
+          retention-days: 7
