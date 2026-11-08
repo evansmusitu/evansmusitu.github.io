@@ -110,6 +110,29 @@ jobs:
               (out/name).write_bytes(content)
           print("Approved Studio media verified twice; no external upload or publication")
           PY
+      - name: Full inherited review-mode suite with checksum-verified Studio media
+        working-directory: corporate
+        env:
+          MUSITU_BUILD_MODE: review
+          MUSITU_PROTECTED_STAGING_MEDIA: '1'
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'pytest>=8,<10' 'beautifulsoup4>=4.12,<5'
+          python3 scripts/build.py
+          python3 -m pytest -q tests/test_site.py tests/test_http.py tests/test_sitemap.py tests/test_studio_and_store.py
+          node --check assets/site.js
+          node --check dist/assets/site-data.js
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          artifact=Path("dist")
+          manifest=json.loads((artifact/"manifest.json").read_text(encoding="utf-8"))
+          assert manifest["build_mode"]=="review"
+          assert manifest["studio_media_included"] is True
+          assert not (artifact/"sitemap.xml").exists()
+          assert (artifact/"robots.txt").read_text()=="User-agent: *\\nDisallow: /\\n"
+          print("Inherited review suite checked exact 34-route source with approved Studio media. No deployment.")
+          PY
       - name: Qualify immutable production-mode candidate (local artifact, not deployed)
         working-directory: corporate
         env:
