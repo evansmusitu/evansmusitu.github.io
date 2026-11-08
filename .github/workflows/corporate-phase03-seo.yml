@@ -30,6 +30,7 @@ on:
       - 'corporate/PHASE03_INTERNATIONAL_GROWTH_MONITORING.md'
       - 'corporate/PHASE03_GLOBAL_DISCOVERY_EXECUTION.md'
       - 'corporate/PHASE03_COMPLETION_EVIDENCE_20261108.md'
+      - 'corporate/CORRESPONDENCE_ADDRESS_PUBLICATION_HANDOFF_20261108.md'
       - '.github/workflows/corporate-phase03-seo.yml'
   workflow_dispatch:
 
