@@ -174,6 +174,7 @@ class Phase03SEOTests(unittest.TestCase):
         en_links = fn("/products/axiom/", equivalents, approved)
         fr_links = fn("/fr/products/axiom/", equivalents, approved)
         self.assertEqual(en_links, fr_links)
+        self.assertEqual(en_links.count(chr(10)), 3)  # three HTML link lines, not a literal backslash-n
         self.assertIn('hreflang="fr" href="https://mftintelligence.com/fr/products/axiom/"', en_links)
         self.assertIn('hreflang="x-default" href="https://mftintelligence.com/products/axiom/"', en_links)
         with self.assertRaises(ValueError):
