@@ -131,7 +131,7 @@ class PublicObserverReleaseRegression(unittest.TestCase):
             # This mock deliberately simulates Cloudflare Pages SPA fallback:
             # an unknown public path receives HTTP 200 and the English homepage canonical.
             return 200, ORIGIN+path, {}, ('<html lang="en"><head><link rel="canonical" href="'+ORIGIN+'/"></head></html>').encode()
-        with patch("public_seo_observer.get",side_effect=response), \\
+        with patch("public_seo_observer.get",side_effect=response), \
              patch("public_seo_observer.validate_page",side_effect=lambda path: path):
             with self.assertRaisesRegex(AssertionError,"Missing public path.*404"):
                 audit()
