@@ -114,6 +114,28 @@ class PublicationContract(unittest.TestCase):
 class PublicObserverReleaseRegression(unittest.TestCase):
     """The public acceptance check must not pass the pre-Phase-03 site."""
 
+    def test_soft_404_on_nonexistent_path_cannot_qualify_phase03(self):
+        from public_seo_observer import audit
+        from seo import read_catalog
+        routes = set(read_catalog()["routes"]) | set(article_routes(approved_sources())) | set(FR_EN)
+        self.assertEqual(len(routes),48)
+        xml = ('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+               + ''.join('<url><loc>'+ORIGIN+route+'</loc></url>' for route in sorted(routes))
+               + '</urlset>').encode()
+        robots = ('User-agent: *\\nAllow: /\\nSitemap: '+ORIGIN+'/sitemap.xml').encode()
+        def response(path):
+            if path == "/robots.txt":
+                return 200, ORIGIN+path, {}, robots
+            if path == "/sitemap.xml":
+                return 200, ORIGIN+path, {}, xml
+            # This mock deliberately simulates Cloudflare Pages SPA fallback:
+            # an unknown public path receives HTTP 200 and the English homepage canonical.
+            return 200, ORIGIN+path, {}, ('<html lang="en"><head><link rel="canonical" href="'+ORIGIN+'/"></head></html>').encode()
+        with patch("public_seo_observer.get",side_effect=response), \\
+             patch("public_seo_observer.validate_page",side_effect=lambda path: path):
+            with self.assertRaisesRegex(AssertionError,"Missing public path.*404"):
+                audit()
+
     def test_legacy_33_url_sitemap_cannot_qualify_phase03(self):
         from public_seo_observer import audit
         from seo import read_catalog
