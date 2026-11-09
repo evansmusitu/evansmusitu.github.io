@@ -9,7 +9,9 @@ from __future__ import annotations
 import hashlib
 import html
 import json
+import os
 import re
+from datetime import date
 from pathlib import Path
 
 from research_review import load_drafts, _body
@@ -18,7 +20,7 @@ from seo import ORIGIN, approved_article_schema, approved_hreflang_links
 BASE = Path(__file__).resolve().parents[1]
 APPROVAL_FILE = BASE / "content" / "phase03-publication-approvals.json"
 LOCALES = BASE / "content" / "localization-pilot.json"
-PUBLISHED_ON = "2026-11-08"
+APPROVED_ON = "2026-11-08"
 EN_FR = {
     "/": "/fr/",
     "/products/axiom/": "/fr/products/axiom/",
@@ -58,9 +60,23 @@ def _safe_jsonld(graph: list[dict]) -> str:
     return '<script type="application/ld+json">' + payload + '</script>\n'
 
 
+def actual_publication_date() -> str:
+    """Require the operator's actual launch date, never the manuscript approval date."""
+    raw = os.environ.get("MUSITU_PHASE03_PUBLICATION_DATE", "")
+    if not re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}", raw):
+        raise ValueError("Phase 03 requires explicit publication date YYYY-MM-DD")
+    try:
+        published = date.fromisoformat(raw)
+    except ValueError:
+        raise ValueError("Phase 03 requires explicit publication date YYYY-MM-DD") from None
+    if published < date.fromisoformat(APPROVED_ON):
+        raise ValueError("Phase 03 publication date predates manuscript approval")
+    return raw
+
+
 def approved_sources() -> list[dict]:
     approval = json.loads(APPROVAL_FILE.read_text(encoding="utf-8"))
-    if approval.get("approval_date") != PUBLISHED_ON or len(approval.get("articles", [])) != 12:
+    if approval.get("approval_date") != APPROVED_ON or len(approval.get("articles", [])) != 12:
         raise ValueError("Publication approval record not complete")
     expected = {item["slug"]: item for item in approval["articles"]}
     if len(expected) != 12:
@@ -91,17 +107,19 @@ def _article_content(article: dict) -> str:
     return _body(text)
 
 
-def article_info(article: dict, header: str) -> dict:
+def article_info(article: dict, header: str, published_on: str | None = None) -> dict:
     path = "/research/articles/" + article["slug"] + "/"
     heading = html.escape(article["title"])
     first = article["text"].split("## Research question", 1)[1].split("## Method", 1)[0].strip()
     description = " ".join(first.split())[:155].rstrip(" ,.;") + "."
+    day = date.fromisoformat(published_on) if published_on else None
+    date_label = (str(day.day) + " " + day.strftime("%B %Y")) if day else "Publication date pending"
     main = ('<main id="main" tabindex="-1">'
         '<nav aria-label="Breadcrumb" class="breadcrumbs shell"><ol>'
         '<li><a href="/">Home</a></li><li><a href="/research/">Research</a></li>'
         '<li aria-current="page">Article</li></ol></nav>'
         '<section class="page-hero shell"><span class="eyebrow">RESEARCH / METHODS</span>'
-        '<p class="lead">Technical explainer · MUSITU Research · 8 November 2026</p></section>'
+        '<p class="lead">Technical explainer · MUSITU Research · ' + date_label + '</p></section>'
         '<article class="section shell phase03-article">'
         + _article_content(article)
         + '</article>'
@@ -116,9 +134,9 @@ def article_info(article: dict, header: str) -> dict:
 
 def article_head(article: dict) -> str:
     path = "/research/articles/" + article["slug"] + "/"
-    info = article_info(article, "")
+    info = article_info(article, "", actual_publication_date())
     record = {"path": path, "headline": article["title"], "description": info["description"],
-              "date_published": PUBLISHED_ON, "review_status": "approved", "publication_status": "published"}
+              "date_published": actual_publication_date(), "review_status": "approved", "publication_status": "published"}
     data = approved_article_schema(record)
     data.pop("@context")
     crumbs = {"@type":"BreadcrumbList", "itemListElement":[
