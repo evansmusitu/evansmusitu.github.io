@@ -206,6 +206,10 @@ def build()->dict:
    rendered=render(route,info,shared_fr,mode=mode,origin=origin,seo_html=seo_html)
    rendered=rendered.replace('<html lang="en"','<html lang="fr"',1)
    dest.write_text(rendered,encoding='utf-8')
+ # Cloudflare Pages requires a top-level 404.html to disable its automatic
+ # HTTP 200 single-page-application fallback for unknown static routes.
+ # Keep the existing /404/ page, but use this noindex copy for actual 404s.
+ (DST/'404.html').write_bytes((DST/'404'/'index.html').read_bytes())
  if mode=='production':
   (DST/'robots.txt').write_text(f'User-agent: *\nAllow: /\nSitemap: {origin}/sitemap.xml\n',encoding='utf-8')
   urls=''.join(f'<url><loc>{origin}{route}</loc></url>' for route in [r for r in ROUTES if r!='/404/']+extra_routes)
