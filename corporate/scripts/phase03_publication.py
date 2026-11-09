@@ -63,7 +63,7 @@ def _safe_jsonld(graph: list[dict]) -> str:
 def actual_publication_date() -> str:
     """Require the operator's actual launch date, never the manuscript approval date."""
     raw = os.environ.get("MUSITU_PHASE03_PUBLICATION_DATE", "")
-    if not re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}", raw):
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw):
         raise ValueError("Phase 03 requires explicit publication date YYYY-MM-DD")
     try:
         published = date.fromisoformat(raw)
