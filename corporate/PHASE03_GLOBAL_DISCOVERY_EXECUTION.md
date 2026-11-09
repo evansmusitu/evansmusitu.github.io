@@ -86,3 +86,20 @@ A private normalized-export processor (see `PHASE03_INTERNATIONAL_GROWTH_MONITOR
 ## 8 November — pinned axe-core gate and limited Google reconciliation
 
 A bounded, development-only Playwright + pinned axe-core v4.14.0 accessibility scan now runs across **34 generated pages in dark and light themes** under each Chromium/Firefox/WebKit browser, following the existing local HTTP/CSP checks. A real homepage external-link accessible-label mismatch was detected, corrected in the source and reverified in the five-job successful [42458530254](https://github.com/evansmusitu/evansmusitu.github.io/actions/runs/42458530254). All **204 automated scans found zero rule violations**; incomplete automated checks (144 per engine) and all human WCAG 2.2 AA/assistive-tech and hosted acceptance remain open. Automated success is not certification. The workflow also now reruns for corporate content, CSS/JS and template source changes. Google’s latest full-field and minimal sitemap provider readback both report **33** submitted canonical sitemap URLs, consistent with the independent 33-route public sitemap; a prior 99 count was not reproducible and remains noted as an inconsistent provider observation. Neither the earlier Google sitemap submission nor this source-quality work authorizes Phase 03 production release.
+
+
+## 9 November 2026 — Article publication-date release gate
+
+The 12 manuscripts have an **owner approval date of 8 November 2026**. That approval timestamp is not evidence of public publication. The publication-mode production renderer now refuses to create 12 indexable `Article` JSON-LD records unless an operator explicitly supplies the **actual planned publication date** in the release environment:
+
+```text
+MUSITU_PUBLISH_PHASE03=1
+MUSITU_BUILD_MODE=production
+MUSITU_PHASE03_PUBLICATION_DATE=YYYY-MM-DD
+```
+
+The date must be a valid ISO calendar date **on or after owner approval**. When the independent publication is authorized, set the date to the real corporate Pages launch date (in the applicable corporate release calendar), rebuild the exact launch artifact, check that **all twelve visible article dates, JSON-LD `datePublished` fields and `manifest.json` publication-date evidence agree**, and only then execute any protected staging or production promotion. A changed deployment date requires regenerating and independently revalidating the release artifact; do not reuse an outdated artifact or silently backdate it to approval.
+
+The GitHub Actions build **only tests** a frozen `2026-11-09` value as a deterministic, **non-deploying fixture**. It is not the owner-approved release date and must never be copied into a future production release without checking the actual deployment date. Review/noindex mode continues without any publication date. The absence of this date in a Phase 03 production build is an intentional fail-closed gate.
+
+The existing public 33-URL sitemap and corporate site are not modified by this source change. Actual production rollback rehearsal for the separate 404 maintenance has been qualified, but Phase 03's editorial/French/legal/accessibility, hosted-security, contact roundtrip, deployment and search-engine indexing approvals remain separately open.
