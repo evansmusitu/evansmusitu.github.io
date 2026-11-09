@@ -20,6 +20,16 @@ def test_route_count_and_exact_master():
  assert len(set(ROUTES))==34
  assert len(list(DIST.rglob('index.html')))==34
 
+def test_cloudflare_pages_unknown_routes_have_a_true_noindex_404_document():
+ # Cloudflare Pages serves the root homepage with HTTP 200 on unknown paths
+ # when no top-level 404.html exists, even if /404/index.html exists.
+ not_found=DIST/'404.html'
+ assert not_found.is_file(),'Cloudflare Pages requires a root 404.html to avoid HTTP 200 soft-404s'
+ assert not_found.read_bytes()==(DIST/'404'/'index.html').read_bytes()
+ markup=BeautifulSoup(not_found.read_text(), 'html.parser')
+ assert markup.select_one('meta[name="robots"]')['content']=='noindex,nofollow'
+ assert not markup.select_one('link[rel="canonical"]')
+
 @pytest.mark.parametrize('route',ROUTES)
 def test_static_page(route):
  p=path_for(route);assert p.exists(),route
