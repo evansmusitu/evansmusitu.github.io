@@ -214,6 +214,8 @@ jobs:
         working-directory: corporate
         env:
           MUSITU_PUBLISH_PHASE03: '1'
+          # CI-only synthetic release-date fixture; actual publication date must be operator-supplied.
+          MUSITU_PHASE03_PUBLICATION_DATE: '2026-11-09'
           MUSITU_BUILD_MODE: production
           MUSITU_CANONICAL_ORIGIN: https://mftintelligence.com
           MUSITU_INCLUDE_STUDIO_MEDIA: '1'
@@ -372,6 +374,8 @@ jobs:
           MUSITU_CANONICAL_ORIGIN: https://mftintelligence.com
           MUSITU_INCLUDE_STUDIO_MEDIA: '1'
           MUSITU_PUBLISH_PHASE03: '1'
+          # CI fixture only. Do not deploy with this hard-coded date.
+          MUSITU_PHASE03_PUBLICATION_DATE: '2026-11-09'
         run: |
           set -euo pipefail
           python3 scripts/build.py
