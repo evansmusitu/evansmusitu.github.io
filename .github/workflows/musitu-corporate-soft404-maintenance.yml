@@ -1,0 +1,43 @@
+name: MUSITU Corporate Soft-404 Maintenance Source Qualification
+
+on:
+  push:
+    branches:
+      - hotfix/corporate-soft404-20261109
+    paths:
+      - corporate/scripts/build.py
+      - corporate/tests/test_site.py
+      - .github/workflows/musitu-corporate-soft404-maintenance.yml
+
+permissions:
+  contents: read
+
+jobs:
+  review-mode-exact-build:
+    if: ${{ github.repository == 'evansmusitu/evansmusitu.github.io' && github.ref == 'refs/heads/hotfix/corporate-soft404-20261109' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing offline test dependencies
+        run: python3 -m pip install --disable-pip-version-check pytest beautifulsoup4
+      - name: Build the default nonpublic review artifact
+        run: |
+          MUSITU_BUILD_MODE=review MUSITU_PUBLISH_PHASE03=0 python3 corporate/scripts/build.py
+          python3 -c 'import json; from pathlib import Path; m=json.loads(Path("corporate/dist/manifest.json").read_text()); assert m["build_mode"]=="review" and m["route_count"]==34 and m["indexing_enabled"] is False'
+      - name: Verify root 404 bytes and unaffected 34 route review site
+        run: |
+          python3 -m pytest -q corporate/tests/test_site.py
+      - name: Verify no actual deploy and only existing local assets
+        run: |
+          test -f corporate/dist/404/index.html
+          test -f corporate/dist/404.html
+          test -f corporate/dist/robots.txt
+          test ! -f corporate/dist/sitemap.xml
+          test "$(find corporate/dist -name index.html | wc -l)" -eq 34
+          node --check corporate/assets/site.js
