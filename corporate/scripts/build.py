@@ -161,6 +161,10 @@ def build()->dict:
   dest=DST/route.lstrip('/')/'index.html'
   dest.parent.mkdir(parents=True,exist_ok=True)
   dest.write_text(render(route,records[route],shared,staged_media=staged_media,mode=mode,origin=origin),encoding='utf-8')
+ # Cloudflare Pages needs a top-level 404.html to avoid returning HTTP 200
+ # and the home page canonical for unknown static routes.
+ # This is a byte-identical copy of the already approved /404/ content.
+ (DST/'404.html').write_bytes((DST/'404'/'index.html').read_bytes())
  if mode=='production':
   (DST/'robots.txt').write_text(f'User-agent: *\nAllow: /\nSitemap: {origin}/sitemap.xml\n',encoding='utf-8')
   urls=''.join(f'<url><loc>{origin}{route}</loc></url>' for route in ROUTES if route!='/404/')

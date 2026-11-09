@@ -1,0 +1,106 @@
+name: MUSITU Corporate Soft-404 Maintenance Source Qualification
+
+on:
+  push:
+    branches:
+      - hotfix/corporate-soft404-20261109
+    paths:
+      - corporate/scripts/build.py
+      - corporate/tests/test_site.py
+      - .github/workflows/musitu-corporate-soft404-maintenance.yml
+
+permissions:
+  contents: read
+
+jobs:
+  review-mode-exact-build:
+    if: ${{ github.repository == 'evansmusitu/evansmusitu.github.io' && github.ref == 'refs/heads/hotfix/corporate-soft404-20261109' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing offline test dependencies
+        run: python3 -m pip install --disable-pip-version-check pytest beautifulsoup4
+      - name: Restore only checksum-approved public Studio media for complete existing test suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 2 https://mftintelligence.com/assets/studio-demo-82s.mp4 --output corporate/assets/studio-demo-82s.mp4
+          curl --fail --silent --show-error --location --retry 2 https://mftintelligence.com/assets/studio-poster.png --output corporate/assets/studio-poster.png
+          printf '%s  %s\n' 'afd6dfd3c73668e544f3f8a857697fed0abaadccd4927202bb3a185612c2dea0' 'corporate/assets/studio-demo-82s.mp4' | sha256sum --check
+          printf '%s  %s\n' '0ea5e961d916375029010dbae01bf8a1783e5fd6b90f74c006dc852df1c285d0' 'corporate/assets/studio-poster.png' | sha256sum --check
+      - name: Build the default nonpublic review artifact with approved private review media
+        run: |
+          MUSITU_BUILD_MODE=review MUSITU_PROTECTED_STAGING_MEDIA=1 python3 corporate/scripts/build.py
+          python3 -c 'import json; from pathlib import Path; m=json.loads(Path("corporate/dist/manifest.json").read_text()); assert m["build_mode"]=="review" and m["route_count"]==34 and m["indexing_enabled"] is False'
+      - name: Verify root 404 bytes and unaffected 34 route review site
+        run: |
+          python3 -m pytest -q corporate/tests/test_site.py
+      - name: Verify no actual deploy and only existing local assets
+        run: |
+          test -f corporate/dist/404/index.html
+          test -f corporate/dist/404.html
+          test -f corporate/dist/robots.txt
+          test ! -f corporate/dist/sitemap.xml
+          test "$(find corporate/dist -name index.html | wc -l)" -eq 34
+          node --check corporate/assets/site.js
+      - name: Build and qualify exact production-mode 34/33 cohort with unchanged approved media (NO DEPLOY)
+        run: |
+          MUSITU_BUILD_MODE=production MUSITU_CANONICAL_ORIGIN=https://mftintelligence.com MUSITU_INCLUDE_STUDIO_MEDIA=1 python3 corporate/scripts/build.py
+          python3 -m pytest -q corporate/tests/test_production_build.py
+          test -f corporate/dist/404.html
+          cmp corporate/dist/404.html corporate/dist/404/index.html
+          test "$(find corporate/dist -name index.html | wc -l)" -eq 34
+          node --check corporate/dist/assets/site-data.js
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,xml.etree.ElementTree as ET
+          d=Path("corporate/dist")
+          obj=json.loads((d/"manifest.json").read_text())
+          assert obj["route_count"]==34 and obj["build_mode"]=="production"
+          assert obj["indexing_enabled"] is True and obj["production_approved"] is False
+          names=[x.text for x in ET.parse(d/"sitemap.xml").findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]
+          assert len(names)==33 and "https://mftintelligence.com/" in names
+          assert not any("/fr/" in u or "/research/articles/" in u for u in names)
+          assert "noindex,nofollow" in (d/"404.html").read_text()
+          print("Production 34 routes / 33 existing URLs and root HTTP 404 asset: PASS; NOT DEPLOYED")
+          PY
+      - name: Compare every unchanged production file hash with the exact last published release
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp corporate/dist/manifest.json /tmp/musitu-hotfix-candidate-manifest.json
+          git clone -q --depth=1 --branch main https://github.com/evansmusitu/evansmusitu.github.io.git /tmp/musitu-corporate-production-baseline
+          test "$(git -C /tmp/musitu-corporate-production-baseline rev-parse HEAD)" = "a728cb9eb0cbd27a1f6f11b6fbe2856cac921db3"
+          cp corporate/assets/studio-demo-82s.mp4 /tmp/musitu-corporate-production-baseline/corporate/assets/studio-demo-82s.mp4
+          cp corporate/assets/studio-poster.png /tmp/musitu-corporate-production-baseline/corporate/assets/studio-poster.png
+          (
+            cd /tmp/musitu-corporate-production-baseline
+            MUSITU_BUILD_MODE=production MUSITU_CANONICAL_ORIGIN=https://mftintelligence.com MUSITU_INCLUDE_STUDIO_MEDIA=1 python3 corporate/scripts/build.py
+            printf '%s  %s\n' '979cb418d6e974d46d4901898f547e574c486a7b348b5f501f7242a4fc987e76' 'corporate/dist/manifest.json' | sha256sum --check
+          )
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          base=json.loads(Path("/tmp/musitu-corporate-production-baseline/corporate/dist/manifest.json").read_text())
+          current=json.loads(Path("/tmp/musitu-hotfix-candidate-manifest.json").read_text())
+          oldfiles=base["files"]
+          newfiles=current["files"]
+          assert len(oldfiles)==44,(len(oldfiles),"current production unexpected base")
+          assert len(newfiles)==45,(len(newfiles),"new asset cardinality")
+          assert set(newfiles)-set(oldfiles)=={"404.html"},set(newfiles)-set(oldfiles)
+          assert not set(oldfiles)-set(newfiles)
+          for file,sha in oldfiles.items():
+              assert sha==newfiles[file],("unexpected byte change",file)
+          assert current["route_count"]==base["route_count"]==34
+          assert current["routes"]==base["routes"]
+          assert current["canonical_origin"]==base["canonical_origin"]
+          assert current["indexing_enabled"]==base["indexing_enabled"]==True
+          print("EXACT DELTA PASS: all 44 previously published files byte-identical; only added root 404.html")
+          print("Live deployment: NOT PERFORMED")
+          PY
