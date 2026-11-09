@@ -49,3 +49,24 @@ jobs:
           test ! -f corporate/dist/sitemap.xml
           test "$(find corporate/dist -name index.html | wc -l)" -eq 34
           node --check corporate/assets/site.js
+      - name: Build and qualify exact production-mode 34/33 cohort with unchanged approved media (NO DEPLOY)
+        run: |
+          MUSITU_BUILD_MODE=production MUSITU_CANONICAL_ORIGIN=https://mftintelligence.com MUSITU_INCLUDE_STUDIO_MEDIA=1 python3 corporate/scripts/build.py
+          python3 -m pytest -q corporate/tests/test_production_build.py
+          test -f corporate/dist/404.html
+          cmp corporate/dist/404.html corporate/dist/404/index.html
+          test "$(find corporate/dist -name index.html | wc -l)" -eq 34
+          node --check corporate/dist/assets/site-data.js
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,xml.etree.ElementTree as ET
+          d=Path("corporate/dist")
+          obj=json.loads((d/"manifest.json").read_text())
+          assert obj["route_count"]==34 and obj["build_mode"]=="production"
+          assert obj["indexing_enabled"] is True and obj["production_approved"] is False
+          names=[x.text for x in ET.parse(d/"sitemap.xml").findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]
+          assert len(names)==33 and "https://mftintelligence.com/" in names
+          assert not any("/fr/" in u or "/research/articles/" in u for u in names)
+          assert "noindex,nofollow" in (d/"404.html").read_text()
+          print("Production 34 routes / 33 existing URLs and root HTTP 404 asset: PASS; NOT DEPLOYED")
+          PY
