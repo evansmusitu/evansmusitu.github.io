@@ -10,6 +10,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 from xml.etree import ElementTree as ET
 import json
 
@@ -55,11 +56,18 @@ def get(path: str, max_bytes: int = 1_000_000):
     if not path.startswith("/"):
         raise ValueError("Only root-relative public GETs are allowed")
     request = Request(ORIGIN + path, headers={"User-Agent": "MUSITU-SEO-Observer/1.0 (read-only)", "Accept": "text/html,application/xml,text/plain"})
-    with urlopen(request, timeout=18) as response:
+    try:
+        response = urlopen(request, timeout=18)
+    except HTTPError as exc:
+        # A real HTTP 404 is expected for the negative control: retain its
+        # status, body and response headers instead of treating it as a transport failure.
+        response = exc
+    with response:
         data = response.read(max_bytes + 1)
         if len(data) > max_bytes:
             raise ValueError("Response exceeded read budget")
-        return response.status, response.url, {k.lower(): v for k,v in response.headers.items()}, data
+        status = getattr(response, "status", None) or getattr(response, "code", None)
+        return status, response.url, {k.lower(): v for k,v in response.headers.items()}, data
 
 def validate_page(route: str):
     status, url, headers, body = get(route)
@@ -105,6 +113,22 @@ def validate_page(route: str):
         raise AssertionError("Missing public security headers: " + route)
     return route
 
+def validate_not_found():
+    # A fixed nonexistent path must be an actual 404. Without a top-level
+    # 404.html, Cloudflare Pages silently serves the homepage as HTTP 200.
+    route = "/__musitu-nonexistent-page-seo-audit-20261109/"
+    status, url, headers, body = get(route)
+    if status != 404 or url.rstrip("/") != (ORIGIN + route).rstrip("/"):
+        raise AssertionError("Missing public path must return HTTP 404: " + route)
+    parser = MetadataParser()
+    parser.feed(body.decode("utf-8"))
+    if parser.robots != ["noindex,nofollow"] or parser.canonical:
+        raise AssertionError("Missing public path is not safely noindex: " + route)
+    if (not headers.get("content-security-policy")
+            or headers.get("x-content-type-options","").lower() != "nosniff"):
+        raise AssertionError("Missing public path lacks security headers: " + route)
+    return True
+
 def audit():
     core_routes = set(read_catalog()["routes"])
     article_pages = set(article_routes(approved_sources()))
@@ -131,6 +155,7 @@ def audit():
             raise AssertionError("Off-origin or malformed sitemap entry")
     if set(locs) != {ORIGIN + p for p in routes}:
         raise AssertionError("Phase 03 live sitemap must contain exactly 48 approved URLs")
+    validate_not_found()
     passed = []
     with ThreadPoolExecutor(max_workers=5) as pool:
         jobs = {pool.submit(validate_page, route): route for route in sorted(routes)}
@@ -140,7 +165,8 @@ def audit():
       "indexed_intent_core_routes_checked":len(core_routes),
       "research_articles_checked":len(article_pages),"french_pages_checked":len(french_pages),
       "total_phase03_routes_checked":len(passed),"sitemap_entries":len(locs),
-      "jsonld_documents_checked":len(passed),"account_verification_claimed":False,
+      "jsonld_documents_checked":len(passed),"nonexistent_public_path_http_404":True,
+       "account_verification_claimed":False,
       "google_indexing_claimed":False,"writes":0}
     print(json.dumps(result, sort_keys=True))
     return result
