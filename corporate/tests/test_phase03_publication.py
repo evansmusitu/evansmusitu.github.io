@@ -45,6 +45,12 @@ class PublicationContract(unittest.TestCase):
         with patch.dict(os.environ,{"MUSITU_PHASE03_PUBLICATION_DATE":""},clear=False):
             with self.assertRaisesRegex(ValueError,"explicit publication date"):
                 article_head(article)
+        with patch.dict(os.environ,{"MUSITU_PHASE03_PUBLICATION_DATE":"2026-11-99"},clear=False):
+            with self.assertRaisesRegex(ValueError,"explicit publication date"):
+                article_head(article)
+        with patch.dict(os.environ,{"MUSITU_PHASE03_PUBLICATION_DATE":"2026-11-07"},clear=False):
+            with self.assertRaisesRegex(ValueError,"predates manuscript approval"):
+                article_head(article)
 
     def test_opt_in_must_be_explicit_and_not_public_by_default(self):
         with patch.dict(os.environ,{"MUSITU_BUILD_MODE":"review","MUSITU_PUBLISH_PHASE03":"invalid"},clear=False):
@@ -54,6 +60,7 @@ class PublicationContract(unittest.TestCase):
             baseline=build()
         self.assertEqual(baseline["route_count"],34)
         self.assertEqual(baseline["phase03_publication_routes"],[])
+        self.assertIsNone(baseline["phase03_article_publication_date"])
         # Cloudflare Pages requires a root-level 404.html or unknown routes become HTTP 200 SPA fallbacks.
         root_not_found=ROOT/"dist"/"404.html"
         self.assertTrue(root_not_found.is_file(),"Cloudflare Pages top-level 404.html must be present")
@@ -66,6 +73,7 @@ class PublicationContract(unittest.TestCase):
         self.assertEqual(candidate["route_count"],49)
         self.assertEqual(len(candidate["phase03_publication_routes"]),15)
         self.assertFalse(candidate["phase03_publication_indexable"])
+        self.assertIsNone(candidate["phase03_article_publication_date"])
         self.assertFalse((ROOT/"dist"/"sitemap.xml").exists())
         self.assertEqual((ROOT/"dist"/"robots.txt").read_text().splitlines(),["User-agent: *","Disallow: /"])
         for route in list(ROUTES)+candidate["phase03_publication_routes"]:
@@ -90,9 +98,11 @@ class PublicationContract(unittest.TestCase):
         if not (ROOT/"assets"/"studio-demo-82s.mp4").exists():
             self.skipTest("Approved Studio media absent; run in authorized CI production artifact job")
         with patch.dict(os.environ,{"MUSITU_BUILD_MODE":"production","MUSITU_CANONICAL_ORIGIN":ORIGIN,
-                                    "MUSITU_INCLUDE_STUDIO_MEDIA":"1","MUSITU_PUBLISH_PHASE03":"1"},clear=False):
+                                    "MUSITU_INCLUDE_STUDIO_MEDIA":"1","MUSITU_PUBLISH_PHASE03":"1",
+                                     "MUSITU_PHASE03_PUBLICATION_DATE":"2026-11-09"},clear=False):
             manifest=build()
         self.assertTrue(manifest["phase03_publication_indexable"])
+        self.assertEqual(manifest["phase03_article_publication_date"],"2026-11-09")
         self.assertEqual(manifest["route_count"],49)
         self.assertEqual(len(manifest["phase03_publication_routes"]),15)
         locs=ET.parse(ROOT/"dist"/"sitemap.xml").getroot()
@@ -114,7 +124,11 @@ class PublicationContract(unittest.TestCase):
             self.assertEqual(len(parser.jsonld),1,route)
             self.assertEqual(parser.jsonld[0]["@context"],"https://schema.org")
             if route.startswith("/research/articles/"):
-                self.assertIn("Article",{x["@type"] for x in parser.jsonld[0]["@graph"]})
+                articles=[x for x in parser.jsonld[0]["@graph"] if x["@type"]=="Article"]
+                self.assertEqual(len(articles),1)
+                self.assertEqual(articles[0]["datePublished"],"2026-11-09")
+                self.assertIn("9 November 2026",html)
+                self.assertNotIn("8 November 2026",html)
             if route in FR_EN:
                 self.assertIn('<html lang="fr"',html)
                 self.assertIn('hreflang="en"',html)
