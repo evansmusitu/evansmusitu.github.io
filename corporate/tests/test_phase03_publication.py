@@ -11,7 +11,7 @@ from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
 from build import build, ROUTES
-from phase03_publication import approved_sources, article_routes, french_records, hreflang, FR_EN, EN_FR
+from phase03_publication import approved_sources, article_routes, french_records, hreflang, FR_EN, EN_FR, article_head, article_info
 from public_seo_observer import MetadataParser
 from seo import ORIGIN
 
@@ -31,6 +31,20 @@ class PublicationContract(unittest.TestCase):
             self.assertEqual(a,hreflang(translated))
             self.assertIn('hreflang="x-default"',a)
             self.assertIn(ORIGIN+translated,a)
+
+    def test_article_release_metadata_must_use_an_explicit_real_publication_date(self):
+        # Owner's 8-Nov manuscript approval is not the date 12 articles went live.
+        article=approved_sources()[0]
+        with patch.dict(os.environ,{"MUSITU_PHASE03_PUBLICATION_DATE":"2026-11-09"},clear=False):
+            parser=MetadataParser()
+            parser.feed(article_head(article))
+            news=[n for n in parser.jsonld[0]["@graph"] if n["@type"]=="Article"]
+            self.assertEqual(len(news),1)
+            self.assertEqual(news[0]["datePublished"],"2026-11-09")
+        self.assertNotIn("8 November 2026",article_info(article,"")["main"])
+        with patch.dict(os.environ,{"MUSITU_PHASE03_PUBLICATION_DATE":""},clear=False):
+            with self.assertRaisesRegex(ValueError,"explicit publication date"):
+                article_head(article)
 
     def test_opt_in_must_be_explicit_and_not_public_by_default(self):
         with patch.dict(os.environ,{"MUSITU_BUILD_MODE":"review","MUSITU_PUBLISH_PHASE03":"invalid"},clear=False):
