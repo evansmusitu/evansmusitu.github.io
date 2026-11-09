@@ -9,7 +9,8 @@ import hashlib, html, json, re, shutil, os
 from pathlib import Path
 from seo import seo_head, validate_catalog
 from phase03_publication import (approved_sources, article_routes, article_info, article_head,
-  localize_english_core, french_info, french_head, french_records, hreflang, FR_EN)
+  localize_english_core, french_info, french_head, french_records, hreflang, FR_EN,
+  actual_publication_date)
 
 BASE=Path(__file__).resolve().parents[1]
 SRC=BASE/'content/pages.json'
@@ -140,6 +141,7 @@ def build()->dict:
  publication_flag=os.environ.get('MUSITU_PUBLISH_PHASE03','0')
  if publication_flag not in ('0','1'):raise ValueError('MUSITU_PUBLISH_PHASE03 must be 0 or 1')
  publication_enabled=publication_flag=='1'
+ publication_date=actual_publication_date() if publication_enabled and mode=='production' else None
  articles=approved_sources() if publication_enabled else []
  french=french_records() if publication_enabled else {}
  extra_routes=article_routes(articles)+list(french)
@@ -179,7 +181,7 @@ def build()->dict:
  if publication_enabled:
   for article in articles:
    route='/research/articles/'+article['slug']+'/'
-   info=article_info(article,records['/research/']['header'])
+   info=article_info(article,records['/research/']['header'],publication_date)
    dest=DST/route.lstrip('/')/'index.html'
    dest.parent.mkdir(parents=True,exist_ok=True)
    seo_html=article_head(article) if mode=='production' else ''
@@ -230,6 +232,7 @@ def build()->dict:
     'phase03_publication_source_approved':publication_enabled,
     'phase03_publication_routes':extra_routes,
     'phase03_publication_indexable':publication_enabled and mode=='production',
+    'phase03_article_publication_date':publication_date,
     'routes':ROUTES,'gated_routes':sorted(GATED),'files':compiled}
  (DST/'manifest.json').write_text(json.dumps(manifest,sort_keys=True,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
  return manifest
