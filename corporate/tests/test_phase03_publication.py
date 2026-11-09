@@ -40,6 +40,11 @@ class PublicationContract(unittest.TestCase):
             baseline=build()
         self.assertEqual(baseline["route_count"],34)
         self.assertEqual(baseline["phase03_publication_routes"],[])
+        # Cloudflare Pages requires a root-level 404.html or unknown routes become HTTP 200 SPA fallbacks.
+        root_not_found=ROOT/"dist"/"404.html"
+        self.assertTrue(root_not_found.is_file(),"Cloudflare Pages top-level 404.html must be present")
+        self.assertEqual(root_not_found.read_bytes(),(ROOT/"dist"/"404"/"index.html").read_bytes())
+        self.assertIn('name="robots" content="noindex,nofollow"',root_not_found.read_text())
         self.assertFalse((ROOT/"dist"/"fr"/"index.html").exists())
         with patch.dict(os.environ,{"MUSITU_BUILD_MODE":"review","MUSITU_PUBLISH_PHASE03":"1",
                                   "MUSITU_PROTECTED_STAGING_MEDIA":"0"},clear=False):
