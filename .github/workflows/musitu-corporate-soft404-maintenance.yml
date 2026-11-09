@@ -70,3 +70,37 @@ jobs:
           assert "noindex,nofollow" in (d/"404.html").read_text()
           print("Production 34 routes / 33 existing URLs and root HTTP 404 asset: PASS; NOT DEPLOYED")
           PY
+      - name: Compare every unchanged production file hash with the exact last published release
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp corporate/dist/manifest.json /tmp/musitu-hotfix-candidate-manifest.json
+          git clone -q --depth=1 --branch main https://github.com/evansmusitu/evansmusitu.github.io.git /tmp/musitu-corporate-production-baseline
+          test "$(git -C /tmp/musitu-corporate-production-baseline rev-parse HEAD)" = "a728cb9eb0cbd27a1f6f11b6fbe2856cac921db3"
+          cp corporate/assets/studio-demo-82s.mp4 /tmp/musitu-corporate-production-baseline/corporate/assets/studio-demo-82s.mp4
+          cp corporate/assets/studio-poster.png /tmp/musitu-corporate-production-baseline/corporate/assets/studio-poster.png
+          (
+            cd /tmp/musitu-corporate-production-baseline
+            MUSITU_BUILD_MODE=production MUSITU_CANONICAL_ORIGIN=https://mftintelligence.com MUSITU_INCLUDE_STUDIO_MEDIA=1 python3 corporate/scripts/build.py
+            printf '%s  %s\n' '979cb418d6e974d46d4901898f547e574c486a7b348b5f501f7242a4fc987e76' 'corporate/dist/manifest.json' | sha256sum --check
+          )
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          base=json.loads(Path("/tmp/musitu-corporate-production-baseline/corporate/dist/manifest.json").read_text())
+          current=json.loads(Path("/tmp/musitu-hotfix-candidate-manifest.json").read_text())
+          oldfiles=base["files"]
+          newfiles=current["files"]
+          assert len(oldfiles)==44,(len(oldfiles),"current production unexpected base")
+          assert len(newfiles)==45,(len(newfiles),"new asset cardinality")
+          assert set(newfiles)-set(oldfiles)=={"404.html"},set(newfiles)-set(oldfiles)
+          assert not set(oldfiles)-set(newfiles)
+          for file,sha in oldfiles.items():
+              assert sha==newfiles[file],("unexpected byte change",file)
+          assert current["route_count"]==base["route_count"]==34
+          assert current["routes"]==base["routes"]
+          assert current["canonical_origin"]==base["canonical_origin"]
+          assert current["indexing_enabled"]==base["indexing_enabled"]==True
+          print("EXACT DELTA PASS: all 44 previously published files byte-identical; only added root 404.html")
+          print("Live deployment: NOT PERFORMED")
+          PY
