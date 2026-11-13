@@ -1,0 +1,414 @@
+name: MUSITU Corporate Phase 03 SEO Source Qualification
+
+on:
+  pull_request:
+    paths:
+      - 'corporate/content/pages.json'
+      - 'corporate/content/public-records.json'
+      - 'corporate/assets/site.css'
+      - 'corporate/assets/site.js'
+      - 'corporate/templates/**'
+      - 'corporate/scripts/build.py'
+      - 'corporate/scripts/seo.py'
+      - 'corporate/scripts/phase03_publication.py'
+      - 'corporate/content/phase03-publication-approvals.json'
+      - 'corporate/tests/test_phase03_publication.py'
+      - 'corporate/tests/phase03_publication_http_browser.py'
+      - 'corporate/scripts/render_growth_dashboard.py'
+      - 'corporate/tests/test_phase03_dashboard.py'
+      - 'corporate/content/seo-routes.json'
+      - 'corporate/tests/test_phase03_seo.py'
+      - 'corporate/tests/browser_review.py'
+      - 'corporate/tests/phase03_production_http_browser.py'
+      - 'corporate/tests/phase03_axe_http_browser.py'
+      - 'corporate/content/localization-pilot.json'
+      - 'corporate/editorial/research-drafts/**'
+      - 'corporate/editorial/PHASE03_SOURCE_SPECIFIC_REVIEW_DOCKET_20261110.md'
+      - 'corporate/scripts/public_seo_observer.py'
+      - 'corporate/scripts/research_review.py'
+      - 'corporate/scripts/international_growth_report.py'
+      - 'corporate/tests/test_phase03_growth.py'
+      - 'corporate/PHASE03_INTERNATIONAL_GROWTH_MONITORING.md'
+      - 'corporate/PHASE03_GLOBAL_DISCOVERY_EXECUTION.md'
+      - 'corporate/PHASE03_COMPLETION_EVIDENCE_20261108.md'
+      - 'corporate/CORRESPONDENCE_ADDRESS_PUBLICATION_HANDOFF_20261108.md'
+      - '.github/workflows/corporate-phase03-seo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-and-review-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Syntax and isolated review build
+        working-directory: corporate
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/build.py scripts/phase03_publication.py tests/test_phase03_publication.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py scripts/research_review.py scripts/international_growth_report.py scripts/render_growth_dashboard.py tests/test_phase03_growth.py tests/test_phase03_dashboard.py tests/phase03_axe_http_browser.py
+          MUSITU_BUILD_MODE=review python3 scripts/build.py
+          test "$(find dist -name index.html | wc -l)" -eq 34
+          test ! -e dist/sitemap.xml
+          grep -Fq 'Disallow: /' dist/robots.txt
+      - name: Phase 03 SEO contract and isolation tests
+        working-directory: corporate
+        run: python3 -m unittest discover -s tests -p 'test_phase03_seo.py' -v
+      - name: Private international search reporting contract (synthetic data only)
+        working-directory: corporate
+        run: python3 -m unittest discover -s tests -p 'test_phase03_growth.py' -v
+      - name: Privacy-preserving country dashboard contract (synthetic data only)
+        working-directory: corporate
+        run: python3 -m unittest discover -s tests -p 'test_phase03_dashboard.py' -v
+      - name: Build twelve offline editorial review previews
+        working-directory: corporate
+        run: |
+          set -euo pipefail
+          python3 scripts/research_review.py --output review-artifacts/research-preview
+          test "$(find review-artifacts/research-preview -maxdepth 1 -name '*.html' | wc -l)" -eq 13
+          test ! -f review-artifacts/research-preview/sitemap.xml
+          grep -Fq 'noindex,nofollow' review-artifacts/research-preview/index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          root=Path("review-artifacts/research-preview")
+          m=json.loads((root/"manifest.json").read_text())
+          assert m["article_count"]==12 and m["publication_authorized"] is False
+          assert len(m["articles"])==12
+          print("Editorial preview bundle: 12 draft-only pages, no release authority")
+          PY
+      - name: Upload review-only research packet
+        uses: actions/upload-artifact@v4
+        with:
+          name: musitu-phase03-research-review-only
+          path: corporate/review-artifacts/research-preview/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Run inherited local HTTP, sitemap and Studio/Store contracts
+        working-directory: corporate
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'pytest>=8,<10'
+          python3 -m pytest -q tests/test_http.py tests/test_sitemap.py tests/test_studio_and_store.py
+
+      - name: Verify source-locked 12 English and 3 French review routes, noindex by default
+        working-directory: corporate
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_phase03_publication.py' -v
+          grep -Fq 'Disallow: /' dist/robots.txt
+          test ! -e dist/sitemap.xml
+          test "$(find dist -name index.html | wc -l)" -eq 49
+
+  production-artifact-contract:
+    # Never expose approved media artifacts to arbitrary fork pull-request code.
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
+    name: Rebuild exact candidate with previously approved media (NO DEPLOY)
+    needs: source-and-review-contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Download immutable PR33 qualified build for media extraction only
+        uses: actions/download-artifact@v4
+        with:
+          name: MUSITU-CORPORATE-PR33-PRODUCTION-87cc21fc
+          repository: ${{ github.repository }}
+          run-id: 42287099983
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/pr33-review-source
+      - name: Verify exact approved media SHA-256 before reusing
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, shutil
+          prior=Path("${{ runner.temp }}")/"pr33-review-source"/"assets"
+          out=Path("corporate/assets")
+          expected={
+            "studio-demo-82s.mp4":"afd6dfd3c73668e544f3f8a857697fed0abaadccd4927202bb3a185612c2dea0",
+            "studio-poster.png":"0ea5e961d916375029010dbae01bf8a1783e5fd6b90f74c006dc852df1c285d0",
+          }
+          for name, digest in expected.items():
+              content=(prior/name).read_bytes()
+              assert hashlib.sha256(content).hexdigest()==digest,"Approved media hash mismatch"
+              (out/name).write_bytes(content)
+          print("Approved Studio media verified twice; no external upload or publication")
+          PY
+      - name: Full inherited review-mode suite with checksum-verified Studio media
+        working-directory: corporate
+        env:
+          MUSITU_BUILD_MODE: review
+          MUSITU_PROTECTED_STAGING_MEDIA: '1'
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'pytest>=8,<10' 'beautifulsoup4>=4.12,<5'
+          python3 scripts/build.py
+          python3 -m pytest -q tests/test_site.py tests/test_http.py tests/test_sitemap.py tests/test_studio_and_store.py
+          node --check assets/site.js
+          node --check dist/assets/site-data.js
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          artifact=Path("dist")
+          manifest=json.loads((artifact/"manifest.json").read_text(encoding="utf-8"))
+          assert manifest["build_mode"]=="review"
+          assert manifest["studio_media_included"] is True
+          assert not (artifact/"sitemap.xml").exists()
+          assert (artifact/"robots.txt").read_text().splitlines()==["User-agent: *","Disallow: /"]
+          print("Inherited review suite checked exact 34-route source with approved Studio media. No deployment.")
+          PY
+      - name: Qualify immutable production-mode candidate (local artifact, not deployed)
+        working-directory: corporate
+        env:
+          MUSITU_BUILD_MODE: production
+          MUSITU_CANONICAL_ORIGIN: https://mftintelligence.com
+          MUSITU_INCLUDE_STUDIO_MEDIA: '1'
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'pytest>=8,<10' 'beautifulsoup4>=4.12,<5'
+          python3 scripts/build.py
+          python3 -m pytest -q tests/test_production_build.py
+          first="$(sha256sum dist/manifest.json | awk '{print $1}')"
+          python3 scripts/build.py
+          second="$(sha256sum dist/manifest.json | awk '{print $1}')"
+          test "$first" = "$second"
+          python3 - <<'PY'
+          import sys, json
+          from pathlib import Path
+          sys.path.insert(0, "scripts")
+          from public_seo_observer import MetadataParser
+          from seo import ORIGIN, read_catalog
+          routes=read_catalog()["routes"]
+          assert len(routes)==33
+          for route in routes:
+              raw=(Path("dist")/route.lstrip("/")/"index.html").read_text()
+              p=MetadataParser()
+              p.feed(raw)
+              assert p.canonical==[ORIGIN+route],route
+              assert p.robots==["index,follow"],route
+              assert len(p.jsonld)==1,route
+              assert p.jsonld[0]["@context"]=="https://schema.org",route
+          missing=Path("dist/404/index.html").read_text()
+          assert 'type="application/ld+json"' not in missing
+          assert len(list(Path("dist").rglob("index.html")))==34
+          manifest=json.loads(Path("dist/manifest.json").read_text())
+          assert manifest["production_approved"] is False
+          print(json.dumps({"production_candidate":"QUALIFIED_IN_SOURCE_ONLY",
+            "article_publication":False,"deployed":False,"base_routes":34,
+            "verified_jsonld_routes":len(routes),
+            "source_commit":"${{ github.event.pull_request.head.sha || github.sha }}"}))
+          PY
+          echo "Reproducible manifest SHA-256: $second; no deployment performed"
+      - name: Verify owner-approved publication mode against real production media (NO DEPLOY)
+        working-directory: corporate
+        env:
+          MUSITU_PUBLISH_PHASE03: '1'
+          # CI-only synthetic release-date fixture; actual publication date must be operator-supplied.
+          MUSITU_PHASE03_PUBLICATION_DATE: '2026-11-09'
+          MUSITU_BUILD_MODE: production
+          MUSITU_CANONICAL_ORIGIN: https://mftintelligence.com
+          MUSITU_INCLUDE_STUDIO_MEDIA: '1'
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_phase03_publication.py' -v
+          python3 scripts/build.py
+          test "$(find dist -name index.html | wc -l)" -eq 49
+          grep -Fq '/fr/research/' dist/sitemap.xml
+          grep -Fq '/research/articles/model-risk-governance-2026/' dist/sitemap.xml
+          test "$(grep -o '<loc>' dist/sitemap.xml | wc -l)" -eq 48
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          manifest=json.loads(Path('dist/manifest.json').read_text())
+          assert manifest['phase03_publication_source_approved'] is True
+          assert manifest['phase03_publication_indexable'] is True
+          assert manifest['production_approved'] is False
+          print('49 approved route publication candidate rendered; 48 sitemap entries. NOT DEPLOYED.')
+          PY
+
+
+  offline-cross-browser-qa:
+    name: Candidate DOM and local HTTP browser acceptance (${{ matrix.engine }})
+    needs: production-artifact-contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Install Playwright browser dependencies
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'playwright>=1.56,<1.61'
+          python3 -m playwright install --with-deps '${{ matrix.engine }}'
+      - name: Run offline review-mode 34-route responsive and interaction checks
+        working-directory: corporate
+        env:
+          MUSITU_BROWSER_ENGINE: ${{ matrix.engine }}
+          MUSITU_BUILD_MODE: review
+        run: |
+          set -euo pipefail
+          python3 scripts/build.py
+          python3 tests/browser_review.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          result=json.loads(Path('review-artifacts/browser-dom-results.json').read_text(encoding='utf-8'))
+          assert result['passed'] is True
+          assert result['routes_tested']==34
+          assert result['responsive_checks']==102
+          assert result['theme_checks']==204
+          assert result['nojs_checks']==34
+          assert not result['errors'] and not result['runtime_exceptions'] and not result['overflow']
+          assert len(result['interactions'])>=12
+          print(json.dumps({'engine':result['browser_engine'],'routes':34,'responsive_checks':102,'theme_checks':204,
+            'nojs_checks':34,'interactions_passed':len(result['interactions']),'hosted_http_tested':False,
+            'certified_wcag':False,'deployed':False},sort_keys=True))
+          PY
+      - name: Extract previous qualified media for isolated candidate test
+        uses: actions/download-artifact@v4
+        with:
+          name: MUSITU-CORPORATE-PR33-PRODUCTION-87cc21fc
+          repository: ${{ github.repository }}
+          run-id: 42287099983
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/pr33-browser-media-source
+      - name: Verify exact permitted Studio media hashes (no upload)
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+          source=Path("${{ runner.temp }}")/"pr33-browser-media-source"/"assets"
+          dest=Path("corporate/assets")
+          expected={
+             "studio-demo-82s.mp4":"afd6dfd3c73668e544f3f8a857697fed0abaadccd4927202bb3a185612c2dea0",
+             "studio-poster.png":"0ea5e961d916375029010dbae01bf8a1783e5fd6b90f74c006dc852df1c285d0"
+          }
+          for name,digest in expected.items():
+              data=(source/name).read_bytes()
+              assert hashlib.sha256(data).hexdigest()==digest,"Unexpected media hash"
+              (dest/name).write_bytes(data)
+          print("Pinned approved media restored for in-run candidate testing only")
+          PY
+      - name: Run actual local HTTP production artifact contract (not hosted)
+        working-directory: corporate
+        env:
+          MUSITU_BROWSER_ENGINE: ${{ matrix.engine }}
+          MUSITU_BUILD_MODE: production
+          MUSITU_CANONICAL_ORIGIN: https://mftintelligence.com
+          MUSITU_INCLUDE_STUDIO_MEDIA: '1'
+        run: |
+          set -euo pipefail
+          python3 scripts/build.py
+          python3 tests/phase03_production_http_browser.py --engine "${MUSITU_BROWSER_ENGINE}"
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          eng=os.environ['MUSITU_BROWSER_ENGINE']
+          path=Path('review-artifacts')/f'phase03-production-local-http-{eng}.json'
+          result=json.loads(path.read_text(encoding='utf-8'))
+          assert result['checked_routes']==34
+          assert result['headers_checked']==34
+          assert result['jsonld_checked']==33
+          assert result['interactions_checked']==3
+          assert result['local_assets_real_network_loaded'] is True
+          assert result['hosted_cloudflare_verified'] is False
+          assert not result['off_origin_requests'] and not result['request_failures']
+          assert not result['page_errors'] and not result['console_errors']
+          assert result['remote_writes']==0 and result['deployed'] is False
+          print('Local HTTP transport, generated security headers, real assets and JSON-LD passed; NOT Cloudflare hosted acceptance')
+          PY
+      - name: Install pinned local axe-core for WCAG 2.2 A/AA automation
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/musitu-axe" \
+            --ignore-scripts --no-save --no-package-lock --no-fund --no-audit \
+            'axe-core@4.14.0'
+          test -s "$RUNNER_TEMP/musitu-axe/node_modules/axe-core/axe.min.js"
+      - name: Automated WCAG 2.2 A/AA + best-practice scan, real local HTML
+        working-directory: corporate
+        env:
+          MUSITU_BROWSER_ENGINE: ${{ matrix.engine }}
+        run: |
+          set -euo pipefail
+          python3 tests/phase03_axe_http_browser.py \
+            --engine "$MUSITU_BROWSER_ENGINE" \
+            --axe-path "$RUNNER_TEMP/musitu-axe/node_modules/axe-core/axe.min.js"
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          engine=os.environ['MUSITU_BROWSER_ENGINE']
+          report=json.loads((Path('review-artifacts')/f'phase03-axe-{engine}.json').read_text())
+          assert report['axe_version']=='4.14.0'
+          assert report['routes']==34 and report['scans']==68
+          assert report['passed'] is True and not report['violations']
+          assert report['hosted_cloudflare_verified'] is False
+          assert report['manual_wcag_22_aa_certified'] is False
+          print('Automated axe-core A/AA and best-practice checks passed; manual hosted accessibility remains open')
+          PY
+      - name: Run pinned WCAG 2.2 A/AA automated scan on 12 new articles and 3 French pages
+        working-directory: corporate
+        env:
+          MUSITU_BROWSER_ENGINE: ${{ matrix.engine }}
+          MUSITU_BUILD_MODE: production
+          MUSITU_CANONICAL_ORIGIN: https://mftintelligence.com
+          MUSITU_INCLUDE_STUDIO_MEDIA: '1'
+          MUSITU_PUBLISH_PHASE03: '1'
+          # CI fixture only. Do not deploy with this hard-coded date.
+          MUSITU_PHASE03_PUBLICATION_DATE: '2026-11-09'
+        run: |
+          set -euo pipefail
+          python3 scripts/build.py
+          python3 tests/phase03_publication_http_browser.py --engine "$MUSITU_BROWSER_ENGINE"
+          python3 tests/phase03_axe_http_browser.py \
+            --engine "$MUSITU_BROWSER_ENGINE" \
+            --axe-path "$RUNNER_TEMP/musitu-axe/node_modules/axe-core/axe.min.js" \
+            --publication-only
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          engine=os.environ['MUSITU_BROWSER_ENGINE']
+          result=json.loads((Path('review-artifacts')/f'phase03-axe-publication-{engine}.json').read_text())
+          assert result['axe_version']=='4.14.0'
+          assert result['routes']==15 and result['scans']==30
+          assert result['passed'] and not result['violations']
+          assert result['manual_wcag_22_aa_certified'] is False
+          print('New 15-page cohort axe scan passed; native human reader and manual WCAG remain open')
+          PY
+
+      - name: Retain offline browser review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: musitu-phase03-offline-browser-${{ matrix.engine }}
+          path: |
+            corporate/review-artifacts/browser-dom-results.json
+            corporate/review-artifacts/phase03-production-local-http-${{ matrix.engine }}.json
+            corporate/review-artifacts/phase03-axe-${{ matrix.engine }}.json
+            corporate/review-artifacts/phase03-axe-publication-${{ matrix.engine }}.json
+            corporate/review-artifacts/phase03-publication-http-${{ matrix.engine }}.json
+            corporate/review-artifacts/homepage-desktop-dom.png
+            corporate/review-artifacts/homepage-mobile-dom.png
+          if-no-files-found: warn
+          retention-days: 7

@@ -50,7 +50,12 @@ def test_production_legal_identity_and_media():
  assert expected in soup('/legal/privacy/').get_text(' ',strip=True)
  assert 'MUSITU is the website operator and data controller' in soup('/legal/privacy/').get_text(' ',strip=True)
  assert expected in soup('/legal/terms/').get_text(' ',strip=True)
- assert expected in soup('/').select_one('footer').get_text(' ',strip=True)
+ footer=soup('/').select_one('footer')
+ assert expected not in footer.get_text(' ',strip=True)
+ assert 'Zimbabwe-founded' not in footer.get_text(' ',strip=True)
+ assert footer.select_one('a[href="mailto:support@mftintelligence.com"]')
+ assert 'MUSITU is a technology organization' in soup('/company/').get_text(' ',strip=True)
+ assert 'Zimbabwe-founded' not in soup('/company/').get_text(' ',strip=True)
  video=DIST/'assets/studio-demo-82s.mp4'
  poster=DIST/'assets/studio-poster.png'
  assert hashlib.sha256(video.read_bytes()).hexdigest()=='afd6dfd3c73668e544f3f8a857697fed0abaadccd4927202bb3a185612c2dea0'
