@@ -23,6 +23,7 @@ on:
       - 'corporate/tests/phase03_axe_http_browser.py'
       - 'corporate/content/localization-pilot.json'
       - 'corporate/editorial/research-drafts/**'
+      - 'corporate/editorial/PHASE03_SOURCE_SPECIFIC_REVIEW_DOCKET_20261110.md'
       - 'corporate/scripts/public_seo_observer.py'
       - 'corporate/scripts/research_review.py'
       - 'corporate/scripts/international_growth_report.py'
