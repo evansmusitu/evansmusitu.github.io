@@ -16,6 +16,15 @@ from public_seo_observer import MetadataParser
 from seo import ORIGIN
 
 class PublicationContract(unittest.TestCase):
+    def test_source_fit_docket_covers_all_drafts_and_identifies_nonbinding_bcbs_newsletter(self):
+        dossier=(ROOT/"editorial"/"PHASE03_SOURCE_SPECIFIC_REVIEW_DOCKET_20261110.md").read_text()
+        self.assertIn("Release authority: NONE",dossier)
+        self.assertIn("Publication/indexation: NOT AUTHORIZED",dossier)
+        for draft in approved_sources():
+            self.assertIn("| `"+draft["slug"]+"` |",dossier)
+        self.assertIn("6 January 2026",dossier)
+        self.assertIn("does not constitute new supervisory guidance or expectations",dossier)
+
     def test_twelve_exact_approved_sources_and_three_native_text_pilots(self):
         articles=approved_sources()
         self.assertEqual(len(articles),12)
