@@ -43,6 +43,7 @@ def test_musitu_marketing_pages_have_no_internal_release_warning_banners():
         for phrase in PROHIBITED:
             assert phrase not in text,(route,phrase)
         assert not page(route).select(".gate-label"),route
+        assert not page(route).find(string=lambda x: x and x.strip()=="NaN"),route
     assert "privacy" in page("/legal/privacy/").get_text(" ",strip=True).lower()
     assert "terms" in page("/legal/terms/").get_text(" ",strip=True).lower()
 
