@@ -31,7 +31,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install 'pytest==8.4.2' 'beautifulsoup4==4.14.2' 'playwright==1.56.0'
           python -m playwright install --with-deps chromium
-          npm install --prefix corporate/qa-deps --no-save --no-package-lock --ignore-scripts --no-audit --no-fund axe-core@4.10.3
+          npm install --prefix corporate/qa-deps --no-save --no-package-lock --ignore-scripts --no-audit --no-fund axe-core@4.14.0
       - name: Build review artifact (no production environment)
         working-directory: corporate
         env:
