@@ -195,7 +195,8 @@ def build()->dict:
    "  X-Content-Type-Options: nosniff\n"
    "  Referrer-Policy: strict-origin-when-cross-origin\n"
    "  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()\n"
-   "  X-Frame-Options: DENY\n",encoding='utf-8')
+   "  X-Frame-Options: DENY\n"
+   "  Strict-Transport-Security: max-age=86400\n",encoding='utf-8')
  else:
   (DST/'robots.txt').write_text('User-agent: *\nDisallow: /\n',encoding='utf-8')
  compiled={p.relative_to(DST).as_posix():hash_bytes(p.read_bytes()) for p in sorted(DST.rglob('*')) if p.is_file() and p.name!='manifest.json'}
