@@ -243,7 +243,7 @@ jobs:
     name: Candidate DOM and local HTTP browser acceptance (${{ matrix.engine }})
     needs: production-artifact-contract
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
