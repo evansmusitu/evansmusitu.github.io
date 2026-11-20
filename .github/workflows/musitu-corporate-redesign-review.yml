@@ -17,7 +17,7 @@ concurrency:
 jobs:
   static-and-responsive:
     name: 34-route build, static controls and Chromium
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - name: Check out exact source
