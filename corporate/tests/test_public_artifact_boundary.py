@@ -64,3 +64,9 @@ def test_default_review_build_cannot_accidentally_publish_international_routes()
     assert not (DIST / "research" / "articles").exists()
     assert not (DIST / "sitemap.xml").exists()
     assert "Disallow: /" in (DIST / "robots.txt").read_text(encoding="utf-8")
+
+
+if __name__ == "__main__":
+    test_artifact_is_a_static_public_subset_and_not_the_source_repository()
+    test_generated_public_text_has_no_credentials_or_review_only_records()
+    print("Generated artifact publication boundary: PASS (no internal source files or secret patterns)")
