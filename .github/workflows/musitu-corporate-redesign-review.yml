@@ -31,6 +31,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install 'pytest==8.4.2' 'beautifulsoup4==4.14.2' 'playwright==1.56.0'
           python -m playwright install --with-deps chromium
+          npm install --prefix corporate/qa-deps --no-save --no-package-lock --ignore-scripts --no-audit --no-fund axe-core@4.10.3
       - name: Build review artifact (no production environment)
         working-directory: corporate
         env:
@@ -41,13 +42,16 @@ jobs:
           python scripts/build.py
           node --check assets/site.js
           node --check dist/assets/site-data.js
-          python -m py_compile scripts/build.py tests/browser_review.py tests/test_redesign.py
+          python -m py_compile scripts/build.py tests/browser_review.py tests/browser_axe.py tests/test_redesign.py
       - name: Verify navigation, content, local HTTP and sitemap
         working-directory: corporate
         run: python -m pytest -q tests/test_redesign.py tests/test_http.py tests/test_sitemap.py
       - name: Check rendered DOM and interactive journeys
         working-directory: corporate
         run: python tests/browser_review.py
+      - name: Verify automated WCAG 2.2 A/AA criteria (sampled local DOM)
+        working-directory: corporate
+        run: python tests/browser_axe.py
       - name: Attach browser evidence (for reviewer only)
         if: always()
         uses: actions/upload-artifact@v4
@@ -55,6 +59,7 @@ jobs:
           name: musitu-corporate-redesign-review-evidence
           path: |
             corporate/review-artifacts/browser-dom-results.json
+            corporate/review-artifacts/axe-review-results.json
             corporate/review-artifacts/homepage-desktop-dom.png
             corporate/review-artifacts/homepage-mobile-dom.png
           if-no-files-found: ignore
