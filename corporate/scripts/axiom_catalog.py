@@ -90,7 +90,7 @@ def render_axiom_catalog() -> str:
         '</div><a class="button button-primary" '
         'href="https://chatgpt.com/plugins/plugin_asdk_app_6ae058ee6cec81919329ae43b76a4c86" '
         'target="_blank" rel="noopener noreferrer" '
-        'aria-label="Open MUSITU Axiom in ChatGPT (opens in a new tab)">Explore Axiom in ChatGPT ↗</a>'
+        'aria-label="Explore Axiom in ChatGPT (opens in a new tab)">Explore Axiom in ChatGPT ↗</a>'
         '</div>'
         '</div></section>'
     )
