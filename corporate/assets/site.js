@@ -87,7 +87,7 @@
       const head=document.createElement('thead');const hr=document.createElement('tr');const corner=document.createElement('th');corner.scope='col';corner.textContent='Property';hr.appendChild(corner);
       selection.forEach(id=>{const th=document.createElement('th');th.scope='col';th.textContent=getFamily(id)?.name||id;hr.appendChild(th);});head.appendChild(hr);table.appendChild(head);
       const body=document.createElement('tbody');
-      [['Focus','category'],['Purpose','intro'],['Evidence','evidence'],['Limits','limits']].forEach(([label,key])=>{const tr=document.createElement('tr');const th=document.createElement('th');th.scope='row';th.textContent=label;tr.appendChild(th);selection.forEach(id=>{const td=document.createElement('td');td.textContent=getFamily(id)?.[key]||'Not documented';tr.appendChild(td);});body.appendChild(tr);});
+      [['Focus','category'],['Purpose','intro'],['Evidence','evidence'],['Technology focus','limits']].forEach(([label,key])=>{const tr=document.createElement('tr');const th=document.createElement('th');th.scope='row';th.textContent=label;tr.appendChild(th);selection.forEach(id=>{const td=document.createElement('td');td.textContent=getFamily(id)?.[key]||'Not documented';tr.appendChild(td);});body.appendChild(tr);});
       table.appendChild(body);const wrap=document.createElement('div');wrap.className='compare-table-scroll';wrap.appendChild(table);out.appendChild(wrap);
     }
     $$('[data-compare]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.compare;const i=selection.indexOf(id);if(i>=0)selection.splice(i,1);else if(selection.length<3)selection.push(id);else{escapeSet(status,'Maximum three families. Remove one before adding another.');return;}redraw();}));redraw();
