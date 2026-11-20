@@ -251,7 +251,16 @@ body::before{height:700px;background:radial-gradient(ellipse at 83% 7%,rgba(112,
 .axiom-operation-list li{min-width:0;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:5px 12px;padding:11px 0;border-top:1px solid var(--line)}
 .axiom-operation-label{color:var(--text);font-size:14px;font-weight:600}
 .axiom-operation-list code{max-width:100%;overflow-wrap:anywhere;font-size:11px;color:var(--mint);background:transparent;white-space:normal}
-.axiom-access-note{font-size:14px;line-height:1.65;color:var(--muted);margin:24px 0 0;padding:20px 22px;border-left:3px solid var(--mint);background:var(--surface-2);border-radius:0 12px 12px 0}
-.axiom-access-note strong{color:var(--text)}
+.axiom-explore-cta{display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;padding:28px 30px;margin:28px 0 0;border:1px solid var(--line);border-radius:19px;background:var(--surface-2)}
+.axiom-explore-cta>div{flex:1 1 330px;min-width:0}
+.axiom-explore-cta h3{font-size:clamp(22px,2.5vw,30px);margin:0 0 8px}
+.axiom-explore-cta p{color:var(--muted);line-height:1.55;margin:0}
+.axiom-explore-cta .button{flex-shrink:0;max-width:100%}
 @media(max-width:800px){.axiom-directory-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:550px){.axiom-metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.axiom-metrics>div{padding:12px 9px;border-radius:12px}.axiom-metrics strong{font-size:27px}.axiom-metrics span{font-size:11px}.axiom-domain{padding:17px}.axiom-directory-nav a{padding:8px 10px}}
+
+/* Customer-facing product entrypoint instead of internal release-warning panels. */
+.axiom-product-cta{margin:26px 0 4px;padding:27px clamp(20px,3vw,34px);border:1px solid var(--line);background:var(--surface-2);border-radius:18px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.axiom-product-cta h3{font-size:clamp(20px,2.3vw,28px);margin:0}
+.axiom-product-cta p{font-size:15px;line-height:1.65;color:var(--muted);max-width:720px;margin:0}
+.axiom-product-cta .button{margin-top:9px}

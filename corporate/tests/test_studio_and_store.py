@@ -11,7 +11,8 @@ def test_direct_chatgpt_destination_with_access_context():
     for route in ('/', '/products/axiom/'):
         assert STORE in pages[route]['main']
         assert 'rel="noopener noreferrer"' in pages[route]['main']
-    assert 'has not been independently confirmed' in pages['/products/axiom/']['main']
+    assert 'has not been independently confirmed' not in pages['/products/axiom/']['main']
+    assert '74' in pages['/products/axiom/']['main']
 
 def test_staging_media_is_opt_in(monkeypatch):
     monkeypatch.delenv('MUSITU_PROTECTED_STAGING_MEDIA',raising=False)

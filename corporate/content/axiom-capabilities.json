@@ -4,7 +4,6 @@
   "source": "MUSITU Axiom connected plugin capabilities and certified public operation names",
   "operation_count": 74,
   "business_tool_count": 30,
-  "access_note": "These are operation names exposed by the connected Axiom registry; account eligibility, authentication, quotas, supported arguments and public ChatGPT listing availability can vary. The catalog is not a promise of unrestricted anonymous use.",
   "categories": [
     {
       "id": "finance",

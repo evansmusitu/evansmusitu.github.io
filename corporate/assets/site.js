@@ -87,7 +87,7 @@
       const head=document.createElement('thead');const hr=document.createElement('tr');const corner=document.createElement('th');corner.scope='col';corner.textContent='Property';hr.appendChild(corner);
       selection.forEach(id=>{const th=document.createElement('th');th.scope='col';th.textContent=getFamily(id)?.name||id;hr.appendChild(th);});head.appendChild(hr);table.appendChild(head);
       const body=document.createElement('tbody');
-      [['Focus','category'],['Purpose','intro'],['Evidence','evidence'],['Limits','limits']].forEach(([label,key])=>{const tr=document.createElement('tr');const th=document.createElement('th');th.scope='row';th.textContent=label;tr.appendChild(th);selection.forEach(id=>{const td=document.createElement('td');td.textContent=getFamily(id)?.[key]||'Not documented';tr.appendChild(td);});body.appendChild(tr);});
+      [['Focus','category'],['Purpose','intro'],['Evidence','evidence'],['Technology focus','limits']].forEach(([label,key])=>{const tr=document.createElement('tr');const th=document.createElement('th');th.scope='row';th.textContent=label;tr.appendChild(th);selection.forEach(id=>{const td=document.createElement('td');td.textContent=getFamily(id)?.[key]||'Not documented';tr.appendChild(td);});body.appendChild(tr);});
       table.appendChild(body);const wrap=document.createElement('div');wrap.className='compare-table-scroll';wrap.appendChild(table);out.appendChild(wrap);
     }
     $$('[data-compare]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.compare;const i=selection.indexOf(id);if(i>=0)selection.splice(i,1);else if(selection.length<3)selection.push(id);else{escapeSet(status,'Maximum three families. Remove one before adding another.');return;}redraw();}));redraw();
@@ -107,7 +107,7 @@
     const holder=$('#evidence-dialog-content');if(!holder)return;holder.replaceChildren();
     const h=document.createElement('h3');h.textContent=rec.title;holder.appendChild(h);
     const dl=document.createElement('dl');holder.appendChild(dl);
-    [['Associated technology',rec.family],['Evidence type',rec.kind],['Reviewed',rec.date],['Public claim',rec.claim],['What was established',rec.establishes],['What was not established',rec.limits]].forEach(([label,value])=>{
+    [['Associated technology',rec.family],['Evidence type',rec.kind],['Reviewed',rec.date],['Public claim',rec.claim],['What was established',rec.establishes],['Scope of this record',rec.limits]].forEach(([label,value])=>{
       const dt=document.createElement('dt');dt.textContent=label;const dd=document.createElement('dd');dd.textContent=value;dl.append(dt,dd);
     });
     const allowed=data.routes.some(p=>p.path===rec.link)||['https://evansmusitu.github.io/','https://payments.mftintelligence.com/chemistry/releases'].includes(rec.link);

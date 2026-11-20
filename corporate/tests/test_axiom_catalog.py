@@ -97,7 +97,7 @@ def test_verified_operation_names_exactly_match_74_tool_registry():
     assert len(actual) == len(set(actual))
     assert len(groups) == 18 and len({g["id"] for g in groups}) == 18
     assert data["business_tool_count"] == 30
-    assert "account" in data["access_note"].lower()
+    assert data["snapshot_date"] == "2026-11-20"
 
 
 def test_directory_contains_every_plain_language_operation_and_valid_jump_target():
@@ -118,7 +118,8 @@ def test_directory_contains_every_plain_language_operation_and_valid_jump_target
     for link in links:
         target = section.select_one(link["href"])
         assert target is not None and target.select_one("h3") is not None
-    assert "unrestricted" in section.get_text(" ", strip=True).lower()
+    assert "Explore Axiom in ChatGPT" in section.get_text(" ", strip=True)
+    assert "Availability and maturity" not in section.get_text(" ", strip=True)
     assert not section.select("script,iframe,form,button")
 
 
@@ -128,7 +129,10 @@ def test_only_flagship_page_includes_complete_directory():
     assert {x.get_text(strip=True) for x in axiom.select(".axiom-operation-list code")} == EXPECTED_OPERATIONS
     assert not axiom.find(string=lambda x: x and "AXIOM_CAPABILITY_DIRECTORY" in x)
     assert axiom.select_one('a[href^="https://chatgpt.com/plugins/"]')
-    assert axiom.select_one("section#axiom-full-capabilities .axiom-access-note")
+    assert axiom.select_one("section#axiom-full-capabilities .axiom-explore-cta")
+    assert axiom.select_one("section#axiom-full-capabilities .axiom-explore-cta a[href^='https://chatgpt.com/plugins/']")
+    assert "Availability and maturity" not in axiom.get_text(" ", strip=True)
+    assert "independently certified superiority" not in axiom.get_text(" ", strip=True)
     for route in ("company", "trust", "products/education", "products/foundry"):
         page = (DIST / route / "index.html").read_text(encoding="utf-8")
         assert "axiom-full-capabilities" not in page
@@ -148,10 +152,11 @@ def test_74_operation_directory_is_discoverable_from_home_and_products():
 def test_no_overstated_access_or_backend_requests():
     data = load_capability_catalog()
     directory = render_axiom_catalog().lower()
-    assert "registry snapshot" in directory
-    assert "account eligibility" in directory
-    assert "not live trading" in directory
-    assert "independently certified superiority" in directory
+    assert "capability library" in directory
+    assert "bring your next question to axiom" in directory
+    assert "availability and maturity" not in directory
+    assert "unrestricted anonymous use" not in directory
+    assert "independently certified superiority" not in directory
     assert "fetch(" not in directory
     assert "sk-proj-" not in directory
     assert data["snapshot_date"] == "2026-11-20"
