@@ -158,11 +158,6 @@ body::before{height:700px;background:radial-gradient(ellipse at 83% 7%,rgba(112,
 .analysis-row>span{color:var(--faint);font-size:10px;font-weight:800;letter-spacing:.1em}
 .analysis-row strong{font-size:15px;font-weight:700}
 .analysis-panel>p{margin:21px 0 0!important;font-size:11px!important;color:var(--faint)!important;line-height:1.6!important}
-.proof-story{min-width:0;padding:26px 26px 28px;border:1px solid var(--line);border-radius:16px;background:var(--surface);display:flex;flex-direction:column}
-.proof-story-type{color:var(--mint);font-size:10px;font-weight:820;letter-spacing:.11em}
-.proof-story h3{font-size:24px;letter-spacing:-.04em;margin:24px 0 9px}
-.proof-story p{color:var(--muted);font-size:14px;line-height:1.76;margin:0 0 20px;flex:1}
-.proof-story .text-link{align-self:flex-start}
 .method-layout{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:clamp(38px,7vw,105px)}
 .home-method h2{max-width:630px}
 .home-method p{color:var(--muted);font-size:16px;line-height:1.78;max-width:600px}
@@ -208,10 +203,9 @@ body::before{height:700px;background:radial-gradient(ellipse at 83% 7%,rgba(112,
   .credibility-grid a,.credibility-grid a+a{padding:15px 40px 17px 0;border-left:0}
   .credibility-grid a+a{border-top:1px solid var(--line)}
   .evidence-arrow{right:7px;bottom:19px}
-  .path-grid,.home-proof .three-grid{grid-template-columns:1fr}
+  .path-grid{grid-template-columns:1fr}
   .path-card{min-height:0;padding:25px}
   .path-symbol{margin:12px 0 6px}
-  .proof-story{padding:24px}
   .home-flagship .featured h2,.home-method h2{font-size:clamp(33px,8vw,47px)}
   .home-contact .cta-panel{padding:31px 25px}
   .portfolio-more{align-items:flex-start}
