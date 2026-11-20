@@ -7,7 +7,7 @@
       "intro": "MUSITU Axiom brings specialized mathematical operations into intelligent analytical workflows. It focuses on structured quantitative work whose inputs, methods and results can be examined.",
       "path": "/products/axiom/",
       "evidence": "Published Axiom ChatGPT integration and a current directory of 74 documented operations.",
-      "limits": "No live trading, promised financial outcome, independent superiority certification, unrestricted enterprise account service or generally available integrated billing is established.",
+      "limits": "Mathematical computation for modelling, analysis, optimisation, finance and verification.",
       "category": "Quantitative intelligence"
     },
     {
@@ -17,7 +17,7 @@
       "intro": "MUSITU Education develops and investigates software intended to make revision, knowledge and interactive learning more accessible and purposeful.",
       "path": "/products/education/",
       "evidence": "Chemistry Rescue pages and Chemistry Mastery release notes are public; current release notes document signed Android version 1.3.0.",
-      "limits": "No official examination-board endorsement, guaranteed academic outcomes, claimed school adoption or unrestricted institutional product launch.",
+      "limits": "Chemistry revision, educational practice and learning-technology research.",
       "category": "Learning technology"
     },
     {
@@ -27,7 +27,7 @@
       "intro": "Foundry explores digital production, three-dimensional software and engineering systems that transform ideas into interactive assets.",
       "path": "/products/foundry/",
       "evidence": "An 82-second captured Studio recording and GLB reviewer notes document 13 meshes, 13 nodes, 13 materials and one animation clip.",
-      "limits": "Not a general-availability enterprise 3D editor, GPU-rendering cloud, completed Gemini-to-3D workflow or integrated Studio–Axiom pipeline.",
+      "limits": "Offline 3D editing, animation, animated GLB export and creative engineering.",
       "category": "Creative systems"
     },
     {
@@ -37,7 +37,7 @@
       "intro": "MUSITU Markets explores the foundations of market-facing technology: useful discovery, structured catalog information and responsible software distribution.",
       "path": "/products/markets/",
       "evidence": "Digital-product discovery, structured catalogues and commerce architecture research.",
-      "limits": "No licensed retailer, authorized checkout service, general payment processor or publicly operational unrestricted marketplace is claimed.",
+      "limits": "Digital-product discovery, catalogue architecture and commerce-system research.",
       "category": "Digital markets"
     },
     {
@@ -47,7 +47,7 @@
       "intro": "Frontier Market Intelligence studies quantitative approaches to changing market information, uncertainty and risk-aware financial analysis.",
       "path": "/products/fmi/",
       "evidence": "Quantitative market research and risk-aware model evaluation.",
-      "limits": "No broker execution, autonomous live trading, proven returns, licensed investment advisory service or current predictive guarantee.",
+      "limits": "Quantitative market research, risk evaluation and experimental forecasting methods.",
       "category": "Market research"
     },
     {
@@ -57,7 +57,7 @@
       "intro": "WorldFabric investigates how digital systems can communicate, exchange information and coordinate workflows within defined operational boundaries.",
       "path": "/products/worldfabric/",
       "evidence": "MUSITU Connect interoperability engineering and controlled integration research.",
-      "limits": "No unrestricted enterprise deployment, telecommunications network, autonomous payment fabric or generally available cross-product operating layer is claimed.",
+      "limits": "Interoperability, controlled Connect workflows and infrastructure engineering.",
       "category": "Connected systems"
     }
   ],
