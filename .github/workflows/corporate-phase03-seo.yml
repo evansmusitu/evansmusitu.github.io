@@ -89,12 +89,12 @@ jobs:
           path: corporate/review-artifacts/research-preview/
           if-no-files-found: error
           retention-days: 14
-      - name: Run inherited local HTTP, sitemap and Studio/Store contracts
+      - name: Run inherited HTTP, sitemap, Studio and redesign regressions
         working-directory: corporate
         run: |
           set -euo pipefail
-          python3 -m pip install --disable-pip-version-check 'pytest>=8,<10'
-          python3 -m pytest -q tests/test_http.py tests/test_sitemap.py tests/test_studio_and_store.py
+          python3 -m pip install --disable-pip-version-check 'pytest>=8,<10' 'beautifulsoup4>=4.12,<5'
+          python3 -m pytest -q tests/test_http.py tests/test_sitemap.py tests/test_studio_and_store.py tests/test_redesign.py
 
       - name: Verify source-locked 12 English and 3 French review routes, noindex by default
         working-directory: corporate
@@ -243,7 +243,7 @@ jobs:
     name: Candidate DOM and local HTTP browser acceptance (${{ matrix.engine }})
     needs: production-artifact-contract
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:

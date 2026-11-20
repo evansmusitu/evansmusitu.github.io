@@ -43,6 +43,7 @@ def test_production_robots_sitemap_and_headers():
  headers=(DIST/'_headers').read_text()
  assert "Content-Security-Policy:" in headers and "frame-ancestors 'none'" in headers
  assert 'X-Content-Type-Options: nosniff' in headers
+ assert 'Strict-Transport-Security: max-age=86400' in headers
  assert 'X-Robots-Tag' not in headers
 
 def test_production_legal_identity_and_media():

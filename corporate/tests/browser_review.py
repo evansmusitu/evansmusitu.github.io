@@ -24,6 +24,9 @@ def offline(route,js=True):
     html=p.read_text()
     html=re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>','',html)
     html=html.replace('<link rel="stylesheet" href="/assets/site.css">','<style>'+CSS+'</style>')
+    import urllib.parse
+    favicon=(ROOT/'assets/favicon.svg').read_text(encoding='utf-8')
+    html=html.replace('src="/assets/favicon.svg"','src="data:image/svg+xml,'+urllib.parse.quote(favicon,safe='')+'"')
     html=html.replace('<script src="/assets/site-data.js" defer></script>','<script>'+DATA+'</script>' if js else '')
     html=html.replace('<script src="/assets/site.js" defer></script>','<script>'+APP+'</script>' if js else '')
     return html
@@ -97,21 +100,25 @@ def main():
       page.keyboard.press('Escape')
       assert not page.locator('#search-dialog').evaluate('(e)=>e.open')
     check('local_search',search)
+    page.set_content(offline('/products/'),wait_until='domcontentloaded',timeout=8000)
     def navigator():
       page.locator('[data-goal="foundry"]').first.click()
       assert 'Foundry' in page.locator('[data-goal-title]').first.inner_text()
       assert page.locator('[data-goal-link]').first.get_attribute('href')=='/products/foundry/'
     check('navigator',navigator)
+    page.set_content(offline('/ecosystem/'),wait_until='domcontentloaded',timeout=8000)
     def atlas():
       page.locator('[data-atlas="worldfabric"]').first.click()
       assert 'WorldFabric' in page.locator('[data-atlas-title]').first.inner_text()
     check('atlas',atlas)
+    page.set_content(offline('/products/'),wait_until='domcontentloaded',timeout=8000)
     def evidence():
       page.locator('[data-evidence="axiom"].evidence-open').first.click()
       assert page.locator('#evidence-dialog').evaluate('(e)=>e.open')
       assert 'published' in page.locator('#evidence-dialog-content').inner_text().lower()
       page.locator('#evidence-dialog .dialog-close').click()
     check('evidence_lens',evidence)
+    page.set_content(offline('/'),wait_until='domcontentloaded',timeout=8000)
     def ask():
       page.get_by_role('button',name='Ask MUSITU').first.click()
       assert page.locator('#ask-dialog').evaluate('(e)=>e.open')
