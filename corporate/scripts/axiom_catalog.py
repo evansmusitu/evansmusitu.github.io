@@ -44,8 +44,6 @@ def load_capability_catalog() -> dict:
             unique.add(code)
     if len(unique) != 74 or data.get("operation_count") != 74 or data.get("business_tool_count") != 30:
         raise ValueError("Unreviewed Axiom operation or business-entrypoint count")
-    if not isinstance(data.get("access_note"), str) or not data["access_note"].strip():
-        raise ValueError("Missing public access qualifications")
     return data
 
 
@@ -75,21 +73,24 @@ def render_axiom_catalog() -> str:
     return (
         '<section class="section axiom-directory-section" id="axiom-full-capabilities">'
         '<div class="shell"><div class="section-heading">'
-        '<span class="eyebrow">CURRENT CONNECTED CAPABILITY REGISTRY</span>'
+        '<span class="eyebrow">THE AXIOM CAPABILITY LIBRARY</span>'
         '<h2>Explore all 74 Axiom operations.</h2>'
-        '<p>Go beyond a few examples. Browse the full verified registry snapshot, '
-        'organized by discipline, with plain-language capabilities and exact operation names.</p>'
+        '<p>Discover tools for financial analysis, statistics, mathematics, optimisation and more. '
+        'Browse by discipline and explore the exact capabilities behind each tool.</p>'
         '</div><div class="axiom-metrics" aria-label="Axiom registry snapshot">'
         '<div><strong>74</strong><span>Registered operations</span></div>'
         '<div><strong>18</strong><span>Capability disciplines</span></div>'
-        '<div><strong>30</strong><span>Business-oriented tool entrypoints</span></div>'
-        '</div><p class="axiom-snapshot">Registry snapshot: ' + esc(data["snapshot_date"]) + '. '
-        'The 30 business-oriented entrypoints are tool interfaces, not an additional 30 unique operations.</p>'
+        '<div><strong>30</strong><span>Focused analytical tools</span></div>'
+        '</div><p class="axiom-snapshot">Capability library updated ' + esc(data["snapshot_date"]) + '.</p>'
         '<nav class="axiom-directory-nav" aria-label="Jump to Axiom disciplines">'
         + navigation + '</nav>'
         '<div class="axiom-directory-grid">' + "".join(panels) + '</div>'
-        '<p class="axiom-access-note"><strong>Availability and maturity:</strong> '
-        + esc(data["access_note"]) + ' This directory describes computation, '
-        'not live trading, investment advice, automatic product access or independently certified superiority.</p>'
+        '<div class="axiom-explore-cta"><div><h3>Bring your next question to Axiom.</h3>'
+        '<p>Explore the mathematical tools behind sharper analysis, stronger models and more informed decisions.</p>'
+        '</div><a class="button button-primary" '
+        'href="https://chatgpt.com/plugins/plugin_asdk_app_6ae058ee6cec81919329ae43b76a4c86" '
+        'target="_blank" rel="noopener noreferrer" '
+        'aria-label="Open MUSITU Axiom in ChatGPT (opens in a new tab)">Explore Axiom in ChatGPT ↗</a>'
+        '</div>'
         '</div></section>'
     )
