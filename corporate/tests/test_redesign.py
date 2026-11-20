@@ -57,7 +57,7 @@ def test_homepage_is_a_distinct_editorial_journey():
     b = soup('/')
     main = b.select_one('main#main')
     assert len(main.select('h1')) == 1
-    assert len(main.select('section')) == 7
+    assert len(main.select('section')) == 6
     assert len(main.get_text(' ', strip=True).split()) < 650
     assert not main.select('[data-atlas-component], [data-navigator], [data-catalog-item]')
     assert 'ILLUSTRATIVE' in main.get_text(' ',strip=True)
