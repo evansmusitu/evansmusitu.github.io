@@ -1,0 +1,117 @@
+name: MUSITU corporate redesign acceptance (review only)
+
+on:
+  pull_request:
+    paths:
+      - 'corporate/**'
+      - '.github/workflows/musitu-corporate-redesign-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: musitu-corporate-redesign-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-and-responsive:
+    name: 34-route build, static controls and Chromium
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install isolated reviewer dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pytest==8.4.2' 'beautifulsoup4==4.14.2' 'playwright==1.56.0'
+          python -m playwright install --with-deps chromium
+          npm install --prefix corporate/qa-deps --no-save --no-package-lock --ignore-scripts --no-audit --no-fund axe-core@4.14.0
+      - name: Build review artifact (no production environment)
+        working-directory: corporate
+        env:
+          MUSITU_BUILD_MODE: review
+          MUSITU_PROTECTED_STAGING_MEDIA: '0'
+        run: |
+          set -euo pipefail
+          python scripts/build.py
+          node --check assets/site.js
+          node --check dist/assets/site-data.js
+          python -m py_compile scripts/build.py tests/browser_review.py tests/browser_axe.py tests/test_redesign.py
+      - name: Verify navigation, content, local HTTP and sitemap
+        working-directory: corporate
+        run: python -m pytest -q tests/test_redesign.py tests/test_http.py tests/test_sitemap.py
+      - name: Check rendered DOM and interactive journeys
+        working-directory: corporate
+        run: python tests/browser_review.py
+      - name: Verify automated WCAG 2.2 A/AA criteria (sampled local DOM)
+        working-directory: corporate
+        run: python tests/browser_axe.py
+      - name: Attach browser evidence (for reviewer only)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: musitu-corporate-redesign-review-evidence
+          path: |
+            corporate/review-artifacts/browser-dom-results.json
+            corporate/review-artifacts/axe-review-results.json
+            corporate/review-artifacts/homepage-desktop-dom.png
+            corporate/review-artifacts/homepage-mobile-dom.png
+          if-no-files-found: ignore
+          retention-days: 7
+
+  candidate-local-lighthouse:
+    name: Candidate local-HTTP Lighthouse lab sample (not production)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build noindex candidate and install pinned Lighthouse
+        run: |
+          set -euo pipefail
+          MUSITU_BUILD_MODE=review python corporate/scripts/build.py
+          npm install --global lighthouse@12.8.2
+      - name: Measure mobile and desktop local navigation
+        run: |
+          set -euo pipefail
+          mkdir -p corporate/review-artifacts
+          python corporate/scripts/preview_server.py --port 8765 >/tmp/musitu-qa-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          sleep 2
+          export CHROME_PATH="$(command -v google-chrome || command -v chromium)"
+          test -n "$CHROME_PATH"
+          lighthouse http://127.0.0.1:8765/ --output=json --output-path=/tmp/musitu-candidate-mobile.json --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --quiet --only-categories=performance
+          lighthouse http://127.0.0.1:8765/ --preset=desktop --output=json --output-path=/tmp/musitu-candidate-desktop.json --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --quiet --only-categories=performance
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report={"scope":"unpublished review-mode candidate on loopback HTTP; no CDN, no actual production Studio media; not real-user CWV","samples":{}}
+          keys=("first-contentful-paint","largest-contentful-paint","cumulative-layout-shift","total-blocking-time","speed-index")
+          for device in ("mobile","desktop"):
+              x=json.loads(Path("/tmp/musitu-candidate-"+device+".json").read_text())
+              report["samples"][device]={"performance_score":x["categories"]["performance"]["score"],"metrics":{k:x["audits"][k].get("numericValue") for k in keys}}
+          Path("corporate/review-artifacts/local-candidate-lighthouse.json").write_text(json.dumps(report,indent=2)+"\n")
+          print(json.dumps(report,indent=2))
+          PY
+      - name: Retain synthetic local performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: musitu-candidate-lighthouse-local-only
+          path: corporate/review-artifacts/local-candidate-lighthouse.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+# No deployment, credential access, production URL mutation or search submission.

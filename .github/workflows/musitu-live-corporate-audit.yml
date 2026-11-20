@@ -1,0 +1,78 @@
+name: MUSITU live corporate read-only qualification
+
+on:
+  pull_request:
+    paths:
+      - 'corporate/tests/live_public_readonly_audit.py'
+      - '.github/workflows/musitu-live-corporate-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-http-security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify public host status, canonical, security headers and negative route
+        run: python corporate/tests/live_public_readonly_audit.py
+      - name: Retain privacy-safe GET-only results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: musitu-live-readonly-http-evidence
+          path: corporate/review-artifacts/live-public-readonly-audit.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+  live-lighthouse-sample:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Lighthouse CLI
+        run: npm install --global lighthouse@12.8.2
+      - name: Run read-only external performance samples
+        run: |
+          set -euo pipefail
+          mkdir -p corporate/review-artifacts
+          chrome_path="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$chrome_path"
+          export CHROME_PATH="$chrome_path"
+          lighthouse https://mftintelligence.com/ --output=json --output-path=/tmp/musitu-lighthouse-mobile.json --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --quiet --only-categories=performance,accessibility,best-practices,seo
+          lighthouse https://mftintelligence.com/ --preset=desktop --output=json --output-path=/tmp/musitu-lighthouse-desktop.json --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --quiet --only-categories=performance,accessibility,best-practices,seo
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          out={"scope":"currently live public homepage, not the unpublished redesign candidate","method":"Lighthouse synthetic lab sample from GitHub-hosted Ubuntu runner; not real-user CWV","samples":{}}
+          for device in ("mobile","desktop"):
+              doc=json.loads(Path("/tmp/musitu-lighthouse-"+device+".json").read_text())
+              keys=("first-contentful-paint","largest-contentful-paint","cumulative-layout-shift","total-blocking-time","speed-index")
+              out["samples"][device]={
+                  "scores":{k:doc["categories"].get(k,{}).get("score") for k in ("performance","accessibility","best-practices","seo")},
+                  "audits":{k:doc["audits"].get(k,{}).get("numericValue") for k in keys},
+                  "lighthouse_version":doc.get("lighthouseVersion"),
+                  "requested_url":doc.get("requestedUrl"),"final_url":doc.get("finalDisplayedUrl",doc.get("finalUrl"))
+              }
+          path=Path("corporate/review-artifacts/live-lighthouse-summary.json")
+          path.write_text(json.dumps(out,indent=2)+"\n")
+          print(json.dumps(out,indent=2))
+          PY
+      - name: Retain summarized scores without source HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: musitu-live-lighthouse-summary
+          path: corporate/review-artifacts/live-lighthouse-summary.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+# Explicitly read-only: no Cloudflare/DNS/editorial/sitemap/submission writes.

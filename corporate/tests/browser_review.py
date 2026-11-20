@@ -24,6 +24,12 @@ def offline(route,js=True):
     html=p.read_text()
     html=re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>','',html)
     html=html.replace('<link rel="stylesheet" href="/assets/site.css">','<style>'+CSS+'</style>')
+    # A local DOM screenshot must render the real favicon/brand mark, not a blank
+    # missing-network placeholder. This substitution is for offline QA only.
+    import urllib.parse
+    favicon=(ROOT/'assets/favicon.svg').read_text(encoding='utf-8')
+    html=html.replace('src="/assets/favicon.svg"',
+      'src="data:image/svg+xml,'+urllib.parse.quote(favicon,safe='')+'"')
     html=html.replace('<script src="/assets/site-data.js" defer></script>','<script>'+DATA+'</script>' if js else '')
     html=html.replace('<script src="/assets/site.js" defer></script>','<script>'+APP+'</script>' if js else '')
     return html
@@ -34,7 +40,11 @@ def main():
            'routes_tested':0,'responsive_checks':0,'theme_checks':0,'nojs_checks':0,
            'interactions':{},'errors':[],'overflow':[],'runtime_exceptions':[]}
   with sync_playwright() as pw:
-    browser=pw.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
+    chromium_binary=next((path for path in ('/usr/bin/chromium','/usr/bin/chromium-browser') if Path(path).is_file()),None)
+    if chromium_binary:
+      browser=pw.chromium.launch(executable_path=chromium_binary,headless=True,args=['--no-sandbox'])
+    else:
+      browser=pw.chromium.launch(headless=True,args=['--no-sandbox'])
     ctx=browser.new_context(viewport={'width':1280,'height':800},java_script_enabled=True, reduced_motion='reduce')
     page=ctx.new_page();page.set_default_timeout(2500)
     def pageerror(e):results['runtime_exceptions'].append(str(e))
@@ -89,21 +99,26 @@ def main():
       page.keyboard.press('Escape')
       assert not page.locator('#search-dialog').evaluate('(e)=>e.open')
     check('local_search',search)
+    # Buyer journey tools live on the pages where they add value, not on the homepage.
+    page.set_content(offline('/products/'),wait_until='domcontentloaded',timeout=8000)
     def navigator():
       page.locator('[data-goal="foundry"]').first.click()
       assert 'Foundry' in page.locator('[data-goal-title]').first.inner_text()
       assert page.locator('[data-goal-link]').first.get_attribute('href')=='/products/foundry/'
     check('navigator',navigator)
+    page.set_content(offline('/ecosystem/'),wait_until='domcontentloaded',timeout=8000)
     def atlas():
       page.locator('[data-atlas="worldfabric"]').first.click()
       assert 'WorldFabric' in page.locator('[data-atlas-title]').first.inner_text()
     check('atlas',atlas)
+    page.set_content(offline('/products/'),wait_until='domcontentloaded',timeout=8000)
     def evidence():
       page.locator('[data-evidence="axiom"].evidence-open').first.click()
       assert page.locator('#evidence-dialog').evaluate('(e)=>e.open')
       assert 'published' in page.locator('#evidence-dialog-content').inner_text().lower()
       page.locator('#evidence-dialog .dialog-close').click()
     check('evidence_lens',evidence)
+    page.set_content(offline('/'),wait_until='domcontentloaded',timeout=8000)
     def ask():
       page.get_by_role('button',name='Ask MUSITU').first.click()
       assert page.locator('#ask-dialog').evaluate('(e)=>e.open')
