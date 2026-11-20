@@ -258,3 +258,9 @@ body::before{height:700px;background:radial-gradient(ellipse at 83% 7%,rgba(112,
 .axiom-explore-cta .button{flex-shrink:0;max-width:100%}
 @media(max-width:800px){.axiom-directory-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:550px){.axiom-metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.axiom-metrics>div{padding:12px 9px;border-radius:12px}.axiom-metrics strong{font-size:27px}.axiom-metrics span{font-size:11px}.axiom-domain{padding:17px}.axiom-directory-nav a{padding:8px 10px}}
+
+/* Customer-facing product entrypoint instead of internal release-warning panels. */
+.axiom-product-cta{margin:26px 0 4px;padding:27px clamp(20px,3vw,34px);border:1px solid var(--line);background:var(--surface-2);border-radius:18px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.axiom-product-cta h3{font-size:clamp(20px,2.3vw,28px);margin:0}
+.axiom-product-cta p{font-size:15px;line-height:1.65;color:var(--muted);max-width:720px;margin:0}
+.axiom-product-cta .button{margin-top:9px}
