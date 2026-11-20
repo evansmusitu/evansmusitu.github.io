@@ -1,0 +1,432 @@
+{
+  "version": 1,
+  "snapshot_date": "2026-11-20",
+  "source": "MUSITU Axiom connected plugin capabilities and certified public operation names",
+  "operation_count": 74,
+  "business_tool_count": 30,
+  "access_note": "These are operation names exposed by the connected Axiom registry; account eligibility, authentication, quotas, supported arguments and public ChatGPT listing availability can vary. The catalog is not a promise of unrestricted anonymous use.",
+  "categories": [
+    {
+      "id": "finance",
+      "title": "Finance, portfolios & risk",
+      "description": "Valuation, options, rates, returns, exposure and scenario modelling.",
+      "operations": [
+        {
+          "id": "finance.beta",
+          "label": "Market beta"
+        },
+        {
+          "id": "finance.black_scholes",
+          "label": "Black–Scholes option pricing"
+        },
+        {
+          "id": "finance.bond_price",
+          "label": "Bond pricing"
+        },
+        {
+          "id": "finance.bond_yield",
+          "label": "Bond yield"
+        },
+        {
+          "id": "finance.compound",
+          "label": "Compound growth"
+        },
+        {
+          "id": "finance.cvar_historical",
+          "label": "Historical expected shortfall (CVaR)"
+        },
+        {
+          "id": "finance.drawdown",
+          "label": "Drawdown analysis"
+        },
+        {
+          "id": "finance.duration",
+          "label": "Bond duration"
+        },
+        {
+          "id": "finance.greeks",
+          "label": "Option Greeks"
+        },
+        {
+          "id": "finance.implied_vol",
+          "label": "Implied volatility"
+        },
+        {
+          "id": "finance.monte_carlo_gbm",
+          "label": "Monte Carlo price scenarios"
+        },
+        {
+          "id": "finance.npv",
+          "label": "Net present value (NPV)"
+        },
+        {
+          "id": "finance.portfolio_metrics",
+          "label": "Portfolio performance metrics"
+        },
+        {
+          "id": "finance.returns",
+          "label": "Investment returns"
+        },
+        {
+          "id": "finance.var_historical",
+          "label": "Historical value at risk"
+        },
+        {
+          "id": "finance.var_parametric",
+          "label": "Parametric value at risk"
+        }
+      ]
+    },
+    {
+      "id": "statistics",
+      "title": "Statistics & inference",
+      "description": "Description, association, regression, distribution fitting and tests.",
+      "operations": [
+        {
+          "id": "statistics.correlation",
+          "label": "Correlation"
+        },
+        {
+          "id": "statistics.covariance",
+          "label": "Covariance"
+        },
+        {
+          "id": "statistics.describe",
+          "label": "Descriptive statistics"
+        },
+        {
+          "id": "statistics.normal_fit",
+          "label": "Fit a normal distribution"
+        },
+        {
+          "id": "statistics.quantile",
+          "label": "Quantiles and percentiles"
+        },
+        {
+          "id": "statistics.regression",
+          "label": "Regression"
+        },
+        {
+          "id": "statistics.ttest_ind",
+          "label": "Two-sample t-test"
+        },
+        {
+          "id": "statistics.zscore",
+          "label": "Standard scores (z-scores)"
+        }
+      ]
+    },
+    {
+      "id": "optimization",
+      "title": "Constrained optimization",
+      "description": "Linear and quadratic optimization problems.",
+      "operations": [
+        {
+          "id": "optimization.linear_program",
+          "label": "Linear programming"
+        },
+        {
+          "id": "optimization.quadratic",
+          "label": "Quadratic optimization"
+        }
+      ]
+    },
+    {
+      "id": "timeseries",
+      "title": "Time-series analysis",
+      "description": "Moving averages, smoothing and volatility.",
+      "operations": [
+        {
+          "id": "timeseries.ewma",
+          "label": "Exponentially weighted moving average"
+        },
+        {
+          "id": "timeseries.moving_average",
+          "label": "Moving averages"
+        },
+        {
+          "id": "timeseries.rolling_volatility",
+          "label": "Rolling volatility"
+        }
+      ]
+    },
+    {
+      "id": "algebra",
+      "title": "Symbolic algebra",
+      "description": "Manipulation, simplification, solving and polynomial roots.",
+      "operations": [
+        {
+          "id": "algebra.expand",
+          "label": "Expand expressions"
+        },
+        {
+          "id": "algebra.factor",
+          "label": "Factor expressions"
+        },
+        {
+          "id": "algebra.polynomial_roots",
+          "label": "Polynomial roots"
+        },
+        {
+          "id": "algebra.simplify",
+          "label": "Simplify expressions"
+        },
+        {
+          "id": "algebra.solve",
+          "label": "Solve equations"
+        }
+      ]
+    },
+    {
+      "id": "calculus",
+      "title": "Symbolic calculus",
+      "description": "Differentiation, integration, limits, series and symbolic sums/products.",
+      "operations": [
+        {
+          "id": "calculus.diff",
+          "label": "Symbolic differentiation"
+        },
+        {
+          "id": "calculus.integrate",
+          "label": "Symbolic integration"
+        },
+        {
+          "id": "calculus.limit",
+          "label": "Limits"
+        },
+        {
+          "id": "calculus.product",
+          "label": "Symbolic products"
+        },
+        {
+          "id": "calculus.series",
+          "label": "Series expansions"
+        },
+        {
+          "id": "calculus.sum",
+          "label": "Symbolic summation"
+        }
+      ]
+    },
+    {
+      "id": "linear",
+      "title": "Linear algebra",
+      "description": "Matrices, systems of equations and eigen-analysis.",
+      "operations": [
+        {
+          "id": "linear.det",
+          "label": "Matrix determinant"
+        },
+        {
+          "id": "linear.eigen",
+          "label": "Eigenvalues and eigenvectors"
+        },
+        {
+          "id": "linear.inv",
+          "label": "Matrix inverse"
+        },
+        {
+          "id": "linear.solve",
+          "label": "Solve linear systems"
+        }
+      ]
+    },
+    {
+      "id": "numeric",
+      "title": "Numerical computation",
+      "description": "Root finding, integration, differential equations, interpolation and fitting.",
+      "operations": [
+        {
+          "id": "numeric.integrate",
+          "label": "Numerical integration"
+        },
+        {
+          "id": "numeric.interpolate",
+          "label": "Interpolation"
+        },
+        {
+          "id": "numeric.least_squares",
+          "label": "Least-squares fitting"
+        },
+        {
+          "id": "numeric.ode",
+          "label": "Ordinary differential equations"
+        },
+        {
+          "id": "numeric.optimize_scalar",
+          "label": "Scalar optimization"
+        },
+        {
+          "id": "numeric.root",
+          "label": "Numerical root finding"
+        }
+      ]
+    },
+    {
+      "id": "probability",
+      "title": "Probability distributions",
+      "description": "Normal, binomial, Poisson, exponential and chi-square calculations.",
+      "operations": [
+        {
+          "id": "probability.binomial_pmf",
+          "label": "Binomial probabilities"
+        },
+        {
+          "id": "probability.chi2_cdf",
+          "label": "Chi-square cumulative probability"
+        },
+        {
+          "id": "probability.exponential_cdf",
+          "label": "Exponential cumulative probability"
+        },
+        {
+          "id": "probability.normal_cdf",
+          "label": "Normal cumulative probability"
+        },
+        {
+          "id": "probability.normal_ppf",
+          "label": "Normal quantiles"
+        },
+        {
+          "id": "probability.poisson_pmf",
+          "label": "Poisson probabilities"
+        }
+      ]
+    },
+    {
+      "id": "arithmetic",
+      "title": "Arithmetic",
+      "description": "Deterministic numerical expression evaluation.",
+      "operations": [
+        {
+          "id": "arithmetic.evaluate",
+          "label": "Arithmetic expressions"
+        }
+      ]
+    },
+    {
+      "id": "verify",
+      "title": "Computation checks",
+      "description": "Evaluation checks and cross-checking methods.",
+      "operations": [
+        {
+          "id": "verify.crosscheck",
+          "label": "Cross-check calculations"
+        },
+        {
+          "id": "verify.evaluate",
+          "label": "Evaluation verification"
+        }
+      ]
+    },
+    {
+      "id": "verified",
+      "title": "Verified intervals",
+      "description": "Interval-based calculation with explicit bounds.",
+      "operations": [
+        {
+          "id": "verified.interval_eval",
+          "label": "Interval evaluation"
+        }
+      ]
+    },
+    {
+      "id": "geometry",
+      "title": "Geometry",
+      "description": "Distances, planar area and 3D volumes.",
+      "operations": [
+        {
+          "id": "geometry.area_circle",
+          "label": "Circle area"
+        },
+        {
+          "id": "geometry.distance",
+          "label": "Distance between points"
+        },
+        {
+          "id": "geometry.volume_sphere",
+          "label": "Sphere volume"
+        }
+      ]
+    },
+    {
+      "id": "transforms",
+      "title": "Signal transforms",
+      "description": "Fast Fourier transform and its inverse.",
+      "operations": [
+        {
+          "id": "transforms.fft",
+          "label": "Fast Fourier transform (FFT)"
+        },
+        {
+          "id": "transforms.ifft",
+          "label": "Inverse Fourier transform (IFFT)"
+        }
+      ]
+    },
+    {
+      "id": "combinatorics",
+      "title": "Combinatorics",
+      "description": "Counting combinations and factorials.",
+      "operations": [
+        {
+          "id": "combinatorics.binomial",
+          "label": "Binomial coefficients"
+        },
+        {
+          "id": "combinatorics.factorial",
+          "label": "Factorials"
+        }
+      ]
+    },
+    {
+      "id": "numbertheory",
+      "title": "Number theory",
+      "description": "Primality, factorization and greatest/least common multiples.",
+      "operations": [
+        {
+          "id": "numbertheory.factorint",
+          "label": "Integer factorization"
+        },
+        {
+          "id": "numbertheory.gcd",
+          "label": "Greatest common divisor"
+        },
+        {
+          "id": "numbertheory.isprime",
+          "label": "Primality testing"
+        },
+        {
+          "id": "numbertheory.lcm",
+          "label": "Least common multiple"
+        }
+      ]
+    },
+    {
+      "id": "units",
+      "title": "Unit conversion",
+      "description": "Explicit dimensional or quantity conversions.",
+      "operations": [
+        {
+          "id": "units.convert",
+          "label": "Unit conversion"
+        }
+      ]
+    },
+    {
+      "id": "knowledge",
+      "title": "Scientific reference",
+      "description": "Physical constants and chemical-element facts.",
+      "operations": [
+        {
+          "id": "knowledge.constant",
+          "label": "Scientific constants"
+        },
+        {
+          "id": "knowledge.element",
+          "label": "Chemical element lookup"
+        }
+      ]
+    }
+  ]
+}
