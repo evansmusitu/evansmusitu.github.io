@@ -2,3 +2,8 @@
 # Owner approval for corporate website use is not blanket public Git source distribution permission.
 assets/studio-demo-82s.mp4
 assets/studio-poster.png
+# Generated review-only and deployable artifacts must never be committed accidentally.
+dist/
+review-artifacts/
+__pycache__/
+*.pyc

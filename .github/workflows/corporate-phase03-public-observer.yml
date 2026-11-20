@@ -1,0 +1,19 @@
+name: MUSITU Phase 03 Independent Public SEO Observer
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-seo-verification:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check deployed public corporate Pages without credentials
+        working-directory: corporate
+        run: python3 scripts/public_seo_observer.py

@@ -1,0 +1,246 @@
+{
+  "version": 1,
+  "origin": "https://mftintelligence.com",
+  "language": "en",
+  "published_languages": [
+    "en"
+  ],
+  "unpublished_language_pilots": [
+    "fr",
+    "pt"
+  ],
+  "discovery_policy": "Only verified, production-published URLs are indexable. Localized pilots remain out of sitemaps until professionally reviewed and deployed.",
+  "routes": {
+    "/": {
+      "primary_query": "MUSITU technology and intelligent software",
+      "page_kind": "brand",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/company/": {
+      "primary_query": "About MUSITU technology organization",
+      "page_kind": "organization",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/trust/": {
+      "primary_query": "Responsible AI and technology governance",
+      "page_kind": "trust",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/accessibility/": {
+      "primary_query": "MUSITU website accessibility",
+      "page_kind": "trust",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/products/": {
+      "primary_query": "MUSITU technology products",
+      "page_kind": "portfolio",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/products/axiom/": {
+      "primary_query": "MUSITU Axiom quantitative analysis",
+      "page_kind": "software",
+      "search_intent": "product-evaluation",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/products/education/": {
+      "primary_query": "MUSITU education software",
+      "page_kind": "portfolio",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/products/foundry/": {
+      "primary_query": "MUSITU creative technology",
+      "page_kind": "portfolio",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/products/markets/": {
+      "primary_query": "MUSITU digital markets technology",
+      "page_kind": "portfolio",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/products/fmi/": {
+      "primary_query": "Frontier market intelligence research",
+      "page_kind": "portfolio",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/products/worldfabric/": {
+      "primary_query": "MUSITU connected digital systems",
+      "page_kind": "portfolio",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/products/education/chemistry-rescue/": {
+      "primary_query": "Chemistry Rescue learning experience",
+      "page_kind": "software",
+      "search_intent": "product-evaluation",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/products/foundry/studio/": {
+      "primary_query": "MUSITU Studio 3D software prototype",
+      "page_kind": "software",
+      "search_intent": "product-evaluation",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/solutions/": {
+      "primary_query": "MUSITU technology solutions",
+      "page_kind": "solutions",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/solutions/finance-research/": {
+      "primary_query": "Quantitative financial research tools",
+      "page_kind": "solutions",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/solutions/learning/": {
+      "primary_query": "Interactive education technology",
+      "page_kind": "solutions",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/solutions/creative-production/": {
+      "primary_query": "3D creative production software",
+      "page_kind": "solutions",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/solutions/enterprise-systems/": {
+      "primary_query": "Enterprise software interoperability",
+      "page_kind": "solutions",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/experiences/": {
+      "primary_query": "MUSITU product demonstrations",
+      "page_kind": "experiences",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/experiences/intelligence/": {
+      "primary_query": "MUSITU Intelligence assistant",
+      "page_kind": "experiences",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/experiences/lab/": {
+      "primary_query": "MUSITU interactive experience lab",
+      "page_kind": "experiences",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/ecosystem/": {
+      "primary_query": "MUSITU technology ecosystem",
+      "page_kind": "portfolio",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/research/": {
+      "primary_query": "MUSITU quantitative and technology research",
+      "page_kind": "research-hub",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/evidence/": {
+      "primary_query": "MUSITU technology evidence and limitations",
+      "page_kind": "trust",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/resources/": {
+      "primary_query": "MUSITU technical resources",
+      "page_kind": "resources",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/developers/": {
+      "primary_query": "MUSITU developer information",
+      "page_kind": "developers",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/news/": {
+      "primary_query": "MUSITU technology news",
+      "page_kind": "news",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/contact/": {
+      "primary_query": "Contact MUSITU",
+      "page_kind": "contact",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/support/": {
+      "primary_query": "MUSITU product support",
+      "page_kind": "support",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/status/": {
+      "primary_query": "MUSITU service status",
+      "page_kind": "status",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/legal/privacy/": {
+      "primary_query": "MUSITU Privacy Policy",
+      "page_kind": "legal",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/legal/terms/": {
+      "primary_query": "MUSITU Terms of Use",
+      "page_kind": "legal",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/sitemap/": {
+      "primary_query": "MUSITU website sitemap",
+      "page_kind": "navigation",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    }
+  }
+}

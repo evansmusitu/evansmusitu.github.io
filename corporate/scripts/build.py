@@ -7,6 +7,10 @@ Keep conditional routes noindex; canonical production domain must be approved se
 from __future__ import annotations
 import hashlib, html, json, re, shutil, os
 from pathlib import Path
+from seo import seo_head, validate_catalog
+from phase03_publication import (approved_sources, article_routes, article_info, article_head,
+  localize_english_core, french_info, french_head, french_records, hreflang, FR_EN,
+  actual_publication_date)
 
 BASE=Path(__file__).resolve().parents[1]
 SRC=BASE/'content/pages.json'
@@ -53,8 +57,9 @@ def validate(records:dict)->None:
  if len(ROUTES)!=34:raise ValueError('Master route count changed')
  for route,info in records.items():
   if not(route.startswith('/') and route.endswith('/')):raise ValueError('Route shape '+route)
-  for name in ('header','main','title','description'):
+  for name in ('main','title','description'):
    if not isinstance(info.get(name),str) or not info[name].strip():raise ValueError(f'Incomplete page {route} {name}')
+  if 'header' in info:raise ValueError('Shared header must be owned by templates/header.html')
   if '<main' not in info['main'] or 'id="main"' not in info['main']:
    raise ValueError('Missing proper page main '+route)
   if '__VIDEO_PLACEHOLDER__' in info['main'] or 'data:video/' in info['main'] or 'data:image/png;base64,' in info['main']:
@@ -92,7 +97,26 @@ def add_protected_studio_player(body:str)->str:
  if count!=1:raise ValueError('Studio media gate is missing in target route')
  return result
 
-def render(route:str,info:dict,shared:dict,staged_media:bool=False,mode:str='review',origin:str|None=None)->str:
+def render_header(route:str,template:str)->str:
+ """Single nav source with route-aware desktop/mobile current-page semantics."""
+ group=None
+ if route.startswith('/products/'):group='Products'
+ elif route.startswith('/solutions/'):group='Solutions'
+ elif route.startswith('/experiences/') or route.startswith('/ecosystem/'):group='Experiences'
+ elif route.startswith('/research/') or route.startswith('/evidence/') or route.startswith('/news/'):group='Research'
+ elif route in ('/company/','/trust/','/accessibility/','/contact/'):group='Company'
+ elif route in ('/resources/','/developers/','/support/','/sitemap/'):group='Resources'
+ rendered=template.rstrip()
+ if group:
+  old=f'<details class="nav-group"><summary>{group} '
+  if rendered.count(old)!=1:raise ValueError('Missing unique navigation group '+group)
+  rendered=rendered.replace(old,f'<details class="nav-group"><summary class="active">{group} ',1)
+ if route!='/':
+  old=f'<a class="nav-link" href="{html.escape(route,quote=True)}">'
+  rendered=rendered.replace(old,f'<a aria-current="page" class="nav-link" href="{html.escape(route,quote=True)}">')
+ return rendered
+
+def render(route:str,info:dict,shared:dict,staged_media:bool=False,mode:str='review',origin:str|None=None,seo_html:str='')->str:
  title=html.escape(info['title'],quote=True)
  desc=html.escape(info['description'],quote=True)
  production=mode=='production'
@@ -107,7 +131,8 @@ def render(route:str,info:dict,shared:dict,staged_media:bool=False,mode:str='rev
  canonical='' if not production or route=='/404/' else f'<link rel="canonical" href="{origin}{route}">\n'
  ogurl='' if not production or route=='/404/' else f'<meta property="og:url" content="{origin}{route}">\n'
  stage='' if production else '<meta name="stage" content="isolated-review-not-published">\n'
- body='\n'.join([shared['skip'],info['header'],ribbon,info['main'],footer,shared['dialogs']])
+ header_markup=info['header'] if route.startswith('/fr/') else render_header(route,shared['header'])
+ body='\n'.join([shared['skip'],header_markup,ribbon,info['main'],footer,shared['dialogs']])
  if staged_media and route in ('/products/foundry/studio/','/experiences/lab/'):
   body=add_protected_studio_player(body)
  return ('<!doctype html>\n<html lang="en" data-theme="dark">\n<head>\n'
@@ -120,7 +145,7 @@ def render(route:str,info:dict,shared:dict,staged_media:bool=False,mode:str='rev
  f'<meta property="og:title" content="{title}">\n'
  f'<meta property="og:description" content="{desc}">\n'
  '<meta property="og:type" content="website">\n'
- +ogurl+canonical+stage+
+  +ogurl+canonical+stage+seo_html+
  f'<meta http-equiv="Content-Security-Policy" content="{html.escape(META_CSP,quote=True)}">\n'
  f'<title>{title}</title>\n'
  '<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">\n'
@@ -134,9 +159,19 @@ def build()->dict:
  mode=current_build_mode()
  origin=canonical_origin(mode)
  records=json.loads(SRC.read_text(encoding='utf-8'))
+ publication_flag=os.environ.get('MUSITU_PUBLISH_PHASE03','0')
+ if publication_flag not in ('0','1'):raise ValueError('MUSITU_PUBLISH_PHASE03 must be 0 or 1')
+ publication_enabled=publication_flag=='1'
+ publication_date=actual_publication_date() if publication_enabled and mode=='production' else None
+ articles=approved_sources() if publication_enabled else []
+ french=french_records() if publication_enabled else {}
+ extra_routes=article_routes(articles)+list(french)
+ if len(extra_routes)!=len(set(extra_routes)) or any(route in ROUTES for route in extra_routes):
+  raise ValueError('Publication route collision')
  validate(records)
+ if mode=='production':validate_catalog(ROUTES)
  shared={p.stem:p.read_text(encoding='utf-8') for p in TEMPLATES.glob('*.html')}
- if set(shared)!={'skip','review-ribbon','footer','dialogs'}:raise ValueError('Unexpected shared templates')
+ if set(shared)!={'skip','review-ribbon','footer','dialogs','header'}:raise ValueError('Unexpected shared templates')
  if DST.exists():shutil.rmtree(DST)
  DST.mkdir(parents=True)
  asset_dest=DST/'assets';asset_dest.mkdir()
@@ -160,14 +195,47 @@ def build()->dict:
  for route in ROUTES:
   dest=DST/route.lstrip('/')/'index.html'
   dest.parent.mkdir(parents=True,exist_ok=True)
-  dest.write_text(render(route,records[route],shared,staged_media=staged_media,mode=mode,origin=origin),encoding='utf-8')
- # Cloudflare Pages needs a top-level 404.html to avoid returning HTTP 200
- # and the home page canonical for unknown static routes.
- # This is a byte-identical copy of the already approved /404/ content.
+  info=localize_english_core(route,records[route],articles) if publication_enabled else records[route]
+  seo_html=seo_head(route,info,records,origin) if mode=='production' else ''
+  if publication_enabled and mode=='production':seo_html+=hreflang(route)
+  dest.write_text(render(route,info,shared,staged_media=staged_media,mode=mode,origin=origin,seo_html=seo_html),encoding='utf-8')
+ if publication_enabled:
+  for article in articles:
+   route='/research/articles/'+article['slug']+'/'
+   info=article_info(article,render_header('/research/',shared['header']),publication_date)
+   dest=DST/route.lstrip('/')/'index.html'
+   dest.parent.mkdir(parents=True,exist_ok=True)
+   seo_html=article_head(article) if mode=='production' else ''
+   dest.write_text(render(route,info,shared,mode=mode,origin=origin,seo_html=seo_html),encoding='utf-8')
+  shared_fr={**shared,
+    'skip':'<a class="skip-link" href="#main">Aller au contenu principal</a>',
+    'review-ribbon':'<div class="review-ribbon" role="note">Aperçu protégé · non indexé</div>',
+    'dialogs':'',
+    'footer':('<footer class="site-footer"><div class="shell footer-main"><div class="footer-col">'
+      '<h2>MUSITU</h2><p>Intelligence fondée sur des preuves. Technologie au service d’un objectif.</p>'
+      '<a href="/fr/">Accueil</a><a href="/fr/research/">Recherche</a>'
+      '<a href="/fr/products/axiom/">Axiom</a></div>'
+      '<div class="footer-col"><h2>Informations et contact</h2>'
+      '<a href="/contact/" lang="en">Contact (English)</a>'
+      '<a href="/legal/privacy/" lang="en">Privacy Policy (English)</a>'
+      '<a href="/legal/terms/" lang="en">Terms (English)</a>'
+      '<a href="/accessibility/" lang="en">Accessibility (English)</a></div></div>'
+      '<div class="shell footer-bottom"><span>© 2026 MUSITU.</span></div></footer>')}
+  for route,pilot in french.items():
+   info=french_info(route,records[FR_EN[route]],pilot)
+   dest=DST/route.lstrip('/')/'index.html'
+   dest.parent.mkdir(parents=True,exist_ok=True)
+   seo_html=french_head(route,info) if mode=='production' else ''
+   rendered=render(route,info,shared_fr,mode=mode,origin=origin,seo_html=seo_html)
+   rendered=rendered.replace('<html lang="en"','<html lang="fr"',1)
+   dest.write_text(rendered,encoding='utf-8')
+ # Cloudflare Pages requires a top-level 404.html to disable its automatic
+ # HTTP 200 single-page-application fallback for unknown static routes.
+ # Keep the existing /404/ page, but use this noindex copy for actual 404s.
  (DST/'404.html').write_bytes((DST/'404'/'index.html').read_bytes())
  if mode=='production':
   (DST/'robots.txt').write_text(f'User-agent: *\nAllow: /\nSitemap: {origin}/sitemap.xml\n',encoding='utf-8')
-  urls=''.join(f'<url><loc>{origin}{route}</loc></url>' for route in ROUTES if route!='/404/')
+  urls=''.join(f'<url><loc>{origin}{route}</loc></url>' for route in [r for r in ROUTES if r!='/404/']+extra_routes)
   (DST/'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+urls+'</urlset>\n',encoding='utf-8')
   (DST/'_headers').write_text(
    "/*\n"
@@ -175,13 +243,18 @@ def build()->dict:
    "  X-Content-Type-Options: nosniff\n"
    "  Referrer-Policy: strict-origin-when-cross-origin\n"
    "  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()\n"
-   "  X-Frame-Options: DENY\n",encoding='utf-8')
+   "  X-Frame-Options: DENY\n"
+   "  Strict-Transport-Security: max-age=86400\n",encoding='utf-8')
  else:
   (DST/'robots.txt').write_text('User-agent: *\nDisallow: /\n',encoding='utf-8')
  compiled={p.relative_to(DST).as_posix():hash_bytes(p.read_bytes()) for p in sorted(DST.rglob('*')) if p.is_file() and p.name!='manifest.json'}
  manifest={'document':'MUSITU-WEB-MASTER-1.0','authorization':'Package A production candidate' if mode=='production' else 'Package A local only',
     'build_mode':mode,'canonical_origin':origin,'indexing_enabled':mode=='production',
-    'production_approved':False,'media_publication_approved':True,'brand_master_approved':True,'brand_master_sha256':'f0e73478176b335bf3cfb5afd8bd7249d5aa39f2627798af7c71d9f13972c2fd','protected_staging_media_included':staged_media if mode=='review' else False,'studio_media_included':staged_media,'route_count':len(ROUTES),
+    'production_approved':False,'media_publication_approved':True,'brand_master_approved':True,'brand_master_sha256':'f0e73478176b335bf3cfb5afd8bd7249d5aa39f2627798af7c71d9f13972c2fd','protected_staging_media_included':staged_media if mode=='review' else False,'studio_media_included':staged_media,'route_count':len(ROUTES)+len(extra_routes),
+    'phase03_publication_source_approved':publication_enabled,
+    'phase03_publication_routes':extra_routes,
+    'phase03_publication_indexable':publication_enabled and mode=='production',
+    'phase03_article_publication_date':publication_date,
     'routes':ROUTES,'gated_routes':sorted(GATED),'files':compiled}
  (DST/'manifest.json').write_text(json.dumps(manifest,sort_keys=True,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
  return manifest

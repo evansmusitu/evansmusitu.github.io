@@ -1,5 +1,5 @@
 {
-  "review_date": "2026-11-06",
+  "review_date": "2026-11-20",
   "package": "A",
   "source_origin": "owner uploaded 34-route offline preview",
   "owner_approved_remote_push": true,
@@ -100,5 +100,30 @@
   "policy_copy_paths": [
     "/legal/privacy/",
     "/legal/terms/"
-  ]
+  ],
+  "current_unified_candidate": {
+    "review_date": "2026-11-20",
+    "release_pr": 39,
+    "release_branch": "corporate-unified-release-candidate-20261120",
+    "last_verified_source_commit": "760bb4e730917c69f0e985eeb5719c5095a2cc3f",
+    "last_verified_source_ci_run": 44695006097,
+    "source_status": "automated_source_qualified_at_recorded_commit_only",
+    "scope": "corporate_site_only",
+    "core_routes": 34,
+    "optional_phase03_routes": 15,
+    "phase03_default_publish_flag": "0",
+    "production_approved": false,
+    "deployed": false,
+    "live_accepted": false,
+    "human_real_device_acceptance": "not_evidenced",
+    "manual_accessibility_acceptance": "not_evidenced",
+    "legal_privacy_operator_signoff": "not_evidenced",
+    "actual_hosted_candidate_security_and_performance": "not_evidenced",
+    "external_origin_support_thread_and_authenticated_reply": "not_evidenced",
+    "production_restore_and_rollback_rehearsal": "not_evidenced",
+    "international_editorial_and_language_review": "not_evidenced",
+    "release_instruction": "Do not merge, deploy, publish Phase 03, or submit new sitemaps until the current commit is qualified and independently approved.",
+    "evidence_caveat": "The source run qualifies only its exact historical commit; later edits require fresh exact-commit CI."
+  },
+  "release_history_note": "The original 2026-11-06 review fields and PR #32 references below are historical, not authority to launch the current unified release."
 }
