@@ -1,0 +1,63 @@
+name: MUSITU corporate redesign acceptance (review only)
+
+on:
+  pull_request:
+    paths:
+      - 'corporate/**'
+      - '.github/workflows/musitu-corporate-redesign-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: musitu-corporate-redesign-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-and-responsive:
+    name: 34-route build, static controls and Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install isolated reviewer dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pytest==8.4.2' 'beautifulsoup4==4.14.2' 'playwright==1.56.0'
+          python -m playwright install --with-deps chromium
+      - name: Build review artifact (no production environment)
+        working-directory: corporate
+        env:
+          MUSITU_BUILD_MODE: review
+          MUSITU_PROTECTED_STAGING_MEDIA: '0'
+        run: |
+          set -euo pipefail
+          python scripts/build.py
+          node --check assets/site.js
+          node --check dist/assets/site-data.js
+          python -m py_compile scripts/build.py tests/browser_review.py tests/test_redesign.py
+      - name: Verify navigation, content, local HTTP and sitemap
+        working-directory: corporate
+        run: python -m pytest -q tests/test_redesign.py tests/test_http.py tests/test_sitemap.py
+      - name: Check rendered DOM and interactive journeys
+        working-directory: corporate
+        run: python tests/browser_review.py
+      - name: Attach browser evidence (for reviewer only)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: musitu-corporate-redesign-review-evidence
+          path: |
+            corporate/review-artifacts/browser-dom-results.json
+            corporate/review-artifacts/homepage-desktop-dom.png
+            corporate/review-artifacts/homepage-mobile-dom.png
+          if-no-files-found: ignore
+          retention-days: 7
+
+# No deployment, credential access, production URL mutation or search submission.
