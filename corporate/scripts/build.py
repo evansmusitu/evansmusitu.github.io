@@ -102,7 +102,7 @@ def render_header(route:str,template:str)->str:
  elif route.startswith('/research/') or route.startswith('/evidence/') or route.startswith('/news/'):group='Research'
  elif route in ('/company/','/trust/','/accessibility/','/contact/'):group='Company'
  elif route in ('/resources/','/developers/','/support/','/sitemap/'):group='Resources'
- rendered=template.rstrip('\\n')
+ rendered=template.rstrip()
  if group:
   old=f'<details class="nav-group"><summary>{group} '
   if rendered.count(old)!=1:raise ValueError('Missing unique navigation group '+group)
