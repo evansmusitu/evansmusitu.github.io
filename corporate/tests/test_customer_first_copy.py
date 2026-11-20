@@ -55,6 +55,7 @@ def test_axiom_directory_has_positive_action_instead_of_access_warning():
     assert not directory.select(".axiom-access-note,.notice")
     cta=directory.select_one(".axiom-explore-cta")
     assert cta and cta.select_one('a[href^="https://chatgpt.com/plugins/"]')
+    assert cta.select_one("a")["aria-label"].startswith("Explore Axiom in ChatGPT")
     lead=main.select_one(".axiom-product-cta")
     assert lead and lead.select_one('a[href^="https://chatgpt.com/plugins/"]')
     assert "74 documented operations" in main.get_text(" ",strip=True)
