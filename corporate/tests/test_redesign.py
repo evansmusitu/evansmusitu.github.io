@@ -61,7 +61,7 @@ def test_homepage_is_a_distinct_editorial_journey():
     assert len(main.get_text(' ', strip=True).split()) < 650
     assert not main.select('[data-atlas-component], [data-navigator], [data-catalog-item]')
     assert 'ILLUSTRATIVE' in main.get_text(' ',strip=True)
-    assert 'not a live computation' in main.get_text(' ',strip=True)
+    assert 'Illustrative workflow' in main.get_text(' ',strip=True)
     for path in ('/products/', '/products/axiom/', '/products/education/', '/products/foundry/',
                  '/products/foundry/studio/', '/products/education/chemistry-rescue/',
                  '/evidence/', '/trust/', '/contact/'):
