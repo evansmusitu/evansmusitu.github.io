@@ -24,6 +24,12 @@ def offline(route,js=True):
     html=p.read_text()
     html=re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>','',html)
     html=html.replace('<link rel="stylesheet" href="/assets/site.css">','<style>'+CSS+'</style>')
+    # A local DOM screenshot must render the real favicon/brand mark, not a blank
+    # missing-network placeholder. This substitution is for offline QA only.
+    import urllib.parse
+    favicon=(ROOT/'assets/favicon.svg').read_text(encoding='utf-8')
+    html=html.replace('src="/assets/favicon.svg"',
+      'src="data:image/svg+xml,'+urllib.parse.quote(favicon,safe='')+'"')
     html=html.replace('<script src="/assets/site-data.js" defer></script>','<script>'+DATA+'</script>' if js else '')
     html=html.replace('<script src="/assets/site.js" defer></script>','<script>'+APP+'</script>' if js else '')
     return html
