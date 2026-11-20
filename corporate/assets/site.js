@@ -107,7 +107,7 @@
     const holder=$('#evidence-dialog-content');if(!holder)return;holder.replaceChildren();
     const h=document.createElement('h3');h.textContent=rec.title;holder.appendChild(h);
     const dl=document.createElement('dl');holder.appendChild(dl);
-    [['Associated technology',rec.family],['Evidence type',rec.kind],['Reviewed',rec.date],['Public claim',rec.claim],['What was established',rec.establishes],['What was not established',rec.limits]].forEach(([label,value])=>{
+    [['Associated technology',rec.family],['Evidence type',rec.kind],['Reviewed',rec.date],['Public claim',rec.claim],['What was established',rec.establishes],['Scope of this record',rec.limits]].forEach(([label,value])=>{
       const dt=document.createElement('dt');dt.textContent=label;const dd=document.createElement('dd');dd.textContent=value;dl.append(dt,dd);
     });
     const allowed=data.routes.some(p=>p.path===rec.link)||['https://evansmusitu.github.io/','https://payments.mftintelligence.com/chemistry/releases'].includes(rec.link);
