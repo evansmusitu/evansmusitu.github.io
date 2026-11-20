@@ -6,7 +6,7 @@
       "short": "Axiom",
       "intro": "MUSITU Axiom brings specialized mathematical operations into intelligent analytical workflows. It focuses on structured quantitative work whose inputs, methods and results can be examined.",
       "path": "/products/axiom/",
-      "evidence": "Documented published ChatGPT integration v2.0.4; later corrections and broader enterprise features remain separate engineering work.",
+      "evidence": "Published Axiom ChatGPT integration and a current directory of 74 documented operations.",
       "limits": "No live trading, promised financial outcome, independent superiority certification, unrestricted enterprise account service or generally available integrated billing is established.",
       "category": "Quantitative intelligence"
     },
@@ -36,7 +36,7 @@
       "short": "Markets",
       "intro": "MUSITU Markets explores the foundations of market-facing technology: useful discovery, structured catalog information and responsible software distribution.",
       "path": "/products/markets/",
-      "evidence": "Store V2 architecture research exists, but an unrestricted public marketplace release has not been established.",
+      "evidence": "Digital-product discovery, structured catalogues and commerce architecture research.",
       "limits": "No licensed retailer, authorized checkout service, general payment processor or publicly operational unrestricted marketplace is claimed.",
       "category": "Digital markets"
     },
@@ -46,7 +46,7 @@
       "short": "Frontier Market Intelligence",
       "intro": "Frontier Market Intelligence studies quantitative approaches to changing market information, uncertainty and risk-aware financial analysis.",
       "path": "/products/fmi/",
-      "evidence": "Technical research and experimental model work are documented in controlled development records, not as a public production trading system.",
+      "evidence": "Quantitative market research and risk-aware model evaluation.",
       "limits": "No broker execution, autonomous live trading, proven returns, licensed investment advisory service or current predictive guarantee.",
       "category": "Market research"
     },
@@ -56,7 +56,7 @@
       "short": "WorldFabric",
       "intro": "WorldFabric investigates how digital systems can communicate, exchange information and coordinate workflows within defined operational boundaries.",
       "path": "/products/worldfabric/",
-      "evidence": "Controlled MUSITU Connect runtime work is documented; commercial general availability is not established.",
+      "evidence": "MUSITU Connect interoperability engineering and controlled integration research.",
       "limits": "No unrestricted enterprise deployment, telecommunications network, autonomous payment fabric or generally available cross-product operating layer is claimed.",
       "category": "Connected systems"
     }
@@ -70,7 +70,7 @@
       "date": "2026-11-03",
       "claim": "Axiom has a documented published ChatGPT integration.",
       "establishes": "A published integration release was recorded and separately distinguished from development-stage changes.",
-      "limits": "Does not establish current app-listing access, enterprise general availability, independent superiority certification or trading.",
+      "limits": "The public ChatGPT integration release record and its published technical context.",
       "link": "/products/axiom/"
     },
     {
@@ -81,7 +81,7 @@
       "date": "2026-11-03",
       "claim": "Chemistry Mastery release notes identify Android version 1.3.0.",
       "establishes": "The official product pages publicly described version 1.3.0 as the stable signed Android release on the review date.",
-      "limits": "Public-page retrieval does not constitute downloading or independently validating the installed package. No guaranteed academic outcomes.",
+      "limits": "The Chemistry Mastery release notes and public learning experience reviewed on this date.",
       "link": "https://payments.mftintelligence.com/chemistry/releases"
     },
     {
@@ -92,29 +92,29 @@
       "date": "2026-10-25",
       "claim": "An authentic offline Studio demo shows scene manipulation and animated GLB export.",
       "establishes": "A recorded sequence shows camera manipulation, object creation, keyframe animation and an exported GLB artifact.",
-      "limits": "No generally available cloud/GPU service, Gemini-to-3D pipeline or connected Axiom–Studio production runtime.",
+      "limits": "The 82-second demonstration of offline scene editing, keyframes and animated GLB export.",
       "link": "/products/foundry/studio/"
     },
     {
       "id": "markets",
-      "title": "Markets research boundary",
+      "title": "Markets research overview",
       "family": "MUSITU Markets",
-      "kind": "Research-stage summary",
+      "kind": "Research overview",
       "date": "2026-11-03",
       "claim": "Markets investigates digital-product discovery and commerce architecture.",
       "establishes": "A development and research direction is documented within the canonical family portfolio.",
-      "limits": "Does not establish an operating marketplace or authorized checkout.",
+      "limits": "Research into digital-product discovery, catalogue design and commerce architecture.",
       "link": "/products/markets/"
     },
     {
       "id": "fmi",
-      "title": "Frontier market research boundary",
+      "title": "Frontier market research overview",
       "family": "MUSITU Frontier Market Intelligence",
-      "kind": "Research-stage summary",
+      "kind": "Research overview",
       "date": "2026-11-03",
       "claim": "FMI investigates risk-aware quantitative market analysis.",
       "establishes": "A bounded research direction and controlled technical studies are documented.",
-      "limits": "No live broker execution, proven returns or public trading authority.",
+      "limits": "Technical research into risk-aware modelling, market data and method evaluation.",
       "link": "/products/fmi/"
     },
     {
@@ -125,7 +125,7 @@
       "date": "2026-11-03",
       "claim": "WorldFabric includes documented controlled interoperability research.",
       "establishes": "A software integration and infrastructure research direction exists, with controlled Connect runtime records.",
-      "limits": "Does not establish unrestricted commercial availability, authorized communications or live payment services.",
+      "limits": "MUSITU Connect interoperability research and controlled integration workflows.",
       "link": "/products/worldfabric/"
     },
     {
@@ -136,7 +136,7 @@
       "date": "2026-11-03",
       "claim": "An existing public Intelligence experience is available at its separate origin.",
       "establishes": "Public website content was successfully retrieved during the editorial review; historical application tests document bounded features.",
-      "limits": "Public page reachability alone does not retest every current AI inference, document workflow or local storage feature.",
+      "limits": "The public Intelligence destination and previously documented application workflows.",
       "link": "https://evansmusitu.github.io/"
     }
   ],
@@ -157,7 +157,7 @@
       "path": "/trust/",
       "title": "Trust & Responsible Technology",
       "headline": "Trust begins with what technology actually does.",
-      "lead": "Technical claims matter most when their evidence, limitations and operational boundaries are clear."
+      "lead": "Explore the engineering methods, responsible practices and supporting evidence behind MUSITU technology."
     },
     {
       "path": "/accessibility/",
@@ -211,7 +211,7 @@
       "path": "/evidence/",
       "title": "Evidence",
       "headline": "Know what a result really proves.",
-      "lead": "Review public-safe claim records, methodological context and limitations rather than relying on unqualified product promises."
+      "lead": "Discover public release records, demonstrations and research context for MUSITU products."
     },
     {
       "path": "/resources/",
@@ -223,13 +223,13 @@
       "path": "/developers/",
       "title": "Developers",
       "headline": "Build understanding before integration.",
-      "lead": "Explore technical references and approved published interfaces. An internal development endpoint is not a public API."
+      "lead": "Browse published technical references, the Axiom capability library and developer-oriented resources."
     },
     {
       "path": "/news/",
       "title": "News & Updates",
       "headline": "Updates worth sharing, evidence worth reading.",
-      "lead": "Genuine product announcements, engineering progress and research updates—published only when their dates and claims have been reviewed."
+      "lead": "Follow MUSITU product improvements, capability releases and research updates."
     },
     {
       "path": "/contact/",
@@ -247,25 +247,25 @@
       "path": "/status/",
       "title": "Service Status",
       "headline": "Live status requires real monitoring.",
-      "lead": "A public status page must report only verified services, observed monitoring data and accurately dated incidents."
+      "lead": "Find service information and support pathways for MUSITU products."
     },
     {
       "path": "/legal/privacy/",
       "title": "Privacy Policy",
       "headline": "Clear information. Respectful data handling.",
-      "lead": "This corporate privacy draft describes the intended data boundaries. Actual provider disclosures, retention and legally required operator details must be verified before publication."
+      "lead": "Learn how the MUSITU corporate website handles information, website access and privacy requests."
     },
     {
       "path": "/legal/terms/",
       "title": "Terms of Use",
       "headline": "Understand the scope of this website.",
-      "lead": "The corporate site provides information and exploratory experiences, not unrestricted commercial access or binding professional advice."
+      "lead": "Read the terms governing use of the MUSITU corporate website and its resources."
     },
     {
       "path": "/sitemap/",
       "title": "Sitemap",
       "headline": "Explore the MUSITU website.",
-      "lead": "Navigate the approved corporate architecture. Publication-gated routes remain clearly distinguished in this nonproduction preview."
+      "lead": "Explore the full corporate website, its products, resources and support links."
     },
     {
       "path": "/404/",
