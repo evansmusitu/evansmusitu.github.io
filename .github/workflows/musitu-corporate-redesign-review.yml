@@ -65,4 +65,53 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  candidate-local-lighthouse:
+    name: Candidate local-HTTP Lighthouse lab sample (not production)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build noindex candidate and install pinned Lighthouse
+        run: |
+          set -euo pipefail
+          MUSITU_BUILD_MODE=review python corporate/scripts/build.py
+          npm install --global lighthouse@12.8.2
+      - name: Measure mobile and desktop local navigation
+        run: |
+          set -euo pipefail
+          mkdir -p corporate/review-artifacts
+          python corporate/scripts/preview_server.py --port 8765 >/tmp/musitu-qa-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          sleep 2
+          export CHROME_PATH="$(command -v google-chrome || command -v chromium)"
+          test -n "$CHROME_PATH"
+          lighthouse http://127.0.0.1:8765/ --output=json --output-path=/tmp/musitu-candidate-mobile.json --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --quiet --only-categories=performance
+          lighthouse http://127.0.0.1:8765/ --preset=desktop --output=json --output-path=/tmp/musitu-candidate-desktop.json --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --quiet --only-categories=performance
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report={"scope":"unpublished review-mode candidate on loopback HTTP; no CDN, no actual production Studio media; not real-user CWV","samples":{}}
+          keys=("first-contentful-paint","largest-contentful-paint","cumulative-layout-shift","total-blocking-time","speed-index")
+          for device in ("mobile","desktop"):
+              x=json.loads(Path("/tmp/musitu-candidate-"+device+".json").read_text())
+              report["samples"][device]={"performance_score":x["categories"]["performance"]["score"],"metrics":{k:x["audits"][k].get("numericValue") for k in keys}}
+          Path("corporate/review-artifacts/local-candidate-lighthouse.json").write_text(json.dumps(report,indent=2)+"\n")
+          print(json.dumps(report,indent=2))
+          PY
+      - name: Retain synthetic local performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: musitu-candidate-lighthouse-local-only
+          path: corporate/review-artifacts/local-candidate-lighthouse.json
+          if-no-files-found: ignore
+          retention-days: 7
+
 # No deployment, credential access, production URL mutation or search submission.
