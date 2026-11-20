@@ -57,8 +57,9 @@ def validate(records:dict)->None:
  if len(ROUTES)!=34:raise ValueError('Master route count changed')
  for route,info in records.items():
   if not(route.startswith('/') and route.endswith('/')):raise ValueError('Route shape '+route)
-  for name in ('header','main','title','description'):
+  for name in ('main','title','description'):
    if not isinstance(info.get(name),str) or not info[name].strip():raise ValueError(f'Incomplete page {route} {name}')
+  if 'header' in info:raise ValueError('Shared header must be owned by templates/header.html')
   if '<main' not in info['main'] or 'id="main"' not in info['main']:
    raise ValueError('Missing proper page main '+route)
   if '__VIDEO_PLACEHOLDER__' in info['main'] or 'data:video/' in info['main'] or 'data:image/png;base64,' in info['main']:
@@ -96,6 +97,25 @@ def add_protected_studio_player(body:str)->str:
  if count!=1:raise ValueError('Studio media gate is missing in target route')
  return result
 
+def render_header(route:str,template:str)->str:
+ """Single nav source with route-aware desktop/mobile current-page semantics."""
+ group=None
+ if route.startswith('/products/'):group='Products'
+ elif route.startswith('/solutions/'):group='Solutions'
+ elif route.startswith('/experiences/') or route.startswith('/ecosystem/'):group='Experiences'
+ elif route.startswith('/research/') or route.startswith('/evidence/') or route.startswith('/news/'):group='Research'
+ elif route in ('/company/','/trust/','/accessibility/','/contact/'):group='Company'
+ elif route in ('/resources/','/developers/','/support/','/sitemap/'):group='Resources'
+ rendered=template.rstrip()
+ if group:
+  old=f'<details class="nav-group"><summary>{group} '
+  if rendered.count(old)!=1:raise ValueError('Missing unique navigation group '+group)
+  rendered=rendered.replace(old,f'<details class="nav-group"><summary class="active">{group} ',1)
+ if route!='/':
+  old=f'<a class="nav-link" href="{html.escape(route,quote=True)}">'
+  rendered=rendered.replace(old,f'<a aria-current="page" class="nav-link" href="{html.escape(route,quote=True)}">')
+ return rendered
+
 def render(route:str,info:dict,shared:dict,staged_media:bool=False,mode:str='review',origin:str|None=None,seo_html:str='')->str:
  title=html.escape(info['title'],quote=True)
  desc=html.escape(info['description'],quote=True)
@@ -111,7 +131,8 @@ def render(route:str,info:dict,shared:dict,staged_media:bool=False,mode:str='rev
  canonical='' if not production or route=='/404/' else f'<link rel="canonical" href="{origin}{route}">\n'
  ogurl='' if not production or route=='/404/' else f'<meta property="og:url" content="{origin}{route}">\n'
  stage='' if production else '<meta name="stage" content="isolated-review-not-published">\n'
- body='\n'.join([shared['skip'],info['header'],ribbon,info['main'],footer,shared['dialogs']])
+ header_markup=info['header'] if route.startswith('/fr/') else render_header(route,shared['header'])
+ body='\n'.join([shared['skip'],header_markup,ribbon,info['main'],footer,shared['dialogs']])
  if staged_media and route in ('/products/foundry/studio/','/experiences/lab/'):
   body=add_protected_studio_player(body)
  return ('<!doctype html>\n<html lang="en" data-theme="dark">\n<head>\n'
@@ -150,7 +171,7 @@ def build()->dict:
  validate(records)
  if mode=='production':validate_catalog(ROUTES)
  shared={p.stem:p.read_text(encoding='utf-8') for p in TEMPLATES.glob('*.html')}
- if set(shared)!={'skip','review-ribbon','footer','dialogs'}:raise ValueError('Unexpected shared templates')
+ if set(shared)!={'skip','review-ribbon','footer','dialogs','header'}:raise ValueError('Unexpected shared templates')
  if DST.exists():shutil.rmtree(DST)
  DST.mkdir(parents=True)
  asset_dest=DST/'assets';asset_dest.mkdir()
@@ -181,7 +202,7 @@ def build()->dict:
  if publication_enabled:
   for article in articles:
    route='/research/articles/'+article['slug']+'/'
-   info=article_info(article,records['/research/']['header'],publication_date)
+   info=article_info(article,render_header('/research/',shared['header']),publication_date)
    dest=DST/route.lstrip('/')/'index.html'
    dest.parent.mkdir(parents=True,exist_ok=True)
    seo_html=article_head(article) if mode=='production' else ''
