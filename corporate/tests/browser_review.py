@@ -34,7 +34,11 @@ def main():
            'routes_tested':0,'responsive_checks':0,'theme_checks':0,'nojs_checks':0,
            'interactions':{},'errors':[],'overflow':[],'runtime_exceptions':[]}
   with sync_playwright() as pw:
-    browser=pw.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
+    chromium_binary=next((path for path in ('/usr/bin/chromium','/usr/bin/chromium-browser') if Path(path).is_file()),None)
+    if chromium_binary:
+      browser=pw.chromium.launch(executable_path=chromium_binary,headless=True,args=['--no-sandbox'])
+    else:
+      browser=pw.chromium.launch(headless=True,args=['--no-sandbox'])
     ctx=browser.new_context(viewport={'width':1280,'height':800},java_script_enabled=True, reduced_motion='reduce')
     page=ctx.new_page();page.set_default_timeout(2500)
     def pageerror(e):results['runtime_exceptions'].append(str(e))
