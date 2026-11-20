@@ -73,4 +73,10 @@ def test_dedicated_interactive_journeys_are_preserved():
     assert soup('/products/').select_one('[data-catalog-item]')
     assert soup('/ecosystem/').select_one('[data-atlas-component]')
     assert soup('/experiences/lab/').select_one('#npv-result')
-    assert soup('/products/foundry/studio/').select_one('video.studio-demo-player')
+    manifest = json.loads((DIST / 'manifest.json').read_text(encoding='utf-8'))
+    studio = soup('/products/foundry/studio/')
+    if manifest['studio_media_included']:
+        assert studio.select_one('video.studio-demo-player')
+    else:
+        assert studio.select_one('.video-clearance-gate')
+        assert not studio.select_one('video.studio-demo-player')
