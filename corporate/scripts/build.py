@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib, html, json, re, shutil, os
 from pathlib import Path
 from seo import seo_head, validate_catalog
+from axiom_catalog import render_axiom_catalog
 from phase03_publication import (approved_sources, article_routes, article_info, article_head,
   localize_english_core, french_info, french_head, french_records, hreflang, FR_EN,
   actual_publication_date)
@@ -169,6 +170,11 @@ def build()->dict:
  if len(extra_routes)!=len(set(extra_routes)) or any(route in ROUTES for route in extra_routes):
   raise ValueError('Publication route collision')
  validate(records)
+ marker='<!--AXIOM_CAPABILITY_DIRECTORY-->'
+ if records['/products/axiom/']['main'].count(marker)!=1:
+  raise ValueError('Axiom directory insertion point is missing or ambiguous')
+ if any(marker in info['main'] for route,info in records.items() if route!='/products/axiom/'):
+  raise ValueError('Axiom capability directory marker on unrelated route')
  if mode=='production':validate_catalog(ROUTES)
  shared={p.stem:p.read_text(encoding='utf-8') for p in TEMPLATES.glob('*.html')}
  if set(shared)!={'skip','review-ribbon','footer','dialogs','header'}:raise ValueError('Unexpected shared templates')
@@ -196,6 +202,8 @@ def build()->dict:
   dest=DST/route.lstrip('/')/'index.html'
   dest.parent.mkdir(parents=True,exist_ok=True)
   info=localize_english_core(route,records[route],articles) if publication_enabled else records[route]
+  if route=='/products/axiom/':
+   info={**info,'main':info['main'].replace(marker,render_axiom_catalog())}
   seo_html=seo_head(route,info,records,origin) if mode=='production' else ''
   if publication_enabled and mode=='production':seo_html+=hreflang(route)
   dest.write_text(render(route,info,shared,staged_media=staged_media,mode=mode,origin=origin,seo_html=seo_html),encoding='utf-8')
