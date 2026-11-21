@@ -51,7 +51,7 @@ def test_axiom_directory_has_positive_action_instead_of_access_warning():
     main=page("/products/axiom/")
     directory=main.select_one("section#axiom-full-capabilities")
     assert directory is not None
-    assert len(directory.select(".axiom-operation-list code"))==74
+    assert len(directory.select(".axiom-operation-tech > p > code"))==74
     assert len(directory.select(".axiom-domain"))==18
     assert not directory.select(".axiom-access-note,.notice")
     cta=directory.select_one(".axiom-explore-cta")
