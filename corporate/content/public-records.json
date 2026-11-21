@@ -344,6 +344,30 @@
       "title": "Enterprise Systems",
       "headline": "Make complex software systems easier to connect.",
       "lead": "Understand the governance, interoperability and reliability concerns behind modern digital workflows."
+    },
+    {
+      "path": "/resources/axiom-investment-npv/",
+      "title": "Axiom: Investment NPV",
+      "headline": "Axiom: Investment NPV",
+      "lead": "Work through a real recorded NPV calculation using clearly stated hypothetical cash flows, rate and period assumptions."
+    },
+    {
+      "path": "/resources/axiom-historical-var/",
+      "title": "Axiom: Historical VaR",
+      "headline": "Axiom: Historical VaR",
+      "lead": "Learn what a historical portfolio value-at-risk threshold means and why short fictional samples need caution."
+    },
+    {
+      "path": "/resources/axiom-linear-regression/",
+      "title": "Axiom: Linear Regression",
+      "headline": "Axiom: Linear Regression",
+      "lead": "See how a real Axiom regression result connects a slope and intercept to eight paired synthetic observations."
+    },
+    {
+      "path": "/resources/axiom-linear-optimisation/",
+      "title": "Axiom: Linear Optimisation",
+      "headline": "Axiom: Linear Optimisation",
+      "lead": "Learn to represent a constrained allocation with a linear objective and examine the recorded optimal solution."
     }
   ]
 }
