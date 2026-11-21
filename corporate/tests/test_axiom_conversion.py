@@ -36,6 +36,14 @@ def test_real_execution_evidence_and_four_independent_tutorial_urls():
 def test_real_own_outputs_and_get_started_product_experience():
     page=soup("/products/axiom/")
     assert len(page.select(".axiom-proof-card"))==4
+    video=page.select_one("#axiom-video video")
+    assert video and video.select_one('source[src="/assets/axiom-explainer.mp4"][type="video/mp4"]')
+    assert video.select_one('track[kind="captions"][srclang="en"]')
+    mp4=DIST/"assets/axiom-explainer.mp4"
+    vtt=DIST/"assets/axiom-explainer.vtt"
+    assert mp4.stat().st_size>10000 and vtt.read_text(encoding="utf-8").startswith("WEBVTT")
+    assert len(vtt.read_text(encoding="utf-8").split("-->"))==7
+    assert "axiom_explainer_sha256" in json.loads((DIST/"manifest.json").read_text(encoding="utf-8"))
     assert len(page.select(".axiom-proof-answer"))==4
     assert len(page.select("#get-started-axiom .axiom-start-steps li"))==3
     assert page.select_one("#get-started-axiom .axiom-start-prompt")
