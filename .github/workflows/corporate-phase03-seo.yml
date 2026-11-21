@@ -54,12 +54,17 @@ permissions:
 jobs:
   source-and-review-contract:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Install original Axiom explainer rendering tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ffmpeg fonts-dejavu-core
+          ffmpeg -hide_banner -version | head -1
       - name: Syntax and isolated review build
         working-directory: corporate
         run: |
@@ -133,6 +138,11 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Install original Axiom explainer rendering tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ffmpeg fonts-dejavu-core
+          ffmpeg -hide_banner -version | head -1
       - name: Download immutable PR33 qualified build for media extraction only
         uses: actions/download-artifact@v4
         with:
@@ -271,6 +281,11 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Install original Axiom explainer rendering tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ffmpeg fonts-dejavu-core
+          ffmpeg -hide_banner -version | head -1
       - name: Install Playwright browser dependencies
         run: |
           set -euo pipefail
