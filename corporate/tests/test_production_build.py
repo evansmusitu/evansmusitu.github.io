@@ -18,7 +18,7 @@ def test_production_manifest_contract():
  assert MANIFEST['indexing_enabled'] is True
  assert MANIFEST['production_approved'] is False
  assert MANIFEST['studio_media_included'] is True
- assert MANIFEST['route_count']==34
+ assert MANIFEST['route_count']==38
 
 def test_production_indexing_and_canonical_contract():
  for route in ROUTES:
@@ -39,7 +39,7 @@ def test_production_robots_sitemap_and_headers():
  assert robots==f'User-agent: *\nAllow: /\nSitemap: {ORIGIN}/sitemap.xml\n'
  root=ElementTree.parse(DIST/'sitemap.xml').getroot()
  locs=[x.text for x in root.findall('{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc')]
- assert len(locs)==33 and ORIGIN+'/' in locs and ORIGIN+'/404/' not in locs
+ assert len(locs)==37 and ORIGIN+'/' in locs and ORIGIN+'/404/' not in locs
  headers=(DIST/'_headers').read_text()
  assert "Content-Security-Policy:" in headers and "frame-ancestors 'none'" in headers
  assert 'X-Content-Type-Options: nosniff' in headers
