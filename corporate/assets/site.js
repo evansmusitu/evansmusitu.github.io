@@ -73,6 +73,60 @@
     };
     cq.addEventListener('input',apply);cf.addEventListener('change',apply);$('#catalog-reset')?.addEventListener('click',()=>{cq.value='';cf.value='all';apply();cq.focus();});apply();
   }
+  // Search the complete static Axiom catalog without sending a query to a server.
+  const axiomQuery=$('#axiom-capability-search');
+  if(axiomQuery){
+    const entries=$('[data-axiom-operation]'),groups=$('[data-axiom-category]');
+    const navigation=$('[data-axiom-nav]'),counter=$('#axiom-capability-count');
+    const reset=$('#axiom-capability-reset'),empty=$('#axiom-capability-empty');
+    const filter=()=>{
+      const tokens=axiomQuery.value.trim().toLowerCase().slice(0,90).split(/\s+/).filter(Boolean);
+      let total=0,shownGroups=0;
+      groups.forEach(group=>{
+        let matches=0;
+        $('[data-axiom-operation]',group).forEach(item=>{
+          const shown=tokens.every(t=>(item.dataset.search||'').includes(t));
+          item.hidden=!shown;if(shown){matches++;total++;}
+        });
+        group.hidden=matches===0;
+        if(matches)shownGroups++;
+      });
+      navigation.forEach(link=>{const target=document.getElementById(link.hash.slice(1));link.hidden=!!target?.hidden;});
+      escapeSet(counter,total+' of '+entries.length+' operations · '+shownGroups+' of '+groups.length+' disciplines');
+      if(empty)empty.hidden=total>0;
+      if(reset)reset.hidden=tokens.length===0;
+    };
+    axiomQuery.addEventListener('input',filter);
+    axiomQuery.addEventListener('keydown',e=>{if(e.key==='Escape'){axiomQuery.value='';filter();}});
+    reset?.addEventListener('click',()=>{axiomQuery.value='';filter();axiomQuery.focus();});
+    filter();
+  }
+  // Copy a real precomputed Axiom example question. The website never runs the operation.
+  $('[data-axiom-copy]').forEach(button=>button.addEventListener('click',async()=>{
+    const card=button.closest('.axiom-demo-card');const prompt=$('[data-axiom-prompt]',card);
+    const feedback=$('.axiom-demo-feedback',card);
+    if(!prompt)return;
+    try{
+      if(!navigator.clipboard?.writeText)throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(prompt.textContent.trim());
+      escapeSet(feedback,'Question copied. Open Axiom in ChatGPT to try it.');
+    }catch(_){escapeSet(feedback,'Select the question text above and copy it manually.');}
+  }));
+  // Build a local mailto handoff. No contact message is sent by this website.
+  const enquiry=$('[data-enquiry-builder]');
+  if(enquiry){
+    const topic=$('#enquiry-topic',enquiry),subject=$('#enquiry-subject',enquiry);
+    const message=$('#enquiry-message',enquiry),compose=$('#enquiry-compose',enquiry);
+    const update=()=>{
+      const title=(subject?.value||'').trim().slice(0,110)||'Product enquiry';
+      const body=(message?.value||'').trim().slice(0,1800);
+      const mailSubject='MUSITU | '+(topic?.value||'General')+' | '+title;
+      const mailBody='Topic: '+(topic?.value||'General')+'\n\n'+(body||'Please contact me regarding my enquiry.')+'\n';
+      if(compose)compose.href='mailto:support@mftintelligence.com?subject='+encodeURIComponent(mailSubject)+'&body='+encodeURIComponent(mailBody);
+    };
+    [topic,subject,message].forEach(el=>el?.addEventListener('input',update));
+    update();
+  }
   // Product comparison uses actual documented family attributes and enforces 3 selections.
   const comparePanel=$('#compare-panel');
   if(comparePanel){
