@@ -63,6 +63,12 @@ def render_axiom_showcase() -> str:
         + 'Copy prompt</button><span class="axiom-demo-feedback" role="status" aria-live="polite"></span></li>'
         for prompt in starter_prompts
     )
+    guide_routes = {
+        "npv": "/resources/axiom-investment-npv/",
+        "portfolio-var": "/resources/axiom-historical-var/",
+        "regression": "/resources/axiom-linear-regression/",
+        "optimization": "/resources/axiom-linear-optimisation/",
+    }
     cards = []
     for item in data["examples"]:
         cards.append(
@@ -81,7 +87,9 @@ def render_axiom_showcase() -> str:
             'Copy example question</button>'
             '<span class="axiom-demo-feedback" role="status" aria-live="polite"></span></div>'
             '<p class="axiom-demo-evidence">' + esc(item["evidence_status"]) + ' · ' + esc(item["verification"]) + '</p>'
-            '</article>'
+            + ('<p><a class="text-link" href="' + esc(guide_routes[item["id"]])
+               + '">Read the worked tutorial</a></p>' if item["id"] in guide_routes else '')
+            + '</article>'
         )
     return (
         '<section id="axiom-start" class="section axiom-onboarding-section">'
