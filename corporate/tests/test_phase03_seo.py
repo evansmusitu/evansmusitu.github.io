@@ -70,7 +70,7 @@ class Phase03SEOTests(unittest.TestCase):
         self.assertNotIn('type="application/ld+json"', review)
         self.assertIn('content="index,follow"', prod)
         self.assertIn('content="noindex,nofollow"', review)
-        self.assertEqual(review.count("<script "), 2)
+        self.assertEqual(review.count("<script "), 3)  # Axiom adds its scoped progressive-enhancement bundle
         self.assertIn("script-src 'self'", META_CSP)
 
     def test_every_production_page_has_expected_index_and_schema_signals(self):
