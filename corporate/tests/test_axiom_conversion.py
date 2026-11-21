@@ -64,8 +64,8 @@ def test_axiom_product_renders_onboarding_and_search_without_giving_up_directory
     assert len(soup.select("[data-axiom-category]"))==18
     assert len(soup.select("[data-axiom-operation]"))==74
     assert len(soup.select("[data-axiom-nav]"))==18
-    assert len(soup.select(".axiom-operation-list code"))==74
-    assert len({c.get_text(strip=True) for c in soup.select(".axiom-operation-list code")})==74
+    assert len(soup.select(".axiom-operation-tech > p > code"))==74
+    assert len({c.get_text(strip=True) for c in soup.select(".axiom-operation-tech > p > code")})==74
     assert not soup.select("section#axiom-demonstrations script, section#axiom-start iframe")
 
 def test_starting_axiom_is_a_single_high_visibility_action_on_header_and_homepage():
