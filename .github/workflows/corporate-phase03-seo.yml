@@ -64,7 +64,7 @@ jobs:
           set -euo pipefail
           python3 -m py_compile scripts/build.py scripts/axiom_catalog.py scripts/axiom_showcase.py tests/test_axiom_conversion.py tests/test_axiom_catalog.py scripts/phase03_publication.py tests/test_phase03_publication.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py scripts/research_review.py scripts/international_growth_report.py scripts/render_growth_dashboard.py tests/test_phase03_growth.py tests/test_phase03_dashboard.py tests/phase03_axe_http_browser.py
           MUSITU_BUILD_MODE=review python3 scripts/build.py
-          test "$(find dist -name index.html | wc -l)" -eq 34
+          test "$(find dist -name index.html | wc -l)" -eq 38
           test ! -e dist/sitemap.xml
           grep -Fq 'Disallow: /' dist/robots.txt
       - name: Phase 03 SEO contract and isolation tests
@@ -114,7 +114,7 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_phase03_publication.py' -v
           grep -Fq 'Disallow: /' dist/robots.txt
           test ! -e dist/sitemap.xml
-          test "$(find dist -name index.html | wc -l)" -eq 49
+          test "$(find dist -name index.html | wc -l)" -eq 53
 
   production-artifact-contract:
     # Never expose approved media artifacts to arbitrary fork pull-request code.
@@ -178,7 +178,7 @@ jobs:
           assert manifest["studio_media_included"] is True
           assert not (artifact/"sitemap.xml").exists()
           assert (artifact/"robots.txt").read_text().splitlines()==["User-agent: *","Disallow: /"]
-          print("Inherited review suite checked exact 34-route source with approved Studio media. No deployment.")
+          print("Inherited review suite checked exact 38-route source with approved Studio media. No deployment.")
           PY
       - name: Qualify immutable production-mode candidate (local artifact, not deployed)
         working-directory: corporate
@@ -203,7 +203,7 @@ jobs:
           from public_seo_observer import MetadataParser
           from seo import ORIGIN, read_catalog
           routes=read_catalog()["routes"]
-          assert len(routes)==33
+          assert len(routes)==37
           for route in routes:
               raw=(Path("dist")/route.lstrip("/")/"index.html").read_text()
               p=MetadataParser()
@@ -214,11 +214,11 @@ jobs:
               assert p.jsonld[0]["@context"]=="https://schema.org",route
           missing=Path("dist/404/index.html").read_text()
           assert 'type="application/ld+json"' not in missing
-          assert len(list(Path("dist").rglob("index.html")))==34
+          assert len(list(Path("dist").rglob("index.html")))==38
           manifest=json.loads(Path("dist/manifest.json").read_text())
           assert manifest["production_approved"] is False
           print(json.dumps({"production_candidate":"QUALIFIED_IN_SOURCE_ONLY",
-            "article_publication":False,"deployed":False,"base_routes":34,
+            "article_publication":False,"deployed":False,"base_routes":38,
             "verified_jsonld_routes":len(routes),
             "source_commit":"${{ github.event.pull_request.head.sha || github.sha }}"}))
           PY
@@ -237,10 +237,10 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_phase03_publication.py' -v
           python3 scripts/build.py
           python3 tests/test_public_artifact_boundary.py
-          test "$(find dist -name index.html | wc -l)" -eq 49
+          test "$(find dist -name index.html | wc -l)" -eq 53
           grep -Fq '/fr/research/' dist/sitemap.xml
           grep -Fq '/research/articles/model-risk-governance-2026/' dist/sitemap.xml
-          test "$(grep -o '<loc>' dist/sitemap.xml | wc -l)" -eq 48
+          test "$(grep -o '<loc>' dist/sitemap.xml | wc -l)" -eq 52
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -248,7 +248,7 @@ jobs:
           assert manifest['phase03_publication_source_approved'] is True
           assert manifest['phase03_publication_indexable'] is True
           assert manifest['production_approved'] is False
-          print('49 approved route publication candidate rendered; 48 sitemap entries. NOT DEPLOYED.')
+          print('53 approved route publication candidate rendered; 52 sitemap entries. NOT DEPLOYED.')
           PY
 
 
@@ -274,7 +274,7 @@ jobs:
           set -euo pipefail
           python3 -m pip install --disable-pip-version-check 'playwright>=1.56,<1.61'
           python3 -m playwright install --with-deps '${{ matrix.engine }}'
-      - name: Run offline review-mode 34-route responsive and interaction checks
+      - name: Run offline review-mode 38-route responsive and interaction checks
         working-directory: corporate
         env:
           MUSITU_BROWSER_ENGINE: ${{ matrix.engine }}
@@ -288,14 +288,14 @@ jobs:
           from pathlib import Path
           result=json.loads(Path('review-artifacts/browser-dom-results.json').read_text(encoding='utf-8'))
           assert result['passed'] is True
-          assert result['routes_tested']==34
-          assert result['responsive_checks']==102
-          assert result['theme_checks']==204
-          assert result['nojs_checks']==34
+          assert result['routes_tested']==38
+          assert result['responsive_checks']==114
+          assert result['theme_checks']==228
+          assert result['nojs_checks']==38
           assert not result['errors'] and not result['runtime_exceptions'] and not result['overflow']
           assert len(result['interactions'])>=12
-          print(json.dumps({'engine':result['browser_engine'],'routes':34,'responsive_checks':102,'theme_checks':204,
-            'nojs_checks':34,'interactions_passed':len(result['interactions']),'hosted_http_tested':False,
+          print(json.dumps({'engine':result['browser_engine'],'routes':38,'responsive_checks':114,'theme_checks':228,
+            'nojs_checks':38,'interactions_passed':len(result['interactions']),'hosted_http_tested':False,
             'certified_wcag':False,'deployed':False},sort_keys=True))
           PY
       - name: Extract previous qualified media for isolated candidate test
@@ -341,9 +341,9 @@ jobs:
           eng=os.environ['MUSITU_BROWSER_ENGINE']
           path=Path('review-artifacts')/f'phase03-production-local-http-{eng}.json'
           result=json.loads(path.read_text(encoding='utf-8'))
-          assert result['checked_routes']==34
-          assert result['headers_checked']==34
-          assert result['jsonld_checked']==33
+          assert result['checked_routes']==38
+          assert result['headers_checked']==38
+          assert result['jsonld_checked']==37
           assert result['interactions_checked']==3
           assert result['local_assets_real_network_loaded'] is True
           assert result['hosted_cloudflare_verified'] is False
@@ -374,7 +374,7 @@ jobs:
           engine=os.environ['MUSITU_BROWSER_ENGINE']
           report=json.loads((Path('review-artifacts')/f'phase03-axe-{engine}.json').read_text())
           assert report['axe_version']=='4.14.0'
-          assert report['routes']==34 and report['scans']==68
+          assert report['routes']==38 and report['scans']==76
           assert report['passed'] is True and not report['violations']
           assert report['hosted_cloudflare_verified'] is False
           assert report['manual_wcag_22_aa_certified'] is False
