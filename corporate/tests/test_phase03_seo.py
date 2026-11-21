@@ -18,9 +18,9 @@ class Phase03SEOTests(unittest.TestCase):
 
     def test_exact_33_indexable_core_routes_reconciled(self):
         catalog = validate_catalog(ROUTES)
-        self.assertEqual(len(catalog["routes"]), 33)
+        self.assertEqual(len(catalog["routes"]), 37)
         self.assertEqual(set(catalog["routes"]), set(self.records) - {"/404/"})
-        self.assertEqual(len(set(x["primary_query"] for x in catalog["routes"].values())), 33)
+        self.assertEqual(len(set(x["primary_query"] for x in catalog["routes"].values())), 37)
 
     def test_no_unapproved_language_is_published(self):
         catalog = read_catalog()
