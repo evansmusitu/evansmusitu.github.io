@@ -120,7 +120,8 @@ def test_directory_contains_every_plain_language_operation_and_valid_jump_target
         assert target is not None and target.select_one("h3") is not None
     assert "Explore Axiom in ChatGPT" in section.get_text(" ", strip=True)
     assert "Availability and maturity" not in section.get_text(" ", strip=True)
-    assert not section.select("script,iframe,form,button")
+    assert not section.select("script,iframe,form")
+    assert len(section.select('button#axiom-search-clear')) == 1
 
 
 def test_only_flagship_page_includes_complete_directory():
