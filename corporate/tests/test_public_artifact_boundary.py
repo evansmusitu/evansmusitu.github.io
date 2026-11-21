@@ -57,7 +57,7 @@ def test_default_review_build_cannot_accidentally_publish_international_routes()
     assert manifest["production_approved"] is False
     assert manifest["build_mode"] == "review"
     assert manifest["indexing_enabled"] is False
-    assert manifest["route_count"] == 34
+    assert manifest["route_count"] == 38
     assert manifest["phase03_publication_routes"] == []
     assert manifest["phase03_publication_indexable"] is False
     assert not (DIST / "fr").exists()
