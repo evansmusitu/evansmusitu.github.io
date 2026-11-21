@@ -103,12 +103,12 @@
   }
   // Copy a real precomputed Axiom example question. The website never runs the operation.
   Array.from(document.querySelectorAll('[data-axiom-copy]')).forEach(button=>button.addEventListener('click',async()=>{
-    const card=button.closest('.axiom-demo-card');const prompt=$('[data-axiom-prompt]',card);
+    const card=button.closest('.axiom-demo-card,.axiom-starter-card');const prompt=card&&$('[data-axiom-prompt]',card);
     const feedback=$('.axiom-demo-feedback',card);
     if(!prompt)return;
     try{
       if(!navigator.clipboard?.writeText)throw new Error('Clipboard unavailable');
-      await navigator.clipboard.writeText(prompt.textContent.trim());
+      await navigator.clipboard.writeText(button.dataset.axiomCopyPayload||prompt.textContent.trim());
       escapeSet(feedback,'Question copied. Open Axiom in ChatGPT to try it.');
     }catch(_){escapeSet(feedback,'Select the question text above and copy it manually.');}
   }));
