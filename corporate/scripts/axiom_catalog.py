@@ -11,6 +11,7 @@ import re
 from pathlib import Path
 
 SOURCE = Path(__file__).resolve().parents[1] / "content/axiom-capabilities.json"
+SCHEMAS = Path(__file__).resolve().parents[1] / "content/axiom-operation-schemas.json"
 TECHNICAL_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
 CATEGORY_ID = re.compile(r"^[a-z][a-z0-9_]*$")
 
@@ -47,10 +48,59 @@ def load_capability_catalog() -> dict:
     return data
 
 
+def load_operation_schemas(catalog: dict) -> dict:
+    """Validate the exact 74 operation input schemas from Axiom's public tool metadata."""
+    data = json.loads(SCHEMAS.read_text(encoding="utf-8"))
+    if data.get("version") != 1 or data.get("snapshot_date") != "2026-11-21":
+        raise ValueError("Unexpected Axiom input schema snapshot")
+    operations = data.get("operations")
+    if not isinstance(operations, list) or data.get("operation_count") != 74 or len(operations) != 74:
+        raise ValueError("Incomplete Axiom operation input schemas")
+    expected = [op["id"] for category in catalog["categories"] for op in category["operations"]]
+    if [o.get("operation") for o in operations] != expected:
+        raise ValueError("Axiom input schemas do not match the current 74-operation catalog")
+    for item in operations:
+        schema = item.get("args_schema")
+        if not isinstance(schema, dict) or schema.get("type") != "object":
+            raise ValueError("Axiom input schema missing object contract")
+        fields = schema.get("properties")
+        mandatory = schema.get("required")
+        if not isinstance(fields, dict) or not fields or not isinstance(mandatory, list):
+            raise ValueError("Axiom input properties or requirements unavailable")
+        if len(mandatory) != len(set(mandatory)) or any(x not in fields for x in mandatory):
+            raise ValueError("Invalid Axiom required parameter")
+    return {item["operation"]: item["args_schema"] for item in operations}
+
+
 def render_axiom_catalog() -> str:
     data = load_capability_catalog()
     esc = lambda value: html.escape(str(value), quote=True)
     categories = data["categories"]
+    operation_schemas = load_operation_schemas(data)
+    def type_label(field: dict) -> str:
+        kind = field.get("type")
+        if isinstance(kind, list):
+            return " / ".join(str(v) for v in kind)
+        if isinstance(kind, str):
+            return kind
+        return "structured value"
+
+    def render_parameters(op: str) -> str:
+        schema = operation_schemas[op]
+        required = set(schema["required"])
+        description = "".join(
+            '<div><dt><code>' + esc(name) + '</code>'
+            '<span class="axiom-parameter-tag">' + ("Required" if name in required else "Optional") + '</span></dt>'
+            '<dd><span class="axiom-parameter-type">' + esc(type_label(field)) + '</span>'
+            + esc(field.get("description", "Input parameter for this calculation.")) + '</dd></div>'
+            for name, field in schema["properties"].items()
+        )
+        return (
+            '<h4>Accepted inputs</h4><dl class="axiom-parameter-list">' + description + '</dl>'
+            '<details class="axiom-raw-schema"><summary>Full input JSON schema</summary>'
+            '<pre><code>' + esc(json.dumps(schema, ensure_ascii=False, indent=2)) + '</code></pre></details>'
+        )
+
     navigation = "".join(
         '<a data-axiom-nav href="#axiom-domain-' + esc(group["id"]) + '">' + esc(group["title"])
         + '<span aria-hidden="true">' + str(len(group["operations"])) + '</span></a>'
@@ -62,7 +112,9 @@ def render_axiom_catalog() -> str:
             '<li id="axiom-operation-' + esc(item["id"].replace(".", "-")) + '" data-axiom-operation data-search="' +
             esc(" ".join((item["label"], item["id"], group["title"], group["description"])).lower()) +
             '"><span class="axiom-operation-label">' + esc(item["label"])
-            + '</span><details class="axiom-operation-tech"><summary>Technical details</summary><code>' + esc(item["id"]) + '</code></details></li>'
+            + '</span><details class="axiom-operation-tech"><summary>Technical details and required inputs</summary>'
+            '<p>Operation: <code>' + esc(item["id"]) + '</code></p>'
+            + render_parameters(item["id"]) + '</details></li>'
             for item in group["operations"]
         )
         panels.append(
@@ -78,7 +130,8 @@ def render_axiom_catalog() -> str:
         '<span class="eyebrow">THE AXIOM CAPABILITY LIBRARY</span>'
         '<h2>Explore all 74 Axiom operations.</h2>'
         '<p>Find the right calculation by keyword, method or technical operation. '
-        'Search tasks such as bond yield, volatility forecasting, regression and solving equations.</p>'
+        'Search tasks such as bond yield, volatility analysis, regression and solving equations. '
+        'Open technical details to inspect accepted inputs and exact JSON schemas.</p>'
         '</div><div class="axiom-metrics" aria-label="Axiom registry snapshot">'
         '<div><strong>74</strong><span>Supported operations</span></div>'
         '<div><strong>18</strong><span>Capability disciplines</span></div>'
