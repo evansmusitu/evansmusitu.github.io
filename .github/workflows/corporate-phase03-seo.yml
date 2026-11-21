@@ -9,6 +9,7 @@ on:
       - 'corporate/tests/test_axiom_catalog.py'
       - 'corporate/tests/test_axiom_conversion.py'
       - 'corporate/scripts/axiom_proof.py'
+      - 'corporate/scripts/axiom_video.py'
       - 'corporate/content/axiom-verified-examples.json'
       - 'corporate/assets/axiom-experience.js'
       - 'corporate/assets/contact-enquiry.js'
@@ -63,7 +64,7 @@ jobs:
         working-directory: corporate
         run: |
           set -euo pipefail
-          python3 -m py_compile scripts/build.py scripts/axiom_catalog.py scripts/axiom_proof.py tests/test_axiom_conversion.py tests/test_axiom_catalog.py scripts/phase03_publication.py tests/test_phase03_publication.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py scripts/research_review.py scripts/international_growth_report.py scripts/render_growth_dashboard.py tests/test_phase03_growth.py tests/test_phase03_dashboard.py tests/phase03_axe_http_browser.py
+          python3 -m py_compile scripts/build.py scripts/axiom_catalog.py scripts/axiom_proof.py scripts/axiom_video.py tests/test_axiom_conversion.py tests/test_axiom_catalog.py scripts/phase03_publication.py tests/test_phase03_publication.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py scripts/research_review.py scripts/international_growth_report.py scripts/render_growth_dashboard.py tests/test_phase03_growth.py tests/test_phase03_dashboard.py tests/phase03_axe_http_browser.py
           MUSITU_BUILD_MODE=review python3 scripts/build.py
           test "$(find dist -name index.html | wc -l)" -eq 38
           test ! -e dist/sitemap.xml
