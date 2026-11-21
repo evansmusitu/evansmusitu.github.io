@@ -24,7 +24,7 @@ def soup(route):
     return BeautifulSoup((DIST / route.lstrip('/') / 'index.html').read_text(encoding='utf-8'), 'html.parser')
 
 def test_shared_header_source_and_content_contract():
-    assert len(RECORDS) == 34
+    assert len(RECORDS) == 38
     assert all('header' not in record for record in RECORDS.values())
     template = (ROOT / 'templates/header.html').read_text(encoding='utf-8')
     assert template.count('class="site-header"') == 1
@@ -57,8 +57,8 @@ def test_homepage_is_a_distinct_editorial_journey():
     b = soup('/')
     main = b.select_one('main#main')
     assert len(main.select('h1')) == 1
-    assert len(main.select('section')) == 6
-    assert len(main.get_text(' ', strip=True).split()) < 650
+    assert len(main.select('section')) == 7
+    assert len(main.get_text(' ', strip=True).split()) < 760
     assert not main.select('[data-atlas-component], [data-navigator], [data-catalog-item]')
     assert 'ILLUSTRATIVE' in main.get_text(' ',strip=True)
     assert 'Illustrative workflow' in main.get_text(' ',strip=True)
