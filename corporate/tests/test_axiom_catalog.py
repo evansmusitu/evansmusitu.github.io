@@ -108,6 +108,14 @@ def test_directory_contains_every_plain_language_operation_and_valid_jump_target
     assert len(section.select(".axiom-domain")) == 18
     assert len(section.select(".axiom-operation-list li")) == 74
     assert len(section.select(".axiom-operation-tech")) == 74
+    for operation,words in {
+        "finance.bond_yield": ("calculate","bond","yield"),
+        "timeseries.rolling_volatility": ("forecast","volatility"),
+        "algebra.solve": ("solve","equations"),
+    }.items():
+        node=section.select_one("#axiom-operation-"+operation.replace(".","-"))
+        assert node is not None
+        assert all(term in node["data-search"] for term in words)
     assert len(section.select(".axiom-raw-schema")) == 74
     assert sum(len(x.select(".axiom-parameter-list > div")) for x in section.select(".axiom-operation-tech")) == 193
     assert {code.get_text(strip=True) for code in section.select(".axiom-operation-tech > p > code")} == EXPECTED_OPERATIONS
