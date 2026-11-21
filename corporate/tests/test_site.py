@@ -15,10 +15,10 @@ def soup_for(route):return BeautifulSoup(path_for(route).read_text(), 'html.pars
 
 
 def test_route_count_and_exact_master():
- assert len(ROUTES)==34
+ assert len(ROUTES)==38
  assert set(ROUTES)==set(SITE)
- assert len(set(ROUTES))==34
- assert len(list(DIST.rglob('index.html')))==34
+ assert len(set(ROUTES))==38
+ assert len(list(DIST.rglob('index.html')))==38
 
 def test_cloudflare_pages_unknown_routes_have_a_true_noindex_404_document():
  # Cloudflare Pages serves the root homepage with HTTP 200 on unknown paths
@@ -45,12 +45,12 @@ def test_static_page(route):
  assert b.select_one('dialog#search-dialog')
  assert b.select_one('dialog#evidence-dialog')
  assert b.select_one('dialog#ask-dialog')
- assert len(b.select('script'))==2 and all(e.get('src','').startswith('/assets/') and not e.get_text(strip=True) for e in b.select('script'))
+ assert len(b.select('script'))==(3 if route in ('/products/axiom/','/contact/') else 2) and all(e.get('src','').startswith('/assets/') and not e.get_text(strip=True) for e in b.select('script'))
  assert len(b.select('link[rel="stylesheet"]'))==1
  assert not b.select('iframe,embed,object,form[action],script:not([src])')
  assert '__VIDEO_PLACEHOLDER__' not in p.read_text()
  assert 'data:image/png;base64,' not in p.read_text()
- # All internal links resolve against the canonical 34-route baseline.
+ # All internal links resolve against the canonical 38-route baseline.
  for a in b.select('a[href]'):
   raw=a.get('href','');u=urllib.parse.urlsplit(raw)
   if not u.scheme and not u.netloc and u.path.startswith('/'):
@@ -74,7 +74,7 @@ def test_families_and_public_info():
  payload=json.loads(script.strip()[len(prefix):].rstrip(';'))
  families=payload['families'];assert len(families)==6
  assert set(f['id'] for f in families)=={'axiom','education','foundry','markets','fmi','worldfabric'}
- assert len(payload['routes'])==34
+ assert len(payload['routes'])==38
  assert all(e['limits'] and e['kind'] and e['date'] and e['claim'] for e in payload['evidence'])
  assert not any('private' in e['link'].lower() for e in payload['evidence'])
  assert 'customer billing' not in soup_for('/products/axiom/').title.get_text().lower()
