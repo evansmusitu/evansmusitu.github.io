@@ -2132,6 +2132,1408 @@
           }
         ]
       }
+    },
+    {
+      "operation": "numeric.interpolate",
+      "label": "Interpolation",
+      "category": "Numerical computation",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "description": "Strictly increasing sample coordinates.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "y": {
+            "type": "array",
+            "description": "Sample values, one per x coordinate.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "at": {
+            "description": "Coordinate or coordinates to interpolate. Outside x, uses the closest endpoint value.",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "array",
+                "description": "Interpolation coordinates.",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 1
+              }
+            ]
+          }
+        },
+        "required": [
+          "x",
+          "y",
+          "at"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": [
+              0,
+              1,
+              2
+            ],
+            "y": [
+              0,
+              2,
+              4
+            ],
+            "at": [
+              0.5,
+              1.5
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numeric.least_squares",
+      "label": "Least-squares fitting",
+      "category": "Numerical computation",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "A": {
+            "type": "array",
+            "description": "Numeric matrix, as rows. Linear operations require a square matrix.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          },
+          "b": {
+            "description": "Right-hand-side vector, or matrix for multiple right-hand sides; one entry or row per row of A.",
+            "anyOf": [
+              {
+                "type": "array",
+                "description": "Right-hand-side vector.",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 1
+              },
+              {
+                "type": "array",
+                "description": "Right-hand sides as columns.",
+                "items": {
+                  "type": "array",
+                  "description": "One matrix row.",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 1
+                },
+                "minItems": 1
+              }
+            ]
+          }
+        },
+        "required": [
+          "A",
+          "b"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "A": [
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                4
+              ]
+            ],
+            "b": [
+              4,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numeric.ode",
+      "label": "Ordinary differential equations",
+      "category": "Numerical computation",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "rhs": {
+            "type": "string",
+            "description": "Right-hand side f(t,y) of scalar y'=f(t,y).",
+            "minLength": 1
+          },
+          "t0": {
+            "type": "number",
+            "description": "Initial independent-variable value."
+          },
+          "t1": {
+            "type": "number",
+            "description": "Final independent-variable value."
+          },
+          "y0": {
+            "type": "number",
+            "description": "Initial value y(t0)."
+          },
+          "rtol": {
+            "type": "number",
+            "description": "Relative solver tolerance.",
+            "exclusiveMinimum": 0,
+            "default": 1e-8
+          },
+          "atol": {
+            "type": "number",
+            "description": "Absolute solver tolerance.",
+            "exclusiveMinimum": 0,
+            "default": 1e-10
+          }
+        },
+        "required": [
+          "rhs",
+          "t0",
+          "t1",
+          "y0"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "rhs": "y",
+            "t0": 0,
+            "t1": 1,
+            "y0": 1
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numeric.optimize_scalar",
+      "label": "Scalar optimization",
+      "category": "Numerical computation",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "a": {
+            "type": "number",
+            "description": "Lower interval bound for variable x."
+          },
+          "b": {
+            "type": "number",
+            "description": "Upper interval bound for variable x."
+          }
+        },
+        "required": [
+          "expression",
+          "a",
+          "b"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**2",
+            "a": 0,
+            "b": 1
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numeric.root",
+      "label": "Numerical root finding",
+      "category": "Numerical computation",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          },
+          "guess": {
+            "type": "number",
+            "description": "Initial numerical root estimate."
+          }
+        },
+        "required": [
+          "expression",
+          "guess"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**2-2",
+            "guess": 1
+          }
+        ]
+      }
+    },
+    {
+      "operation": "probability.binomial_pmf",
+      "label": "Binomial probabilities",
+      "category": "Probability distributions",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "k": {
+            "type": "integer",
+            "description": "Observed successes."
+          },
+          "n": {
+            "type": "integer",
+            "description": "Number of trials.",
+            "minimum": 0
+          },
+          "p": {
+            "type": "number",
+            "description": "Success probability.",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "k",
+          "n",
+          "p"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "k": 2,
+            "n": 4,
+            "p": 0.5
+          }
+        ]
+      }
+    },
+    {
+      "operation": "probability.chi2_cdf",
+      "label": "Chi-square cumulative probability",
+      "category": "Probability distributions",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "description": "Value at which to evaluate the CDF."
+          },
+          "df": {
+            "type": "number",
+            "description": "Positive degrees of freedom.",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "x",
+          "df"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": 2,
+            "df": 3
+          }
+        ]
+      }
+    },
+    {
+      "operation": "probability.exponential_cdf",
+      "label": "Exponential cumulative probability",
+      "category": "Probability distributions",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "description": "Value at which to evaluate the CDF."
+          },
+          "rate": {
+            "type": "number",
+            "description": "Positive exponential rate.",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "x",
+          "rate"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": 1,
+            "rate": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "probability.normal_cdf",
+      "label": "Normal cumulative probability",
+      "category": "Probability distributions",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "description": "Value at which to evaluate the CDF."
+          },
+          "mu": {
+            "type": "number",
+            "description": "Distribution mean.",
+            "default": 0
+          },
+          "sigma": {
+            "type": "number",
+            "description": "Positive standard deviation.",
+            "exclusiveMinimum": 0,
+            "default": 1
+          }
+        },
+        "required": [
+          "x"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": 0
+          }
+        ]
+      }
+    },
+    {
+      "operation": "probability.normal_ppf",
+      "label": "Normal quantiles",
+      "category": "Probability distributions",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "p": {
+            "type": "number",
+            "description": "Cumulative probability. Endpoints give extended-real quantiles.",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "mu": {
+            "type": "number",
+            "description": "Distribution mean.",
+            "default": 0
+          },
+          "sigma": {
+            "type": "number",
+            "description": "Positive standard deviation.",
+            "exclusiveMinimum": 0,
+            "default": 1
+          }
+        },
+        "required": [
+          "p"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "p": 0.5
+          }
+        ]
+      }
+    },
+    {
+      "operation": "probability.poisson_pmf",
+      "label": "Poisson probabilities",
+      "category": "Probability distributions",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "k": {
+            "type": "integer",
+            "description": "Observed event count."
+          },
+          "mu": {
+            "type": "number",
+            "description": "Expected event count.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "k",
+          "mu"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "k": 2,
+            "mu": 3
+          }
+        ]
+      }
+    },
+    {
+      "operation": "arithmetic.evaluate",
+      "label": "Arithmetic expressions",
+      "category": "Arithmetic",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "40+2"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "verify.crosscheck",
+      "label": "Cross-check calculations",
+      "category": "Computation checks",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "arithmetic.evaluate",
+              "algebra.simplify",
+              "algebra.expand",
+              "algebra.factor",
+              "algebra.polynomial_roots",
+              "algebra.solve",
+              "calculus.diff",
+              "calculus.integrate",
+              "calculus.limit",
+              "calculus.series",
+              "calculus.sum",
+              "calculus.product",
+              "numeric.root",
+              "numeric.integrate",
+              "numeric.optimize_scalar",
+              "numeric.ode",
+              "linear.det",
+              "linear.inv",
+              "linear.eigen",
+              "linear.solve",
+              "numeric.least_squares",
+              "numeric.interpolate",
+              "verified.interval_eval",
+              "statistics.describe",
+              "statistics.correlation",
+              "statistics.covariance",
+              "statistics.regression",
+              "statistics.ttest_ind",
+              "statistics.quantile",
+              "statistics.zscore",
+              "statistics.normal_fit",
+              "probability.normal_cdf",
+              "probability.normal_ppf",
+              "probability.binomial_pmf",
+              "probability.poisson_pmf",
+              "probability.exponential_cdf",
+              "probability.chi2_cdf",
+              "finance.compound",
+              "finance.npv",
+              "finance.black_scholes",
+              "finance.greeks",
+              "finance.implied_vol",
+              "finance.var_historical",
+              "finance.var_parametric",
+              "finance.cvar_historical",
+              "finance.returns",
+              "finance.portfolio_metrics",
+              "finance.beta",
+              "finance.drawdown",
+              "finance.bond_price",
+              "finance.bond_yield",
+              "finance.duration",
+              "finance.monte_carlo_gbm",
+              "timeseries.moving_average",
+              "timeseries.ewma",
+              "timeseries.rolling_volatility",
+              "geometry.distance",
+              "geometry.area_circle",
+              "geometry.volume_sphere",
+              "transforms.fft",
+              "transforms.ifft",
+              "optimization.linear_program",
+              "optimization.quadratic",
+              "units.convert",
+              "knowledge.constant",
+              "knowledge.element",
+              "combinatorics.factorial",
+              "combinatorics.binomial",
+              "numbertheory.isprime",
+              "numbertheory.factorint",
+              "numbertheory.gcd",
+              "numbertheory.lcm",
+              "verify.evaluate",
+              "verify.crosscheck"
+            ],
+            "description": "Exact runtime operation identifier."
+          },
+          "args": {
+            "type": "object",
+            "description": "Inputs for the selected operation; see its operation-specific branch."
+          }
+        },
+        "required": [
+          "operation",
+          "args"
+        ],
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "properties": {
+              "operation": {
+                "const": "arithmetic.evaluate"
+              },
+              "args": {
+                "$ref": "#/$defs/arithmetic.evaluate"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "algebra.simplify"
+              },
+              "args": {
+                "$ref": "#/$defs/algebra.simplify"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "algebra.expand"
+              },
+              "args": {
+                "$ref": "#/$defs/algebra.expand"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "algebra.factor"
+              },
+              "args": {
+                "$ref": "#/$defs/algebra.factor"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "algebra.polynomial_roots"
+              },
+              "args": {
+                "$ref": "#/$defs/algebra.polynomial_roots"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "algebra.solve"
+              },
+              "args": {
+                "$ref": "#/$defs/algebra.solve"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "calculus.diff"
+              },
+              "args": {
+                "$ref": "#/$defs/calculus.diff"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "calculus.integrate"
+              },
+              "args": {
+                "$ref": "#/$defs/calculus.integrate"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "calculus.limit"
+              },
+              "args": {
+                "$ref": "#/$defs/calculus.limit"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "calculus.series"
+              },
+              "args": {
+                "$ref": "#/$defs/calculus.series"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "calculus.sum"
+              },
+              "args": {
+                "$ref": "#/$defs/calculus.sum"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "calculus.product"
+              },
+              "args": {
+                "$ref": "#/$defs/calculus.product"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numeric.root"
+              },
+              "args": {
+                "$ref": "#/$defs/numeric.root"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numeric.integrate"
+              },
+              "args": {
+                "$ref": "#/$defs/numeric.integrate"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numeric.optimize_scalar"
+              },
+              "args": {
+                "$ref": "#/$defs/numeric.optimize_scalar"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numeric.ode"
+              },
+              "args": {
+                "$ref": "#/$defs/numeric.ode"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "linear.det"
+              },
+              "args": {
+                "$ref": "#/$defs/linear.det"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "linear.inv"
+              },
+              "args": {
+                "$ref": "#/$defs/linear.inv"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "linear.eigen"
+              },
+              "args": {
+                "$ref": "#/$defs/linear.eigen"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "linear.solve"
+              },
+              "args": {
+                "$ref": "#/$defs/linear.solve"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numeric.least_squares"
+              },
+              "args": {
+                "$ref": "#/$defs/numeric.least_squares"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numeric.interpolate"
+              },
+              "args": {
+                "$ref": "#/$defs/numeric.interpolate"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "verified.interval_eval"
+              },
+              "args": {
+                "$ref": "#/$defs/verified.interval_eval"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.describe"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.describe"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.correlation"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.correlation"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.covariance"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.covariance"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.regression"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.regression"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.ttest_ind"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.ttest_ind"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.quantile"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.quantile"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.zscore"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.zscore"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.normal_fit"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.normal_fit"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "probability.normal_cdf"
+              },
+              "args": {
+                "$ref": "#/$defs/probability.normal_cdf"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "probability.normal_ppf"
+              },
+              "args": {
+                "$ref": "#/$defs/probability.normal_ppf"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "probability.binomial_pmf"
+              },
+              "args": {
+                "$ref": "#/$defs/probability.binomial_pmf"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "probability.poisson_pmf"
+              },
+              "args": {
+                "$ref": "#/$defs/probability.poisson_pmf"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "probability.exponential_cdf"
+              },
+              "args": {
+                "$ref": "#/$defs/probability.exponential_cdf"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "probability.chi2_cdf"
+              },
+              "args": {
+                "$ref": "#/$defs/probability.chi2_cdf"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.compound"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.compound"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.npv"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.npv"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.black_scholes"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.black_scholes"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.greeks"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.greeks"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.implied_vol"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.implied_vol"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.var_historical"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.var_historical"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.var_parametric"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.var_parametric"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.cvar_historical"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.cvar_historical"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.returns"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.returns"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.portfolio_metrics"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.portfolio_metrics"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.beta"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.beta"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.drawdown"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.drawdown"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.bond_price"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.bond_price"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.bond_yield"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.bond_yield"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.duration"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.duration"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.monte_carlo_gbm"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.monte_carlo_gbm"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "timeseries.moving_average"
+              },
+              "args": {
+                "$ref": "#/$defs/timeseries.moving_average"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "timeseries.ewma"
+              },
+              "args": {
+                "$ref": "#/$defs/timeseries.ewma"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "timeseries.rolling_volatility"
+              },
+              "args": {
+                "$ref": "#/$defs/timeseries.rolling_volatility"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "geometry.distance"
+              },
+              "args": {
+                "$ref": "#/$defs/geometry.distance"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "geometry.area_circle"
+              },
+              "args": {
+                "$ref": "#/$defs/geometry.area_circle"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "geometry.volume_sphere"
+              },
+              "args": {
+                "$ref": "#/$defs/geometry.volume_sphere"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "transforms.fft"
+              },
+              "args": {
+                "$ref": "#/$defs/transforms.fft"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "transforms.ifft"
+              },
+              "args": {
+                "$ref": "#/$defs/transforms.ifft"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "optimization.linear_program"
+              },
+              "args": {
+                "$ref": "#/$defs/optimization.linear_program"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "optimization.quadratic"
+              },
+              "args": {
+                "$ref": "#/$defs/optimization.quadratic"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "units.convert"
+              },
+              "args": {
+                "$ref": "#/$defs/units.convert"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "knowledge.constant"
+              },
+              "args": {
+                "$ref": "#/$defs/knowledge.constant"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "knowledge.element"
+              },
+              "args": {
+                "$ref": "#/$defs/knowledge.element"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "combinatorics.factorial"
+              },
+              "args": {
+                "$ref": "#/$defs/combinatorics.factorial"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "combinatorics.binomial"
+              },
+              "args": {
+                "$ref": "#/$defs/combinatorics.binomial"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numbertheory.isprime"
+              },
+              "args": {
+                "$ref": "#/$defs/numbertheory.isprime"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numbertheory.factorint"
+              },
+              "args": {
+                "$ref": "#/$defs/numbertheory.factorint"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numbertheory.gcd"
+              },
+              "args": {
+                "$ref": "#/$defs/numbertheory.gcd"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numbertheory.lcm"
+              },
+              "args": {
+                "$ref": "#/$defs/numbertheory.lcm"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "verify.evaluate"
+              },
+              "args": {
+                "$ref": "#/$defs/verify.evaluate"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "verify.crosscheck"
+              },
+              "args": {
+                "$ref": "#/$defs/verify.crosscheck"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "operation": "verify.evaluate",
+      "label": "Evaluation verification",
+      "category": "Computation checks",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "lhs": {
+            "type": "string",
+            "description": "Left-hand symbolic expression.",
+            "minLength": 1
+          },
+          "rhs": {
+            "type": "string",
+            "description": "Right-hand symbolic expression.",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "lhs",
+          "rhs"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "lhs": "(x+1)**2",
+            "rhs": "x**2+2*x+1"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "verified.interval_eval",
+      "label": "Interval evaluation",
+      "category": "Verified intervals",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          },
+          "interval": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "description": "Numeric [lower, upper] interval."
+          }
+        },
+        "required": [
+          "expression",
+          "interval"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**2",
+            "interval": [
+              1,
+              2
+            ]
+          }
+        ]
+      }
     }
   ]
 }
