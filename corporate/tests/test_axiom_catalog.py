@@ -110,7 +110,7 @@ def test_directory_contains_every_plain_language_operation_and_valid_jump_target
     assert len(section.select(".axiom-operation-tech")) == 74
     assert len(section.select(".axiom-raw-schema")) == 74
     assert sum(len(x.select(".axiom-parameter-list > div")) for x in section.select(".axiom-operation-tech")) == 193
-    assert {code.get_text(strip=True) for code in section.select(".axiom-operation-list code")} == EXPECTED_OPERATIONS
+    assert {code.get_text(strip=True) for code in section.select(".axiom-operation-tech > p > code")} == EXPECTED_OPERATIONS
     actual_by_id = {entry.select_one("code").get_text(strip=True): entry.select_one(".axiom-operation-label").get_text(" ", strip=True)
                     for entry in section.select(".axiom-operation-list li")}
     for group in data["categories"]:
@@ -131,7 +131,7 @@ def test_directory_contains_every_plain_language_operation_and_valid_jump_target
 def test_only_flagship_page_includes_complete_directory():
     axiom = BeautifulSoup((DIST / "products/axiom/index.html").read_text(encoding="utf-8"), "html.parser")
     assert len(axiom.select("section#axiom-full-capabilities")) == 1
-    assert {x.get_text(strip=True) for x in axiom.select(".axiom-operation-list code")} == EXPECTED_OPERATIONS
+    assert {x.get_text(strip=True) for x in axiom.select(".axiom-operation-tech > p > code")} == EXPECTED_OPERATIONS
     assert not axiom.find(string=lambda x: x and "AXIOM_CAPABILITY_DIRECTORY" in x)
     assert axiom.select_one('a[href^="https://chatgpt.com/plugins/"]')
     assert axiom.select_one("section#axiom-full-capabilities .axiom-explore-cta")
