@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "executed_at": "2026-11-21",
+  "source": "Direct MUSITU Axiom connected operation calls, four actual executions",
+  "inputs": "Synthetic illustrative data only; no customer or live market data",
+  "cases": [
+    {
+      "id": "investment-npv",
+      "title": "Evaluate an investment with NPV",
+      "question": "Does a four-year project create value at a 10% discount rate?",
+      "operation": "finance.npv",
+      "input": {
+        "cashflows": [
+          -100000,
+          30000,
+          40000,
+          45000,
+          25000
+        ],
+        "rate": 0.1
+      },
+      "result": 11215.08093709444,
+      "summary": "NPV: +11,215.08 monetary units",
+      "interpretation": "The hypothetical discounted inflows exceed the 100,000-unit starting investment by approximately 11,215.08 units.",
+      "method": "Net present value discounts each period's cash flow by (1 + rate) raised to that period.",
+      "verified": true,
+      "verification": "Axiom independent decimal-discount recurrence verified; residual 2.08e-11",
+      "evidence_digest": "1c2549b3bbd8faaa85c89ee514123ac4946f4faf19e6ec1ecd44b7ab1adabbcc",
+      "prompt": "Using MUSITU Axiom finance.npv, calculate the NPV of cash flows [-100000, 30000, 40000, 45000, 25000] at a discount rate of 0.10. Show the result and assumptions."
+    },
+    {
+      "id": "portfolio-var",
+      "title": "Understand historical portfolio risk",
+      "question": "What does the 95% historical value-at-risk estimate say about example periodic returns?",
+      "operation": "finance.var_historical",
+      "input": {
+        "returns": [
+          0.012,
+          -0.018,
+          0.009,
+          -0.025,
+          0.015,
+          -0.041,
+          0.022,
+          -0.012,
+          0.017,
+          -0.032,
+          0.006,
+          -0.008,
+          0.019,
+          -0.022,
+          0.01,
+          -0.015,
+          0.013,
+          -0.028,
+          0.004,
+          -0.011
+        ],
+        "alpha": 0.95
+      },
+      "result": {
+        "var": 0.03244999999999999,
+        "alpha": 0.95
+      },
+      "summary": "Historical 95% VaR: 3.245% per period",
+      "interpretation": "The example estimates a 3.245% historical loss threshold at the chosen confidence level. Twenty synthetic observations are too few to establish a reliable forward-looking risk estimate.",
+      "method": "Historical VaR uses the empirical tail of observed return losses at a chosen confidence level.",
+      "verified": false,
+      "verification": "Executed with MUSITU Axiom; no independent-verification flag returned",
+      "prompt": "Using MUSITU Axiom finance.var_historical, estimate 95% VaR for these 20 synthetic returns: [0.012,-0.018,0.009,-0.025,0.015,-0.041,0.022,-0.012,0.017,-0.032,0.006,-0.008,0.019,-0.022,0.010,-0.015,0.013,-0.028,0.004,-0.011]. Interpret the result cautiously."
+    },
+    {
+      "id": "statistical-regression",
+      "title": "Find a relationship with linear regression",
+      "question": "How do example outcomes move as a predictor increases?",
+      "operation": "statistics.regression",
+      "input": {
+        "x": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "y": [
+          3.1,
+          4.8,
+          7.2,
+          8.9,
+          11.1,
+          12.8,
+          15,
+          17.2
+        ]
+      },
+      "result": {
+        "slope": 2.0083333333333333,
+        "intercept": 0.9749999999999996,
+        "rvalue": 0.9994519557761541,
+        "pvalue": 4.1134696429884904e-10,
+        "stderr": 0.027155733509404995
+      },
+      "summary": "Fitted line: y ≈ 0.975 + 2.0083x",
+      "interpretation": "For these eight synthetic pairs, the fitted outcome increases by about 2.008 units per predictor unit; association alone does not establish causation.",
+      "method": "Least-squares linear regression fits an intercept and slope to paired observations.",
+      "verified": false,
+      "verification": "Executed with MUSITU Axiom; no independent-verification flag returned",
+      "prompt": "Using MUSITU Axiom statistics.regression, fit x=[1,2,3,4,5,6,7,8] and y=[3.1,4.8,7.2,8.9,11.1,12.8,15.0,17.2]. Report slope, intercept and interpretation."
+    },
+    {
+      "id": "linear-optimization",
+      "title": "Make a constrained allocation decision",
+      "question": "How should two activities be allocated to maximise a simple score under three limits?",
+      "operation": "optimization.linear_program",
+      "input": {
+        "c": [
+          -3,
+          -2
+        ],
+        "A_ub": [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "b_ub": [
+          4,
+          2,
+          3
+        ],
+        "bounds": [
+          0,
+          null
+        ]
+      },
+      "result": {
+        "x": [
+          2,
+          2
+        ],
+        "fun": -10,
+        "success": true,
+        "status": 0
+      },
+      "summary": "Optimal allocation: x = 2, y = 2; maximum score = 10",
+      "interpretation": "With x + y ≤ 4, x ≤ 2 and y ≤ 3, the maximum of 3x + 2y is 10 at (2,2). Axiom minimised the equivalent negative objective.",
+      "method": "Linear programming searches feasible allocations against linear limits and an objective.",
+      "verified": true,
+      "verification": "Axiom rational primal–dual verification: feasible with exact zero duality gap",
+      "evidence_digest": "8337f5b2c19027c47c74a94fa0b0c456ac3d977af39bd80a727ed3f6b27cf068",
+      "prompt": "Using MUSITU Axiom optimization.linear_program, maximise 3x+2y subject to x+y<=4, x<=2, y<=3 and x,y>=0. Translate to the minimisation input c=[-3,-2] and explain the optimal allocation."
+    }
+  ]
+}
