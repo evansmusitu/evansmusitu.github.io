@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "executed_date": "2026-11-21",
+  "provenance": "Executed against the connected certified MUSITU Axiom operations using fictional, non-customer inputs. Numeric displays rounded for readability.",
+  "examples": [
+    {
+      "id": "npv",
+      "title": "Compare a project investment",
+      "discipline": "Finance",
+      "operation": "finance.npv",
+      "question": "What is the net present value of a project costing 10,000 units now and returning 4,000, 4,300 and 4,700 units over three years at a 10% annual discount rate?",
+      "inputs": "cashflows = [-10000, 4000, 4300, 4700]; rate = 0.10",
+      "result": "+721.26 units",
+      "detail": "Positive net present value under the stated cash-flow and discount-rate assumptions.",
+      "verification": "Independent computation check passed"
+    },
+    {
+      "id": "statistics",
+      "title": "Understand a small dataset",
+      "discipline": "Statistics",
+      "operation": "statistics.describe",
+      "question": "Summarize the dataset 12, 15, 18, 19, 21, 25: what are the mean, median and sample standard deviation?",
+      "inputs": "data = [12, 15, 18, 19, 21, 25]",
+      "result": "Mean 18.33 · median 18.5",
+      "detail": "Sample standard deviation approximately 4.55; six observations.",
+      "verification": "Axiom calculation executed"
+    },
+    {
+      "id": "options",
+      "title": "Price a model option",
+      "discipline": "Financial mathematics",
+      "operation": "finance.black_scholes",
+      "question": "Using the Black–Scholes model, calculate a call option value for S=100, K=105, T=1 year, risk-free rate 4%, volatility 20% and no dividend yield.",
+      "inputs": "S=100; K=105; T=1; r=0.04; sigma=0.20; kind=call",
+      "result": "7.57 model units",
+      "detail": "A model-derived theoretical call value for the specified parameters.",
+      "verification": "Axiom calculation executed"
+    },
+    {
+      "id": "optimization",
+      "title": "Optimize under constraints",
+      "discipline": "Optimization",
+      "operation": "optimization.linear_program",
+      "question": "Maximize 3x + 5y subject to x ≤ 4, 2y ≤ 12, 3x + 2y ≤ 18, and x,y ≥ 0. What is the optimum?",
+      "inputs": "c=[-3,-5]; A_ub=[[1,0],[0,2],[3,2]]; b_ub=[4,12,18]",
+      "result": "Maximum 36 · x=2, y=6",
+      "detail": "A feasible optimum for the stated linear constraints and objective.",
+      "verification": "Independent primal–dual verification passed"
+    }
+  ]
+}
