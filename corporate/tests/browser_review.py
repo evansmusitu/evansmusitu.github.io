@@ -158,6 +158,39 @@ def main():
       assert page.locator('#compare-output table').count()==1
       assert 'WorldFabric' in page.locator('#compare-output').inner_text()
     check('family_comparison',compare)
+    # Genuine Axiom examples, local search and responsive get-started CTA.
+    page.set_content(offline('/products/axiom/'),wait_until='domcontentloaded',timeout=8000)
+    def axiom_search():
+      assert page.locator('.axiom-demo-card').count()==4
+      assert page.locator('[data-axiom-operation]').count()==74
+      assert page.locator('#axiom-capability-count').inner_text().startswith('74 of 74')
+      page.locator('#axiom-capability-search').fill('bond yield')
+      assert page.locator('[data-axiom-operation]:visible').count()==1
+      assert page.locator('[data-axiom-operation]:visible code').first.inner_text()=='finance.bond_yield'
+      page.locator('#axiom-capability-search').fill('impossible-nonexistent-operation')
+      assert page.locator('[data-axiom-operation]:visible').count()==0
+      assert page.locator('#axiom-capability-empty').is_visible()
+      page.locator('#axiom-capability-reset').click()
+      assert page.locator('[data-axiom-operation]:visible').count()==74
+    check('axiom_74_operation_search_and_reset',axiom_search)
+    def axiom_prompts():
+      page.locator('[data-axiom-copy]').first.click()
+      assert page.locator('.axiom-demo-feedback').first.inner_text().strip()!=''
+      page.set_viewport_size({'width':390,'height':844})
+      assert page.locator('.header-axiom-cta').is_visible()
+      page.set_viewport_size({'width':1280,'height':800})
+    check('axiom_example_copy_and_mobile_cta',axiom_prompts)
+    page.set_content(offline('/contact/'),wait_until='domcontentloaded',timeout=8000)
+    def enquiry():
+      page.locator('#enquiry-topic').select_option(label='Technical collaboration')
+      page.locator('#enquiry-subject').fill('Model discussion')
+      page.locator('#enquiry-message').fill('I would like to learn about Axiom use cases.')
+      href=page.locator('#enquiry-compose').get_attribute('href')
+      assert href.startswith('mailto:support@mftintelligence.com?subject='),href
+      assert 'Technical%20collaboration' in href
+      assert 'Model%20discussion' in href
+      assert 'Axiom%20use%20cases' in href
+    check('local_email_handoff_no_backend',enquiry)
     page.set_content(offline('/experiences/lab/'),wait_until='domcontentloaded',timeout=8000)
     def lab():
       assert page.locator('#npv-result').count()==1
@@ -189,6 +222,12 @@ def main():
       nopage.locator('.mobile-menu-panel details').first.locator('summary').click()
       assert nopage.locator('.mobile-menu-panel a[href="/products/"]').is_visible()
     check('nojs_mobile_navigation',nojsmenu)
+    nopage.set_content(offline('/products/axiom/',js=False),wait_until='domcontentloaded',timeout=8000)
+    def axiom_nojs():
+      assert nopage.locator('.axiom-demo-card').count()==4
+      assert nopage.locator('[data-axiom-operation]').count()==74
+      assert nopage.locator('#axiom-capability-search').is_hidden()
+    check('axiom_nojs_full_directory',axiom_nojs)
     browser.close()
   results['passed']=not results['errors'] and not results['overflow'] and not results['runtime_exceptions'] and all(x=='PASS' for x in results['interactions'].values())
   (OUT/'browser-dom-results.json').write_text(json.dumps(results,indent=2,ensure_ascii=False)+'\n')
