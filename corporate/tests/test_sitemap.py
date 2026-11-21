@@ -8,7 +8,7 @@ from sitemap import make_sitemap
 
 def test_public_template_excludes_404_and_conditional_pages():
  xml,inc=make_sitemap('https://example.invalid')
- assert len(inc)==34-1-5
+ assert len(inc)==38-1-5
  assert '/404/' not in inc and '/status/' not in inc and '/' in inc
  assert b'https://example.invalid/products/axiom/' in xml
  ElementTree.fromstring(xml)
