@@ -312,3 +312,8 @@ body::before{height:700px;background:radial-gradient(ellipse at 83% 7%,rgba(112,
 @media(max-width:1100px){.header-axiom-cta{font-size:11px;padding:8px 10px}}
 @media(max-width:760px){.axiom-demo-grid{grid-template-columns:1fr}.axiom-start-steps{grid-template-columns:1fr}.axiom-start-steps>li{padding:17px}.axiom-demo-card{padding:19px}.enquiry-form-grid{grid-template-columns:1fr}}
 @media(max-width:580px){.header-actions .search-open,.header-actions>.theme-button,.header-actions .button-ai{display:none}.header-axiom-cta{min-height:39px;padding:7px 10px}.enquiry-builder-bottom .button{width:100%}}
+
+/* Progressive enhancement: a working search/email composer is shown only when JS is active. */
+.axiom-filter-bar,.enquiry-builder{display:none}
+.has-js .axiom-filter-bar{display:flex}
+.has-js .enquiry-builder{display:grid}
