@@ -176,10 +176,14 @@ def main():
       assert page.locator('.axiom-demo-card').count()==20
       assert page.locator('[data-axiom-operation]').count()==74
       assert page.locator('#axiom-capability-count').inner_text().startswith('74 of 74')
-      page.locator('#axiom-capability-search').fill('bond yield')
+      page.locator('#axiom-capability-search').fill('calculate bond yield')
       assert page.locator('[data-axiom-operation]:visible').count()==1
       page.locator('[data-axiom-operation]:visible .axiom-operation-tech summary').first.click()
       assert page.locator('[data-axiom-operation]:visible code').first.inner_text()=='finance.bond_yield'
+      page.locator('#axiom-capability-search').fill('forecast volatility')
+      assert page.locator('[data-axiom-operation]:visible').count()==2
+      page.locator('#axiom-capability-search').fill('solve equations')
+      assert page.locator('[data-axiom-operation]:visible').count()>=2
       page.locator('#axiom-capability-search').fill('impossible-nonexistent-operation')
       assert page.locator('[data-axiom-operation]:visible').count()==0
       assert page.locator('#axiom-capability-empty').is_visible()
