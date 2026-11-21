@@ -317,3 +317,16 @@ body::before{height:700px;background:radial-gradient(ellipse at 83% 7%,rgba(112,
 .axiom-filter-bar,.enquiry-builder{display:none}
 .has-js .axiom-filter-bar{display:flex}
 .has-js .enquiry-builder{display:grid}
+
+/* Axiom onboarding and evidence disclosure: scoped, mobile-first progressive content. */
+.axiom-starter-heading{margin:26px 0 12px;font-size:clamp(18px,2vw,23px)}
+.axiom-starter-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;list-style:none;padding:0;margin:0}
+.axiom-starter-card{display:flex;flex-direction:column;align-items:flex-start;gap:11px;border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0;background:var(--surface)}
+.axiom-starter-card p{font-size:13px;line-height:1.6;overflow-wrap:anywhere;flex:1;margin:0}
+.axiom-starter-card .button{min-height:36px;padding:7px 12px;font-size:12px}
+.axiom-demo-method pre{max-width:100%;overflow-x:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface-2);padding:10px;border-radius:8px}
+.axiom-demo-method pre code{padding:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.axiom-operation-tech{max-width:100%;font-size:12px;color:var(--muted);margin-top:5px}
+.axiom-operation-tech summary{cursor:pointer;color:var(--mint);font-size:12px}
+.axiom-operation-tech code{display:block;margin-top:6px;overflow-wrap:anywhere}
+@media(max-width:760px){.axiom-starter-grid{grid-template-columns:1fr}}
