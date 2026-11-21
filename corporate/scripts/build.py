@@ -160,7 +160,7 @@ def render(route:str,info:dict,shared:dict,staged_media:bool=False,mode:str='rev
  '<script src="/assets/site.js" defer></script>\n'
  + ('<script src="/assets/axiom-experience.js" defer></script>\n' if route=='/products/axiom/' else '')
  + ('<script src="/assets/contact-enquiry.js" defer></script>\n' if route=='/contact/' else '')
- '</body>\n</html>\n')
+ + '</body>\n</html>\n')
 
 def build()->dict:
  mode=current_build_mode()
