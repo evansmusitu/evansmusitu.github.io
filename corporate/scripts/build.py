@@ -26,7 +26,10 @@ ROUTES=[
  '/products/foundry/studio/','/solutions/','/solutions/finance-research/',
  '/solutions/learning/','/solutions/creative-production/','/solutions/enterprise-systems/',
  '/experiences/','/experiences/intelligence/','/experiences/lab/','/ecosystem/',
- '/research/','/evidence/','/resources/','/developers/','/news/',
+ '/research/','/evidence/','/resources/',
+ '/resources/axiom-investment-npv/','/resources/axiom-historical-var/',
+ '/resources/axiom-linear-regression/','/resources/axiom-linear-optimisation/',
+ '/developers/','/news/',
  '/contact/','/support/','/status/','/legal/privacy/','/legal/terms/',
  '/sitemap/','/404/',
 ]
@@ -56,7 +59,7 @@ def canonical_origin(mode:str)->str|None:
 def validate(records:dict)->None:
  if set(records)!=set(ROUTES):
   raise ValueError('Route inventory mismatch: missing '+str(set(ROUTES)-set(records))+' extras '+str(set(records)-set(ROUTES)))
- if len(ROUTES)!=34:raise ValueError('Master route count changed')
+ if len(ROUTES)!=38:raise ValueError('Master route count changed')
  for route,info in records.items():
   if not(route.startswith('/') and route.endswith('/')):raise ValueError('Route shape '+route)
   for name in ('main','title','description'):
@@ -107,7 +110,7 @@ def render_header(route:str,template:str)->str:
  elif route.startswith('/experiences/') or route.startswith('/ecosystem/'):group='Experiences'
  elif route.startswith('/research/') or route.startswith('/evidence/') or route.startswith('/news/'):group='Research'
  elif route in ('/company/','/trust/','/accessibility/','/contact/'):group='Company'
- elif route in ('/resources/','/developers/','/support/','/sitemap/'):group='Resources'
+ elif route.startswith('/resources/') or route in ('/developers/','/support/','/sitemap/'):group='Resources'
  rendered=template.rstrip()
  if group:
   old=f'<details class="nav-group"><summary>{group} '
@@ -191,8 +194,8 @@ def build()->dict:
   for name in ('studio-demo-82s.mp4','studio-poster.png'):
    shutil.copyfile(ASSETS/name,asset_dest/name)
  public=json.loads((BASE/'content/public-records.json').read_text(encoding='utf-8'))
- if len(public.get('families',[]))!=6 or len(public.get('routes',[]))!=34:
-  raise ValueError('Public record content does not match the authorized six families / 34 routes')
+ if len(public.get('families',[]))!=6 or len(public.get('routes',[]))!=38:
+  raise ValueError('Public record content does not match the authorized six families / 38 routes')
  public_routes={x.get('path') for x in public['routes']}
  if public_routes!=set(ROUTES):raise ValueError('Public routes index out of sync with master')
  if len({x.get('id') for x in public['evidence']})!=len(public['evidence']):
