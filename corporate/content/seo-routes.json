@@ -241,6 +241,34 @@
       "search_intent": "informational",
       "target_scope": "international-English",
       "review_status": "proposed"
+    },
+    "/resources/axiom-investment-npv/": {
+      "primary_query": "Calculate project net present value with Axiom",
+      "page_kind": "tutorial",
+      "search_intent": "how-to",
+      "target_scope": "international-English",
+      "review_status": "approved"
+    },
+    "/resources/axiom-portfolio-var/": {
+      "primary_query": "Calculate historical portfolio VaR with Axiom",
+      "page_kind": "tutorial",
+      "search_intent": "how-to",
+      "target_scope": "international-English",
+      "review_status": "approved"
+    },
+    "/resources/axiom-statistical-regression/": {
+      "primary_query": "Fit linear regression with MUSITU Axiom",
+      "page_kind": "tutorial",
+      "search_intent": "how-to",
+      "target_scope": "international-English",
+      "review_status": "approved"
+    },
+    "/resources/axiom-linear-optimization/": {
+      "primary_query": "Solve constrained linear optimization with Axiom",
+      "page_kind": "tutorial",
+      "search_intent": "how-to",
+      "target_scope": "international-English",
+      "review_status": "approved"
     }
   }
 }
