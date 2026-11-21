@@ -284,7 +284,7 @@ body::before{height:700px;background:radial-gradient(ellipse at 83% 7%,rgba(112,
 .axiom-demo-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
 .axiom-demo-top code{color:var(--mint);font-size:11px;overflow-wrap:anywhere}
 .axiom-demo-card h3{font-size:clamp(18px,2vw,24px);line-height:1.2;margin:0}
-.axiom-demo-prompt{color:var(--text);font-size:14px;line-height:1.65;margin:0;flex:1 1 auto}
+.axiom-demo-prompt{color:var(--text);font-size:14px;line-height:1.65;margin:0;flex:1 1 auto;min-width:0;overflow-wrap:anywhere;word-break:break-word}
 .axiom-demo-output{border:1px solid var(--line);background:var(--surface-2);padding:16px;border-radius:12px;display:grid;gap:5px}
 .axiom-demo-output span,.axiom-demo-evidence{font-size:12px;color:var(--muted)}
 .axiom-demo-output strong{color:var(--mint);font-size:clamp(19px,2vw,27px);line-height:1.2;overflow-wrap:anywhere}
