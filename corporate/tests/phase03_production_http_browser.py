@@ -67,7 +67,7 @@ def check(engine: str) -> dict:
     if manifest.get("build_mode") != "production" or manifest.get("studio_media_included") is not True:
         raise AssertionError("A full media-qualified production artifact is required")
     routes = manifest["routes"]
-    if len(routes) != 34 or len(set(routes)) != 34:
+    if len(routes) != 38 or len(set(routes)) != 38:
         raise AssertionError("Unexpected production route count")
     response_headers = parse_headers()
     handler_type = type("LocalProductionHandler", (Handler,), {"response_headers": response_headers})
