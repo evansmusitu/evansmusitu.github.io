@@ -264,3 +264,51 @@ body::before{height:700px;background:radial-gradient(ellipse at 83% 7%,rgba(112,
 .axiom-product-cta h3{font-size:clamp(20px,2.3vw,28px);margin:0}
 .axiom-product-cta p{font-size:15px;line-height:1.65;color:var(--muted);max-width:720px;margin:0}
 .axiom-product-cta .button{margin-top:9px}
+
+
+/* Axiom onboarding and conversion: light, accessible, static-first experiences. */
+.header-axiom-cta{min-height:40px;padding:8px 13px;font-size:12px;white-space:nowrap;flex-shrink:0}
+.mobile-primary-axiom{display:block!important;background:linear-gradient(112deg,#82efcf,#b5a9ff);color:#0a1522!important;font-weight:800;border-radius:11px}
+.mobile-ask-button,.mobile-search-button{width:100%;border:0;text-align:left;padding:11px 12px;background:transparent;color:var(--text);font-size:13px;font-weight:700;border-radius:8px}
+.mobile-ask-button:hover,.mobile-search-button:hover{background:var(--surface-2)}
+.axiom-onboarding-section .section-heading{max-width:780px}
+.axiom-start-steps{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:28px 0;padding:0}
+.axiom-start-steps>li{min-width:0;padding:23px;border:1px solid var(--line);border-radius:16px;background:var(--surface-2)}
+.axiom-start-number{display:inline-block;font-size:12px;color:var(--mint);font-weight:850;letter-spacing:.12em;margin-bottom:13px}
+.axiom-start-steps h3{font-size:18px;margin:0 0 9px}
+.axiom-start-steps p{font-size:14px;line-height:1.6;color:var(--muted);margin:0}
+.axiom-start-action{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:24px}
+.axiom-demos-section{border-top:1px solid var(--line)}
+.axiom-demo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:24px;align-items:stretch}
+.axiom-demo-card{display:flex;min-width:0;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:18px;padding:24px;background:var(--surface)}
+.axiom-demo-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.axiom-demo-top code{color:var(--mint);font-size:11px;overflow-wrap:anywhere}
+.axiom-demo-card h3{font-size:clamp(18px,2vw,24px);line-height:1.2;margin:0}
+.axiom-demo-prompt{color:var(--text);font-size:14px;line-height:1.65;margin:0;flex:1 1 auto}
+.axiom-demo-output{border:1px solid var(--line);background:var(--surface-2);padding:16px;border-radius:12px;display:grid;gap:5px}
+.axiom-demo-output span,.axiom-demo-evidence{font-size:12px;color:var(--muted)}
+.axiom-demo-output strong{color:var(--mint);font-size:clamp(19px,2vw,27px);line-height:1.2;overflow-wrap:anywhere}
+.axiom-demo-output p{font-size:13px;color:var(--muted);line-height:1.5;margin:0}
+.axiom-demo-method{font-size:13px;color:var(--muted);max-width:100%}
+.axiom-demo-method>summary{font-weight:700;cursor:pointer;color:var(--text)}
+.axiom-demo-method code{display:block;padding:10px 0;overflow-wrap:anywhere;color:var(--mint);line-height:1.6}
+.axiom-demo-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.axiom-demo-actions .button{min-height:40px;padding:9px 12px;font-size:12px}
+.axiom-demo-feedback{color:var(--mint);font-size:12px;line-height:1.4}
+.axiom-demo-evidence{margin:0}
+.axiom-filter-bar{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:20px 0 17px}
+.axiom-filter-bar>div{min-width:220px;flex:1 1 380px}
+.axiom-filter-bar label,.enquiry-builder label{display:block;font-size:13px;font-weight:750;color:var(--text);margin-bottom:8px}
+.axiom-filter-bar input,.enquiry-builder input,.enquiry-builder select,.enquiry-builder textarea{display:block;width:100%;background:var(--surface);border:1px solid var(--line);color:var(--text);padding:12px 14px;font:inherit;font-size:14px;border-radius:12px}
+.axiom-filter-bar input:focus-visible,.enquiry-builder input:focus-visible,.enquiry-builder select:focus-visible,.enquiry-builder textarea:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.axiom-filter-bar #axiom-capability-count{font-size:13px;color:var(--muted);flex-basis:100%}
+.axiom-filter-bar .button{min-height:45px}
+.axiom-search-empty{padding:18px;background:var(--surface-2);border-radius:12px;font-size:14px}
+.enquiry-builder{display:grid;gap:18px;border:1px solid var(--line);background:var(--surface-2);border-radius:18px;padding:clamp(18px,3vw,30px);max-width:900px}
+.enquiry-form-grid{display:grid;grid-template-columns:1fr 2fr;gap:15px}
+.enquiry-builder textarea{resize:vertical;min-height:135px}
+.enquiry-builder-bottom{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.enquiry-feedback{font-size:12px;color:var(--muted);line-height:1.5;max-width:350px}
+@media(max-width:1100px){.header-axiom-cta{font-size:11px;padding:8px 10px}}
+@media(max-width:760px){.axiom-demo-grid{grid-template-columns:1fr}.axiom-start-steps{grid-template-columns:1fr}.axiom-start-steps>li{padding:17px}.axiom-demo-card{padding:19px}.enquiry-form-grid{grid-template-columns:1fr}}
+@media(max-width:580px){.header-actions .search-open,.header-actions>.theme-button,.header-actions .button-ai{display:none}.header-axiom-cta{min-height:39px;padding:7px 10px}.enquiry-builder-bottom .button{width:100%}}
