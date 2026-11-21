@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""No-network cross-engine DOM verification for all 34 generated MUSITU review routes.
+"""No-network cross-engine DOM verification for all 38 generated MUSITU review routes.
 
 Managed runners may prohibit loopback navigation. To avoid false claims, this
 suite loads each generated HTML document using set_content, substitutes its
@@ -18,6 +18,8 @@ ROUTES=json.loads((DIST/'manifest.json').read_text())['routes']
 CSS=(ROOT/'assets/site.css').read_text()
 DATA=(DIST/'assets/site-data.js').read_text()
 APP=(ROOT/'assets/site.js').read_text()
+AXIOM=(ROOT/'assets/axiom-experience.js').read_text()
+ENQUIRY=(ROOT/'assets/contact-enquiry.js').read_text()
 
 def offline(route,js=True):
     p=DIST/route.lstrip('/')/'index.html'
@@ -29,6 +31,8 @@ def offline(route,js=True):
     html=html.replace('src="/assets/favicon.svg"','src="data:image/svg+xml,'+urllib.parse.quote(favicon,safe='')+'"')
     html=html.replace('<script src="/assets/site-data.js" defer></script>','<script>'+DATA+'</script>' if js else '')
     html=html.replace('<script src="/assets/site.js" defer></script>','<script>'+APP+'</script>' if js else '')
+    html=html.replace('<script src="/assets/axiom-experience.js" defer></script>','<script>'+AXIOM+'</script>' if js else '')
+    html=html.replace('<script src="/assets/contact-enquiry.js" defer></script>','<script>'+ENQUIRY+'</script>' if js else '')
     return html
 
 def main():
@@ -171,6 +175,42 @@ def main():
       page.locator('[data-cell="electrolytic"]').first.click()
       assert 'Electrolytic' in page.locator('#cell-title').first.inner_text()
     check('chemistry_learning_example',chemistry)
+    page.set_content(offline('/products/axiom/'),wait_until='domcontentloaded',timeout=8000)
+    def axiom_search():
+      assert page.locator('#axiom-full-capabilities .axiom-operation:visible').count()==74
+      field=page.locator('#axiom-capability-search')
+      field.fill('bond yield')
+      assert page.locator('#axiom-full-capabilities .axiom-operation:visible').count()==1
+      assert '1 of 74' in page.locator('#axiom-search-count').inner_text()
+      assert 'finance.bond_yield' in page.locator('#axiom-full-capabilities .axiom-operation:visible').first.inner_text()
+      field.fill('solve equations')
+      assert page.locator('#axiom-full-capabilities .axiom-operation:visible').count()>=2
+      page.locator('#axiom-search-clear').click()
+      assert page.locator('#axiom-full-capabilities .axiom-operation:visible').count()==74
+    check('axiom_search_74_and_clear',axiom_search)
+    def technical_details():
+      op=page.locator('#axiom-full-capabilities .axiom-operation').filter(has_text='Bond yield').first
+      op.locator('summary').click()
+      assert op.locator('details').evaluate('(d)=>d.open')
+      assert 'finance.bond_yield' in op.inner_text()
+    check('axiom_technical_details',technical_details)
+    def proof_and_onboarding():
+      assert page.locator('#axiom-real-examples .axiom-proof-card').count()==4
+      assert page.locator('#get-started-axiom .axiom-start-steps li').count()==3
+      assert page.locator('#axiom-video video track[kind="captions"]').count()==1
+      assert page.locator('.axiom-copy-prompt').count()>=5
+    check('axiom_real_proof_onboarding_and_captions',proof_and_onboarding)
+    page.set_content(offline('/contact/'),wait_until='domcontentloaded',timeout=8000)
+    def enquiry():
+      form=page.locator('#musitu-enquiry-form')
+      assert form.count()==1
+      form.locator('[name="product"]').select_option(label='MUSITU Axiom')
+      form.locator('[name="purpose"]').select_option(label='Product capabilities')
+      form.locator('[name="email"]').fill('invalid-email')
+      form.locator('[name="message"]').fill('I want an Axiom product capability assessment.')
+      assert form.evaluate('(f)=>f.checkValidity()') is False
+      assert 'website does not transmit the message itself' in page.locator('#enquiry-status').inner_text()
+    check('enquiry_validation_and_honest_delivery_status',enquiry)
     # no-JS checks; this browser context never evaluates scripts.
     noctx=browser.new_context(viewport={'width':320,'height':800},java_script_enabled=False,reduced_motion='reduce')
     nopage=noctx.new_page();nopage.set_default_timeout(2500)
