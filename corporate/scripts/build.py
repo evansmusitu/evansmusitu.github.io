@@ -110,7 +110,7 @@ def render_header(route:str,template:str)->str:
  elif route.startswith('/experiences/') or route.startswith('/ecosystem/'):group='Experiences'
  elif route.startswith('/research/') or route.startswith('/evidence/') or route.startswith('/news/'):group='Research'
  elif route in ('/company/','/trust/','/accessibility/','/contact/'):group='Company'
- elif route in ('/resources/','/developers/','/support/','/sitemap/'):group='Resources'
+ elif route.startswith('/resources/') or route in ('/developers/','/support/','/sitemap/'):group='Resources'
  rendered=template.rstrip()
  if group:
   old=f'<details class="nav-group"><summary>{group} '
