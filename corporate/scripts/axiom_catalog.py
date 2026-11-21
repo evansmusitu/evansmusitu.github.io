@@ -62,7 +62,7 @@ def render_axiom_catalog() -> str:
             '<li data-axiom-operation data-search="' +
             esc(" ".join((item["label"], item["id"], group["title"], group["description"])).lower()) +
             '"><span class="axiom-operation-label">' + esc(item["label"])
-            + '</span><code>' + esc(item["id"]) + '</code></li>'
+            + '</span><details class="axiom-operation-tech"><summary>Technical details</summary><code>' + esc(item["id"]) + '</code></details></li>'
             for item in group["operations"]
         )
         panels.append(
@@ -78,11 +78,11 @@ def render_axiom_catalog() -> str:
         '<span class="eyebrow">THE AXIOM CAPABILITY LIBRARY</span>'
         '<h2>Explore all 74 Axiom operations.</h2>'
         '<p>Find the right calculation by keyword, method or technical operation. '
-        'Search across finance, statistics, mathematics, optimisation and more.</p>'
+        'Search tasks such as bond yield, volatility forecasting, regression and solving equations.</p>'
         '</div><div class="axiom-metrics" aria-label="Axiom registry snapshot">'
-        '<div><strong>74</strong><span>Registered operations</span></div>'
+        '<div><strong>74</strong><span>Supported operations</span></div>'
         '<div><strong>18</strong><span>Capability disciplines</span></div>'
-        '<div><strong>4</strong><span>Executed examples</span></div>'
+        '<div><strong>20</strong><span>Recorded Axiom examples</span></div>'
         '</div><p class="axiom-snapshot">Capability library updated ' + esc(data["snapshot_date"]) + '.</p>'
         '<div class="axiom-filter-bar"><div>'
         '<label for="axiom-capability-search">Find a capability</label>'
