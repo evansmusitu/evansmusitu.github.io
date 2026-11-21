@@ -55,6 +55,8 @@ def test_axiom_product_renders_onboarding_and_search_without_giving_up_directory
     assert len(soup.select(".axiom-starter-card"))==5
     assert len(soup.select(".axiom-demo-method pre code"))==20
     assert len(soup.select(".axiom-operation-tech"))==74
+    assert len(soup.select(".axiom-raw-schema"))==74
+    assert len(soup.select(".axiom-parameter-list > div"))==193
     assert not soup.find(string=lambda x:x and "AXIOM_AUTHENTIC_EXAMPLES" in x)
     assert soup.select_one("#axiom-capability-search[type=search][maxlength='90']")
     assert soup.select_one("#axiom-capability-count[aria-live=polite]")
