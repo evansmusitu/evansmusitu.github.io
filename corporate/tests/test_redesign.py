@@ -24,7 +24,7 @@ def soup(route):
     return BeautifulSoup((DIST / route.lstrip('/') / 'index.html').read_text(encoding='utf-8'), 'html.parser')
 
 def test_shared_header_source_and_content_contract():
-    assert len(RECORDS) == 34
+    assert len(RECORDS) == 38
     assert all('header' not in record for record in RECORDS.values())
     template = (ROOT / 'templates/header.html').read_text(encoding='utf-8')
     assert template.count('class="site-header"') == 1
