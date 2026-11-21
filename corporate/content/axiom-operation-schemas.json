@@ -3534,6 +3534,514 @@
           }
         ]
       }
+    },
+    {
+      "operation": "geometry.area_circle",
+      "label": "Circle area",
+      "category": "Geometry",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "radius": {
+            "type": "number",
+            "description": "Nonnegative radius.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "radius"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "radius": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "geometry.distance",
+      "label": "Distance between points",
+      "category": "Geometry",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "p": {
+            "type": "array",
+            "description": "First point coordinates.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "q": {
+            "type": "array",
+            "description": "Second point coordinates with the same dimension as p.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "p",
+          "q"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "p": [
+              0,
+              0
+            ],
+            "q": [
+              3,
+              4
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "geometry.volume_sphere",
+      "label": "Sphere volume",
+      "category": "Geometry",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "radius": {
+            "type": "number",
+            "description": "Nonnegative radius.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "radius"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "radius": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "transforms.fft",
+      "label": "Fast Fourier transform (FFT)",
+      "category": "Signal transforms",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Numeric observations in their original order.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "transforms.ifft",
+      "label": "Inverse Fourier transform (IFFT)",
+      "category": "Signal transforms",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Real-FFT frequency bins, not a full complex spectrum.",
+            "minItems": 1,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "description": "Python-compatible finite complex value, such as 1+2j.",
+                  "minLength": 1,
+                  "pattern": "^\\s*(?:(?:[+-]?(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?|[+-]?(?:(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?)?[jJ]|[+-]?(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?[+-](?:(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?)?[jJ])|\\(\\s*(?:[+-]?(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?|[+-]?(?:(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?)?[jJ]|[+-]?(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?[+-](?:(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?)?[jJ])\\s*\\))\\s*$"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "re": {
+                      "type": "number",
+                      "description": "Real part.",
+                      "default": 0
+                    },
+                    "im": {
+                      "type": "number",
+                      "description": "Imaginary part.",
+                      "default": 0
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "n": {
+            "description": "Output sample count. Omit or null for 2*(number of bins-1).",
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              {
+                "re": 10,
+                "im": 0
+              },
+              {
+                "re": -2,
+                "im": 2
+              },
+              {
+                "re": -2,
+                "im": 0
+              }
+            ],
+            "n": 4
+          }
+        ]
+      }
+    },
+    {
+      "operation": "combinatorics.binomial",
+      "label": "Binomial coefficients",
+      "category": "Combinatorics",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "description": "Upper binomial argument."
+          },
+          "k": {
+            "type": "integer",
+            "description": "Lower binomial argument."
+          }
+        },
+        "required": [
+          "n",
+          "k"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "n": 5,
+            "k": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "combinatorics.factorial",
+      "label": "Factorials",
+      "category": "Combinatorics",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "description": "Nonnegative factorial argument.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "n"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "n": 5
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numbertheory.factorint",
+      "label": "Integer factorization",
+      "category": "Number theory",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "description": "Integer to analyze."
+          }
+        },
+        "required": [
+          "n"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "n": 42
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numbertheory.gcd",
+      "label": "Greatest common divisor",
+      "category": "Number theory",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "integer",
+            "description": "First integer."
+          },
+          "b": {
+            "type": "integer",
+            "description": "Second integer."
+          }
+        },
+        "required": [
+          "a",
+          "b"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "a": 12,
+            "b": 18
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numbertheory.isprime",
+      "label": "Primality testing",
+      "category": "Number theory",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "description": "Integer to analyze."
+          }
+        },
+        "required": [
+          "n"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "n": 42
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numbertheory.lcm",
+      "label": "Least common multiple",
+      "category": "Number theory",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "integer",
+            "description": "First integer."
+          },
+          "b": {
+            "type": "integer",
+            "description": "Second integer."
+          }
+        },
+        "required": [
+          "a",
+          "b"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "a": 12,
+            "b": 18
+          }
+        ]
+      }
+    },
+    {
+      "operation": "units.convert",
+      "label": "Unit conversion",
+      "category": "Unit conversion",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number",
+            "description": "Quantity to convert."
+          },
+          "from": {
+            "type": "string",
+            "description": "Source unit; must be dimensionally compatible with to.",
+            "minLength": 1,
+            "enum": [
+              "m",
+              "km",
+              "cm",
+              "mm",
+              "kg",
+              "g",
+              "s",
+              "min",
+              "h",
+              "Pa",
+              "kPa",
+              "MPa",
+              "C",
+              "F",
+              "K"
+            ]
+          },
+          "to": {
+            "type": "string",
+            "description": "Target unit.",
+            "minLength": 1,
+            "enum": [
+              "m",
+              "km",
+              "cm",
+              "mm",
+              "kg",
+              "g",
+              "s",
+              "min",
+              "h",
+              "Pa",
+              "kPa",
+              "MPa",
+              "C",
+              "F",
+              "K"
+            ]
+          }
+        },
+        "required": [
+          "value",
+          "from",
+          "to"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "value": 1,
+            "from": "km",
+            "to": "m"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "knowledge.constant",
+      "label": "Scientific constants",
+      "category": "Scientific reference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Embedded scientific constant identifier.",
+            "minLength": 1,
+            "enum": [
+              "c",
+              "G",
+              "h",
+              "e",
+              "k_B",
+              "N_A"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "name": "c"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "knowledge.element",
+      "label": "Chemical element lookup",
+      "category": "Scientific reference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Case-sensitive chemical symbol, embedded elements H through Ca.",
+            "minLength": 1,
+            "enum": [
+              "H",
+              "He",
+              "Li",
+              "Be",
+              "B",
+              "C",
+              "N",
+              "O",
+              "F",
+              "Ne",
+              "Na",
+              "Mg",
+              "Al",
+              "Si",
+              "P",
+              "S",
+              "Cl",
+              "Ar",
+              "K",
+              "Ca"
+            ]
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "symbol": "C"
+          }
+        ]
+      }
     }
   ]
 }
