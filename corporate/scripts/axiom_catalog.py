@@ -56,11 +56,28 @@ def render_axiom_catalog() -> str:
         + '<span aria-hidden="true">' + str(len(group["operations"])) + '</span></a>'
         for group in categories
     )
+    search_terms = {
+        "finance.bond_yield": "calculate bond yield fixed income interest",
+        "finance.bond_price": "bond valuation fixed income price",
+        "finance.npv": "investment cash flow net present value discount project",
+        "finance.var_historical": "portfolio risk loss downside historical value at risk",
+        "finance.portfolio_metrics": "portfolio performance diversification",
+        "timeseries.rolling_volatility": "forecast volatility rolling market risk",
+        "timeseries.ewma": "forecast volatility smoothing",
+        "algebra.solve": "solve equations algebra",
+        "linear.solve": "solve equations linear systems matrices",
+        "optimization.linear_program": "allocation optimal budget capacity",
+        "statistics.regression": "trend predictor relationship fit",
+    }
     panels = []
     for group in categories:
         entries = "".join(
-            '<li><span class="axiom-operation-label">' + esc(item["label"])
-            + '</span><code>' + esc(item["id"]) + '</code></li>'
+            '<li class="axiom-operation" data-search="' + esc(' '.join((
+                item["label"], item["id"], group["title"], group["description"],
+                search_terms.get(item["id"], ""))).lower()) + '">'
+            + '<span class="axiom-operation-label">' + esc(item["label"]) + '</span>'
+            + '<details class="axiom-op-detail"><summary>Technical details</summary>'
+            + '<code>' + esc(item["id"]) + '</code></details></li>'
             for item in group["operations"]
         )
         panels.append(
@@ -77,14 +94,19 @@ def render_axiom_catalog() -> str:
         '<h2>Explore all 74 Axiom operations.</h2>'
         '<p>Discover tools for financial analysis, statistics, mathematics, optimisation and more. '
         'Browse by discipline and explore the exact capabilities behind each tool.</p>'
-        '</div><div class="axiom-metrics" aria-label="Axiom registry snapshot">'
-        '<div><strong>74</strong><span>Registered operations</span></div>'
-        '<div><strong>18</strong><span>Capability disciplines</span></div>'
-        '<div><strong>30</strong><span>Focused analytical tools</span></div>'
+        '</div><div class="axiom-metrics" aria-label="Axiom capability library">'
+        '<div><strong>74</strong><span>Capabilities to explore</span></div>'
+        '<div><strong>18</strong><span>Technical disciplines</span></div>'
         '</div><p class="axiom-snapshot">Capability library updated ' + esc(data["snapshot_date"]) + '.</p>'
+        '<div class="axiom-search-bar"><label for="axiom-capability-search">What do you want to calculate?</label>'
+        '<div class="axiom-search-controls"><input type="search" id="axiom-capability-search" '
+        'placeholder="Bond yield, volatility, solve equations..." aria-controls="axiom-directory-results" '
+        'autocomplete="off"><button type="button" id="axiom-search-clear">Clear</button></div>'
+        '<p id="axiom-search-count" role="status" aria-live="polite">Showing all 74 capabilities</p></div>'
         '<nav class="axiom-directory-nav" aria-label="Jump to Axiom disciplines">'
         + navigation + '</nav>'
-        '<div class="axiom-directory-grid">' + "".join(panels) + '</div>'
+        '<div class="axiom-directory-grid" id="axiom-directory-results">' + "".join(panels) + '</div>'
+        '<p id="axiom-search-empty" hidden>No matching capabilities. Try a wider term such as finance or statistics.</p>'
         '<div class="axiom-explore-cta"><div><h3>Bring your next question to Axiom.</h3>'
         '<p>Explore the mathematical tools behind sharper analysis, stronger models and more informed decisions.</p>'
         '</div><a class="button button-primary" '
