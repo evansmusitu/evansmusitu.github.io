@@ -76,15 +76,15 @@
   // Search the complete static Axiom catalog without sending a query to a server.
   const axiomQuery=$('#axiom-capability-search');
   if(axiomQuery){
-    const entries=$('[data-axiom-operation]'),groups=$('[data-axiom-category]');
-    const navigation=$('[data-axiom-nav]'),counter=$('#axiom-capability-count');
+    const entries=Array.from(document.querySelectorAll('[data-axiom-operation]')),groups=Array.from(document.querySelectorAll('[data-axiom-category]'));
+    const navigation=Array.from(document.querySelectorAll('[data-axiom-nav]')),counter=$('#axiom-capability-count');
     const reset=$('#axiom-capability-reset'),empty=$('#axiom-capability-empty');
     const filter=()=>{
       const tokens=axiomQuery.value.trim().toLowerCase().slice(0,90).split(/\s+/).filter(Boolean);
       let total=0,shownGroups=0;
       groups.forEach(group=>{
         let matches=0;
-        $('[data-axiom-operation]',group).forEach(item=>{
+        Array.from(group.querySelectorAll('[data-axiom-operation]')).forEach(item=>{
           const shown=tokens.every(t=>(item.dataset.search||'').includes(t));
           item.hidden=!shown;if(shown){matches++;total++;}
         });
@@ -102,7 +102,7 @@
     filter();
   }
   // Copy a real precomputed Axiom example question. The website never runs the operation.
-  $('[data-axiom-copy]').forEach(button=>button.addEventListener('click',async()=>{
+  Array.from(document.querySelectorAll('[data-axiom-copy]')).forEach(button=>button.addEventListener('click',async()=>{
     const card=button.closest('.axiom-demo-card');const prompt=$('[data-axiom-prompt]',card);
     const feedback=$('.axiom-demo-feedback',card);
     if(!prompt)return;
