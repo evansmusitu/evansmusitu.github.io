@@ -9,6 +9,7 @@ import hashlib, html, json, re, shutil, os
 from pathlib import Path
 from seo import seo_head, validate_catalog
 from axiom_catalog import render_axiom_catalog
+from axiom_proof import render_examples, render_start, examples
 from phase03_publication import (approved_sources, article_routes, article_info, article_head,
   localize_english_core, french_info, french_head, french_records, hreflang, FR_EN,
   actual_publication_date)
@@ -25,7 +26,10 @@ ROUTES=[
  '/products/foundry/studio/','/solutions/','/solutions/finance-research/',
  '/solutions/learning/','/solutions/creative-production/','/solutions/enterprise-systems/',
  '/experiences/','/experiences/intelligence/','/experiences/lab/','/ecosystem/',
- '/research/','/evidence/','/resources/','/developers/','/news/',
+ '/research/','/evidence/','/resources/',
+ '/resources/axiom-investment-npv/','/resources/axiom-portfolio-var/',
+ '/resources/axiom-statistical-regression/','/resources/axiom-linear-optimization/',
+ '/developers/','/news/',
  '/contact/','/support/','/status/','/legal/privacy/','/legal/terms/',
  '/sitemap/','/404/',
 ]
@@ -55,7 +59,7 @@ def canonical_origin(mode:str)->str|None:
 def validate(records:dict)->None:
  if set(records)!=set(ROUTES):
   raise ValueError('Route inventory mismatch: missing '+str(set(ROUTES)-set(records))+' extras '+str(set(records)-set(ROUTES)))
- if len(ROUTES)!=34:raise ValueError('Master route count changed')
+ if len(ROUTES)!=38:raise ValueError('Master route count changed')
  for route,info in records.items():
   if not(route.startswith('/') and route.endswith('/')):raise ValueError('Route shape '+route)
   for name in ('main','title','description'):
@@ -154,6 +158,8 @@ def render(route:str,info:dict,shared:dict,staged_media:bool=False,mode:str='rev
  '</head>\n<body>\n'+body+'\n'
  '<script src="/assets/site-data.js" defer></script>\n'
  '<script src="/assets/site.js" defer></script>\n'
+ + ('<script src="/assets/axiom-experience.js" defer></script>\n' if route=='/products/axiom/' else '')
+ + ('<script src="/assets/contact-enquiry.js" defer></script>\n' if route=='/contact/' else '')
  '</body>\n</html>\n')
 
 def build()->dict:
@@ -171,6 +177,10 @@ def build()->dict:
   raise ValueError('Publication route collision')
  validate(records)
  marker='<!--AXIOM_CAPABILITY_DIRECTORY-->'
+ for extra_marker in ('<!--AXIOM_ONBOARDING-->','<!--AXIOM_REAL_EXECUTIONS-->'):
+  if records['/products/axiom/']['main'].count(extra_marker)!=1:
+   raise ValueError('Missing or duplicated Axiom evidence or onboarding insertion point')
+ examples()
  if records['/products/axiom/']['main'].count(marker)!=1:
   raise ValueError('Axiom directory insertion point is missing or ambiguous')
  if any(marker in info['main'] for route,info in records.items() if route!='/products/axiom/'):
@@ -181,14 +191,14 @@ def build()->dict:
  if DST.exists():shutil.rmtree(DST)
  DST.mkdir(parents=True)
  asset_dest=DST/'assets';asset_dest.mkdir()
- for name in ('site.css','site.js','favicon.svg'):
+ for name in ('site.css','site.js','axiom-experience.js','contact-enquiry.js','favicon.svg'):
   shutil.copyfile(ASSETS/name,asset_dest/name)
  staged_media=verified_studio_media_ready(mode)
  if staged_media:
   for name in ('studio-demo-82s.mp4','studio-poster.png'):
    shutil.copyfile(ASSETS/name,asset_dest/name)
  public=json.loads((BASE/'content/public-records.json').read_text(encoding='utf-8'))
- if len(public.get('families',[]))!=6 or len(public.get('routes',[]))!=34:
+ if len(public.get('families',[]))!=6 or len(public.get('routes',[]))!=38:
   raise ValueError('Public record content does not match the authorized six families / 34 routes')
  public_routes={x.get('path') for x in public['routes']}
  if public_routes!=set(ROUTES):raise ValueError('Public routes index out of sync with master')
@@ -203,7 +213,7 @@ def build()->dict:
   dest.parent.mkdir(parents=True,exist_ok=True)
   info=localize_english_core(route,records[route],articles) if publication_enabled else records[route]
   if route=='/products/axiom/':
-   info={**info,'main':info['main'].replace(marker,render_axiom_catalog())}
+   info={**info,'main':info['main'].replace('<!--AXIOM_ONBOARDING-->',render_start()).replace('<!--AXIOM_REAL_EXECUTIONS-->',render_examples()).replace(marker,render_axiom_catalog())}
   seo_html=seo_head(route,info,records,origin) if mode=='production' else ''
   if publication_enabled and mode=='production':seo_html+=hreflang(route)
   dest.write_text(render(route,info,shared,staged_media=staged_media,mode=mode,origin=origin,seo_html=seo_html),encoding='utf-8')
