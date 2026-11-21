@@ -75,7 +75,13 @@ def main():
             main:document.querySelector('main').getBoundingClientRect().width})''')
           results['theme_checks']+=1
           if measurements['scroll']>measurements['client']+3:
-            results['overflow'].append({'route':route,'width':width,'theme':theme,'measure':measurements})
+            offenders=page.evaluate('''() => Array.from(document.querySelectorAll('body *'))
+              .filter(el=>{const r=el.getBoundingClientRect(); const cs=getComputedStyle(el);
+                return cs.display!=='none' && cs.visibility!=='hidden' && r.right>innerWidth+3 && r.width>0;})
+              .slice(0,12).map(el=>({tag:el.tagName,cls:String(el.className).slice(0,90),
+                right:Math.round(el.getBoundingClientRect().right),
+                width:Math.round(el.getBoundingClientRect().width)}))''')
+            results['overflow'].append({'route':route,'width':width,'theme':theme,'measure':measurements,'offenders':offenders})
         results['responsive_checks']+=1
     # Showcase homepage screenshots from actual rendered offline DOM.
     page.close();page=ctx.new_page();page.set_default_timeout(2500);page.on('pageerror',pageerror)
