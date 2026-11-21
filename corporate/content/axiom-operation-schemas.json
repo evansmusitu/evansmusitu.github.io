@@ -766,6 +766,731 @@
           }
         ]
       }
+    },
+    {
+      "operation": "finance.var_parametric",
+      "label": "Parametric value at risk",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "returns": {
+            "type": "array",
+            "description": "Period returns as decimals.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          },
+          "alpha": {
+            "type": "number",
+            "description": "Confidence level as a decimal strictly between 0 and 1.",
+            "exclusiveMinimum": 0,
+            "exclusiveMaximum": 1,
+            "default": 0.99
+          }
+        },
+        "required": [
+          "returns"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "returns": [
+              -0.03,
+              -0.01,
+              0.01,
+              0.02,
+              0.04
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.correlation",
+      "label": "Correlation",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "description": "First numeric sample.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          },
+          "y": {
+            "type": "array",
+            "description": "Second numeric sample. Paired analyses require the same length as x.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": [
+              1,
+              2,
+              4,
+              5
+            ],
+            "y": [
+              2,
+              4,
+              5,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.covariance",
+      "label": "Covariance",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "description": "First numeric sample.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          },
+          "y": {
+            "type": "array",
+            "description": "Second numeric sample. Paired analyses require the same length as x.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": [
+              1,
+              2,
+              4,
+              5
+            ],
+            "y": [
+              2,
+              4,
+              5,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.describe",
+      "label": "Descriptive statistics",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Numeric observations in their original order.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              2,
+              4,
+              6,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.normal_fit",
+      "label": "Fit a normal distribution",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Numeric observations in their original order.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              1,
+              2,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.quantile",
+      "label": "Quantiles and percentiles",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Numeric observations in their original order.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "q": {
+            "type": "number",
+            "description": "Quantile probability between 0 and 1.",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "data",
+          "q"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "q": 0.5
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.regression",
+      "label": "Regression",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "description": "First numeric sample.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          },
+          "y": {
+            "type": "array",
+            "description": "Second numeric sample. Paired analyses require the same length as x.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": [
+              1,
+              2,
+              4,
+              5
+            ],
+            "y": [
+              2,
+              4,
+              5,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.ttest_ind",
+      "label": "Two-sample t-test",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "description": "First numeric sample.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "y": {
+            "type": "array",
+            "description": "Second numeric sample. Paired analyses require the same length as x.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "equal_var": {
+            "type": "boolean",
+            "description": "Use pooled variance when true (combined sample size at least 3); Welch test when false (each sample size at least 2).",
+            "default": false
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": [
+              1,
+              2,
+              4,
+              5
+            ],
+            "y": [
+              2,
+              4,
+              5,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.zscore",
+      "label": "Standard scores (z-scores)",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Nonconstant numeric sample.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "ddof": {
+            "type": "integer",
+            "description": "Degrees-of-freedom correction; must be less than sample size.",
+            "minimum": 0,
+            "default": 0
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              1,
+              2,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "optimization.linear_program",
+      "label": "Linear programming",
+      "category": "Constrained optimization",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "c": {
+            "type": "array",
+            "description": "Objective coefficients to minimize c dot x.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "A_ub": {
+            "type": "array",
+            "description": "Inequality coefficient rows for A_ub x <= b_ub.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          },
+          "b_ub": {
+            "type": "array",
+            "description": "One upper limit per row of A_ub.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "A_eq": {
+            "type": "array",
+            "description": "Equality coefficient rows for A_eq x = b_eq.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          },
+          "b_eq": {
+            "type": "array",
+            "description": "One target per row of A_eq.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "bounds": {
+            "description": "[lower,upper] for all variables, or one such pair per variable. A null endpoint means unbounded; null for the whole bounds value uses default nonnegative bounds [0,null].",
+            "default": [
+              0,
+              null
+            ],
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                "minItems": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "c"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "c": [
+              -3,
+              -2
+            ],
+            "A_ub": [
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            "b_ub": [
+              4,
+              2,
+              3
+            ],
+            "bounds": [
+              0,
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "optimization.quadratic",
+      "label": "Quadratic optimization",
+      "category": "Constrained optimization",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "Q": {
+            "type": "array",
+            "description": "Square symmetric quadratic matrix for 0.5*x.T*Q*x+c.T*x.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          },
+          "c": {
+            "type": "array",
+            "description": "Linear objective coefficients.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "x0": {
+            "type": "array",
+            "description": "Initial point; defaults to the zero vector.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "Q",
+          "c"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "Q": [
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                2
+              ]
+            ],
+            "c": [
+              -2,
+              -4
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "timeseries.ewma",
+      "label": "Exponentially weighted moving average",
+      "category": "Time-series analysis",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Numeric observations in their original order.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "alpha": {
+            "type": "number",
+            "description": "Recursive smoothing weight in (0,1].",
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "default": 0.2
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "alpha": 0.5
+          }
+        ]
+      }
+    },
+    {
+      "operation": "timeseries.moving_average",
+      "label": "Moving averages",
+      "category": "Time-series analysis",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Numeric observations in their original order.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "window": {
+            "type": "integer",
+            "description": "Window length; cannot exceed the data length.",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "data",
+          "window"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "window": 3
+          }
+        ]
+      }
+    },
+    {
+      "operation": "timeseries.rolling_volatility",
+      "label": "Rolling volatility",
+      "category": "Time-series analysis",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "returns": {
+            "type": "array",
+            "description": "Period return observations as decimals.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          },
+          "window": {
+            "type": "integer",
+            "description": "Window length, from 2 through the returns length.",
+            "minimum": 2
+          },
+          "annualization": {
+            "type": "number",
+            "description": "Periods per year.",
+            "exclusiveMinimum": 0,
+            "default": 252
+          }
+        },
+        "required": [
+          "returns",
+          "window"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "returns": [
+              -0.01,
+              0.02,
+              0.01,
+              -0.02
+            ],
+            "window": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "algebra.expand",
+      "label": "Expand expressions",
+      "category": "Symbolic algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "(x+1)**2"
+          }
+        ]
+      }
     }
   ]
 }
