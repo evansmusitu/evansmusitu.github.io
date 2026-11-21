@@ -344,6 +344,30 @@
       "title": "Enterprise Systems",
       "headline": "Make complex software systems easier to connect.",
       "lead": "Understand the governance, interoperability and reliability concerns behind modern digital workflows."
+    },
+    {
+      "path": "/resources/axiom-investment-npv/",
+      "title": "Axiom investment npv",
+      "headline": "Calculate project net present value with Axiom",
+      "lead": "Calculate an investment's NPV and interpret the discount-rate assumption."
+    },
+    {
+      "path": "/resources/axiom-portfolio-var/",
+      "title": "Axiom portfolio var",
+      "headline": "Calculate historical portfolio VaR with Axiom",
+      "lead": "Use a recorded historical value-at-risk result to understand downside risk."
+    },
+    {
+      "path": "/resources/axiom-statistical-regression/",
+      "title": "Axiom statistical regression",
+      "headline": "Fit linear regression with MUSITU Axiom",
+      "lead": "Fit a line to paired data and interpret the result."
+    },
+    {
+      "path": "/resources/axiom-linear-optimization/",
+      "title": "Axiom linear optimization",
+      "headline": "Solve constrained linear optimization with Axiom",
+      "lead": "Find an optimal allocation under explicit constraints."
     }
   ]
 }
