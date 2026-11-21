@@ -125,3 +125,47 @@ def test_four_on_page_guides_link_to_specific_capabilities():
     directory=page("/products/axiom/")
     for item in expected:
         assert directory.select_one("#axiom-operation-"+item)
+
+
+def test_four_canonical_tutorials_are_source_accurate_and_connect_to_operations():
+    pages=json.loads((ROOT/"content/pages.json").read_text(encoding="utf-8"))
+    evidence=load_axiom_demonstrations()
+    operations={
+        "/resources/axiom-investment-npv/":("npv","finance.npv"),
+        "/resources/axiom-historical-var/":("portfolio-var","finance.var_historical"),
+        "/resources/axiom-linear-regression/":("regression","statistics.regression"),
+        "/resources/axiom-linear-optimisation/":("optimization","optimization.linear_program"),
+    }
+    cases={x["id"]:x for x in evidence["examples"]}
+    for route,(example_id,operation) in operations.items():
+        assert route in pages
+        source=pages[route]
+        article=page(route)
+        assert article.select_one("article.axiom-longform")
+        assert article.select_one('time[datetime="2026-11-21"]')
+        assert article.select_one('link[rel="stylesheet"][href="/assets/site.css"]')
+        assert article.select_one('a[href="/products/axiom/#axiom-operation-'+operation.replace(".", "-")+'"]')
+        assert article.select_one('a[href="/resources/#axiom-practical-guides"]')
+        assert len(article.select("main#main"))==1 and len(article.select("h1"))==1
+        assert len(article.select("h2"))>=6
+        assert not article.select("article.axiom-longform form, article.axiom-longform iframe")
+        assert cases[example_id]["result"] in article.get_text(" ",strip=True)
+        exact=article.select_one(".axiom-tutorial-inputs pre code")
+        assert exact is not None
+        assert json.loads(exact.get_text())==cases[example_id]["arguments"]
+    resources=page("/resources/")
+    assert len(resources.select('#axiom-practical-guides a[href^="/resources/axiom-"]'))==4
+    demos=page("/products/axiom/")
+    assert len(demos.select('.axiom-demo-card a[href^="/resources/axiom-"]'))==4
+
+def test_four_tutorials_have_distinct_indexable_intents_in_seo_source():
+    pages=json.loads((ROOT/"content/pages.json").read_text(encoding="utf-8"))
+    seo=json.loads((ROOT/"content/seo-routes.json").read_text(encoding="utf-8"))
+    tutorial_urls=[route for route in pages if route.startswith("/resources/axiom-")]
+    assert len(tutorial_urls)==4
+    assert len(seo["routes"])==37
+    keywords={seo["routes"][route]["primary_query"] for route in tutorial_urls}
+    assert len(keywords)==4
+    for route in tutorial_urls:
+        assert seo["routes"][route]["page_kind"]=="tutorial"
+        assert pages[route]["title"] in page(route).title.get_text()
