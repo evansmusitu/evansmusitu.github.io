@@ -12,6 +12,21 @@ from pathlib import Path
 
 SOURCE = Path(__file__).resolve().parents[1] / "content/axiom-capabilities.json"
 SCHEMAS = Path(__file__).resolve().parents[1] / "content/axiom-operation-schemas.json"
+# Tested visitor language, separate from canonical operation names and input contracts.
+TASK_ALIASES = {
+    "finance.bond_yield": "calculate bond yield yield to maturity ytm coupon price fixed income",
+    "finance.bond_price": "calculate bond price value bond coupon discount cash flows",
+    "finance.npv": "calculate investment npv net present value discounted cash flow",
+    "finance.var_historical": "calculate portfolio risk value at risk historical var",
+    "finance.var_parametric": "calculate portfolio risk forecast normal var",
+    "timeseries.rolling_volatility": "forecast volatility estimate historical rolling volatility",
+    "timeseries.ewma": "forecast volatility exponentially weighted ewma smoothing",
+    "statistics.regression": "fit statistical regression estimate line predict outcome",
+    "optimization.linear_program": "optimise allocation optimize allocation maximise profit maximize objective linear programming",
+    "optimization.quadratic": "optimise allocation optimize allocation quadratic portfolio optimization",
+    "algebra.solve": "solve equations solve for x find algebraic roots",
+    "linear.solve": "solve equations solve linear systems matrix",
+}
 TECHNICAL_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
 CATEGORY_ID = re.compile(r"^[a-z][a-z0-9_]*$")
 
@@ -110,7 +125,7 @@ def render_axiom_catalog() -> str:
     for group in categories:
         entries = "".join(
             '<li id="axiom-operation-' + esc(item["id"].replace(".", "-")) + '" data-axiom-operation data-search="' +
-            esc(" ".join((item["label"], item["id"], group["title"], group["description"])).lower()) +
+            esc(" ".join((item["label"], item["id"], group["title"], group["description"], TASK_ALIASES.get(item["id"], ""))).lower()) +
             '"><span class="axiom-operation-label">' + esc(item["label"])
             + '</span><details class="axiom-operation-tech"><summary>Technical details and required inputs</summary>'
             '<p>Operation: <code>' + esc(item["id"]) + '</code></p>'
