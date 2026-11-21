@@ -54,7 +54,7 @@ def render_axiom_showcase() -> str:
             '<details class="axiom-demo-method"><summary>View sample inputs</summary><code>'
             + esc(item["inputs"]) + '</code></details>'
             '<div class="axiom-demo-actions"><button class="button button-outline" type="button" '
-            'data-axiom-copy aria-label="Copy ' + esc(item["title"]) + ' example question">'
+            'data-axiom-copy aria-label="Copy example question: ' + esc(item["title"]) + '">'
             'Copy example question</button>'
             '<span class="axiom-demo-feedback" role="status" aria-live="polite"></span></div>'
             '<p class="axiom-demo-evidence">' + esc(item["verification"]) + '</p>'
