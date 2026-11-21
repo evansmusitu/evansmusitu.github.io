@@ -35,7 +35,7 @@ def page(route):
     return BeautifulSoup((DIST/route.lstrip("/")/"index.html").read_text(encoding="utf-8"),"html.parser")
 
 def test_musitu_marketing_pages_have_no_internal_release_warning_banners():
-    assert len(PAGES)==34
+    assert len(PAGES)==38
     for route in PAGES:
         if route.startswith("/legal/"):
             continue  # Preserve required policy and terms disclosures.
@@ -81,7 +81,7 @@ def test_evidence_dialog_and_compare_table_focus_on_facts():
                for f in RECORDS["families"])
     assert all(r["limits"].strip() and not r["limits"].startswith(("No ","Not ","Does not"))
                for r in RECORDS["evidence"])
-    assert RECORDS["routes"] and len(RECORDS["routes"])==34
+    assert RECORDS["routes"] and len(RECORDS["routes"])==38
 
 def test_marketing_remains_truthful_and_legal_disclosures_remain():
     ax=page("/products/axiom/").get_text(" ",strip=True)
