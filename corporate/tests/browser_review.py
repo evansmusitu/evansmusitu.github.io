@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""No-network cross-engine DOM verification for all 34 generated MUSITU review routes.
+"""No-network cross-engine DOM verification for all 38 generated MUSITU review routes.
 
 Managed runners may prohibit loopback navigation. To avoid false claims, this
 suite loads each generated HTML document using set_content, substitutes its
