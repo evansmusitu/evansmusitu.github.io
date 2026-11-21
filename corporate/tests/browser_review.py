@@ -81,7 +81,13 @@ def main():
               .slice(0,12).map(el=>({tag:el.tagName,cls:String(el.className).slice(0,90),
                 right:Math.round(el.getBoundingClientRect().right),
                 width:Math.round(el.getBoundingClientRect().width)}))''')
-            results['overflow'].append({'route':route,'width':width,'theme':theme,'measure':measurements,'offenders':offenders})
+            wide_parents=page.evaluate('''() => Array.from(document.querySelectorAll('body *'))
+              .filter(el=>{const c=getComputedStyle(el);return c.display!=='none' && el.clientWidth>0
+                && el.scrollWidth>el.clientWidth+4})
+              .map(el=>({tag:el.tagName,cls:String(el.className).slice(0,90),
+                client:el.clientWidth,scroll:el.scrollWidth,excess:el.scrollWidth-el.clientWidth}))
+              .sort((a,b)=>b.excess-a.excess).slice(0,15)''')
+            results['overflow'].append({'route':route,'width':width,'theme':theme,'measure':measurements,'offenders':offenders,'wide_parents':wide_parents})
         results['responsive_checks']+=1
     # Showcase homepage screenshots from actual rendered offline DOM.
     page.close();page=ctx.new_page();page.set_default_timeout(2500);page.on('pageerror',pageerror)
