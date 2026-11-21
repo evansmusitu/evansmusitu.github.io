@@ -161,11 +161,12 @@ def main():
     # Genuine Axiom examples, local search and responsive get-started CTA.
     page.set_content(offline('/products/axiom/'),wait_until='domcontentloaded',timeout=8000)
     def axiom_search():
-      assert page.locator('.axiom-demo-card').count()==4
+      assert page.locator('.axiom-demo-card').count()==20
       assert page.locator('[data-axiom-operation]').count()==74
       assert page.locator('#axiom-capability-count').inner_text().startswith('74 of 74')
       page.locator('#axiom-capability-search').fill('bond yield')
       assert page.locator('[data-axiom-operation]:visible').count()==1
+      page.locator('[data-axiom-operation]:visible .axiom-operation-tech summary').first.click()
       assert page.locator('[data-axiom-operation]:visible code').first.inner_text()=='finance.bond_yield'
       page.locator('#axiom-capability-search').fill('impossible-nonexistent-operation')
       assert page.locator('[data-axiom-operation]:visible').count()==0
@@ -224,7 +225,7 @@ def main():
     check('nojs_mobile_navigation',nojsmenu)
     nopage.set_content(offline('/products/axiom/',js=False),wait_until='domcontentloaded',timeout=8000)
     def axiom_nojs():
-      assert nopage.locator('.axiom-demo-card').count()==4
+      assert nopage.locator('.axiom-demo-card').count()==20
       assert nopage.locator('[data-axiom-operation]').count()==74
       assert nopage.locator('#axiom-capability-search').is_hidden()
     check('axiom_nojs_full_directory',axiom_nojs)
