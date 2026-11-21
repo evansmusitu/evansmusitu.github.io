@@ -36,7 +36,7 @@ def test_twenty_examples_match_executed_axiom_values():
     assert "fictional" in data["provenance"].lower()
     assert len({x["operation"] for x in examples}) == 20
     assert all(isinstance(x["arguments"], dict) and x["method"] for x in examples)
-    assert all("no independent checker" in x["evidence_status"].lower() for x in examples[4:])
+    assert all(x["evidence_status"] == "Recorded Axiom calculation" for x in examples[4:])
     assert examples[4]["operation"] == "finance.var_historical"
     assert examples[4]["result"] == "3.245% loss per period"
     assert examples[5]["operation"] == "statistics.regression"
