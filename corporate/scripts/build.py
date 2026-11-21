@@ -10,6 +10,7 @@ from pathlib import Path
 from seo import seo_head, validate_catalog
 from axiom_catalog import render_axiom_catalog
 from axiom_proof import render_examples, render_start, examples
+from axiom_video import make_explainer
 from phase03_publication import (approved_sources, article_routes, article_info, article_head,
   localize_english_core, french_info, french_head, french_records, hreflang, FR_EN,
   actual_publication_date)
@@ -177,7 +178,7 @@ def build()->dict:
   raise ValueError('Publication route collision')
  validate(records)
  marker='<!--AXIOM_CAPABILITY_DIRECTORY-->'
- for extra_marker in ('<!--AXIOM_ONBOARDING-->','<!--AXIOM_REAL_EXECUTIONS-->'):
+ for extra_marker in ('<!--AXIOM_VIDEO-->','<!--AXIOM_ONBOARDING-->','<!--AXIOM_REAL_EXECUTIONS-->'):
   if records['/products/axiom/']['main'].count(extra_marker)!=1:
    raise ValueError('Missing or duplicated Axiom evidence or onboarding insertion point')
  examples()
@@ -193,6 +194,7 @@ def build()->dict:
  asset_dest=DST/'assets';asset_dest.mkdir()
  for name in ('site.css','site.js','axiom-experience.js','contact-enquiry.js','favicon.svg'):
   shutil.copyfile(ASSETS/name,asset_dest/name)
+ video_record=make_explainer(asset_dest/'axiom-explainer.mp4')
  staged_media=verified_studio_media_ready(mode)
  if staged_media:
   for name in ('studio-demo-82s.mp4','studio-poster.png'):
@@ -213,7 +215,16 @@ def build()->dict:
   dest.parent.mkdir(parents=True,exist_ok=True)
   info=localize_english_core(route,records[route],articles) if publication_enabled else records[route]
   if route=='/products/axiom/':
-   info={**info,'main':info['main'].replace('<!--AXIOM_ONBOARDING-->',render_start()).replace('<!--AXIOM_REAL_EXECUTIONS-->',render_examples()).replace(marker,render_axiom_catalog())}
+   info={**info,'main':info['main'].replace('<!--AXIOM_VIDEO-->',('<section class="section axiom-video-section" id="axiom-video">'
+    '<div class="shell"><div class="section-heading"><span class="eyebrow">WATCH AXIOM IN ACTION</span>'
+    '<h2>Four real calculations in 24 seconds.</h2>'
+    '<p>An original visual recap of four recorded Axiom executions, with captions and links to the full inputs below.</p></div>'
+    '<video controls playsinline preload="metadata" width="960" height="540" '
+    'aria-label="MUSITU Axiom quantitative computations in 24 seconds">'
+    '<source src="/assets/axiom-explainer.mp4" type="video/mp4">'
+    '<track kind="captions" src="/assets/axiom-explainer.vtt" srclang="en" label="English" default>'
+    'Watch the individual recorded examples in the following section.</video></div></section>'
+   )).replace('<!--AXIOM_ONBOARDING-->',render_start()).replace('<!--AXIOM_REAL_EXECUTIONS-->',render_examples()).replace(marker,render_axiom_catalog())}
   seo_html=seo_head(route,info,records,origin) if mode=='production' else ''
   if publication_enabled and mode=='production':seo_html+=hreflang(route)
   dest.write_text(render(route,info,shared,staged_media=staged_media,mode=mode,origin=origin,seo_html=seo_html),encoding='utf-8')
@@ -268,7 +279,7 @@ def build()->dict:
  compiled={p.relative_to(DST).as_posix():hash_bytes(p.read_bytes()) for p in sorted(DST.rglob('*')) if p.is_file() and p.name!='manifest.json'}
  manifest={'document':'MUSITU-WEB-MASTER-1.0','authorization':'Package A production candidate' if mode=='production' else 'Package A local only',
     'build_mode':mode,'canonical_origin':origin,'indexing_enabled':mode=='production',
-    'production_approved':False,'media_publication_approved':True,'brand_master_approved':True,'brand_master_sha256':'f0e73478176b335bf3cfb5afd8bd7249d5aa39f2627798af7c71d9f13972c2fd','protected_staging_media_included':staged_media if mode=='review' else False,'studio_media_included':staged_media,'route_count':len(ROUTES)+len(extra_routes),
+    'production_approved':False,'media_publication_approved':True,'brand_master_approved':True,'brand_master_sha256':'f0e73478176b335bf3cfb5afd8bd7249d5aa39f2627798af7c71d9f13972c2fd','protected_staging_media_included':staged_media if mode=='review' else False,'studio_media_included':staged_media,'axiom_explainer_sha256':video_record['sha256'],'axiom_explainer_duration_seconds':24,'route_count':len(ROUTES)+len(extra_routes),
     'phase03_publication_source_approved':publication_enabled,
     'phase03_publication_routes':extra_routes,
     'phase03_publication_indexable':publication_enabled and mode=='production',
