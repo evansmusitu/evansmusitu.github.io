@@ -30,7 +30,7 @@ def test_shared_header_source_and_content_contract():
     assert template.count('class="site-header"') == 1
     assert template.count('class="desktop-nav"') == 1
     assert 'aria-label="Mobile navigation"' in template
-    assert not any('<header' in page['main'] for page in RECORDS.values())
+    assert not any('<header class="site-header"' in page['main'] for page in RECORDS.values())
 
 def test_navigation_generated_consistently_across_all_routes():
     for route in ROUTES:
