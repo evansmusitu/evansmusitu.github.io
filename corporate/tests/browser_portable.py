@@ -25,7 +25,7 @@ def main():
     frame.locator('#catalog-items a[href="/products/axiom/"]').first.click()
     page.wait_for_function("document.querySelector('#routes').value === '/products/axiom/'",timeout=6000)
     record['internal_navigation']=('Axiom' in frame.locator('main').inner_text() and 'Complex questions' in frame.locator('h1').first.inner_text())
-    record['passed']=record['routes']==34 and record['select_navigation'] and record['internal_navigation'] and not record['errors']
+    record['passed']=record['routes']==38 and record['select_navigation'] and record['internal_navigation'] and not record['errors']
     browser.close()
   (ART/'portable-browser-results.json').write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n')
   print(json.dumps(record,indent=2))
