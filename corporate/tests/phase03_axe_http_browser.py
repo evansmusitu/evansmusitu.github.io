@@ -27,11 +27,11 @@ def audit(engine: str, axe_path: Path, publication_only: bool = False) -> dict:
     if not script.is_file() or script.stat().st_size < 100_000:
         raise ValueError("A genuine locally installed axe-core asset is required")
     manifest = json.loads((DIST / "manifest.json").read_text(encoding="utf-8"))
-    expected_routes = 49 if publication_only else 34
+    expected_routes = 53 if publication_only else 38
     if manifest.get("build_mode") != "production" or manifest.get("route_count") != expected_routes:
         raise AssertionError("Unexpected production candidate route count")
     routes = manifest.get("phase03_publication_routes", []) if publication_only else manifest["routes"]
-    if len(routes) != (15 if publication_only else 34):
+    if len(routes) != (15 if publication_only else 38):
         raise AssertionError("Accessibility audit route cohort mismatch")
     header_type = type("LocalAxeHandler", (Handler,), {"response_headers": parse_headers()})
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), partial(header_type, directory=str(DIST)))
