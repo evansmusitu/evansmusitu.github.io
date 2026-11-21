@@ -116,15 +116,15 @@
   const enquiry=$('[data-enquiry-builder]');
   if(enquiry){
     const topic=$('#enquiry-topic',enquiry),subject=$('#enquiry-subject',enquiry);
-    const message=$('#enquiry-message',enquiry),compose=$('#enquiry-compose',enquiry);
+    const message=$('#enquiry-message',enquiry),reply=$('#enquiry-email',enquiry),compose=$('#enquiry-compose',enquiry);
     const update=()=>{
       const title=(subject?.value||'').trim().slice(0,110)||'Product enquiry';
       const body=(message?.value||'').trim().slice(0,1800);
       const mailSubject='MUSITU | '+(topic?.value||'General')+' | '+title;
-      const mailBody='Topic: '+(topic?.value||'General')+'\n\n'+(body||'Please contact me regarding my enquiry.')+'\n';
+      const mailBody='Product: '+(topic?.value||'General')+'\nPurpose: '+title+'\nReply email: '+(reply?.value||'Use sender address').trim().slice(0,254)+'\n\n'+(body||'Please contact me regarding my enquiry.')+'\n';
       if(compose)compose.href='mailto:support@mftintelligence.com?subject='+encodeURIComponent(mailSubject)+'&body='+encodeURIComponent(mailBody);
     };
-    [topic,subject,message].forEach(el=>el?.addEventListener('input',update));
+    [topic,subject,reply,message].forEach(el=>el?.addEventListener('input',update));
     update();
   }
   // Product comparison uses actual documented family attributes and enforces 3 selections.
