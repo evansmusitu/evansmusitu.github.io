@@ -59,7 +59,7 @@ def render_axiom_catalog() -> str:
     panels = []
     for group in categories:
         entries = "".join(
-            '<li data-axiom-operation data-search="' +
+            '<li id="axiom-operation-' + esc(item["id"].replace(".", "-")) + '" data-axiom-operation data-search="' +
             esc(" ".join((item["label"], item["id"], group["title"], group["description"])).lower()) +
             '"><span class="axiom-operation-label">' + esc(item["label"])
             + '</span><details class="axiom-operation-tech"><summary>Technical details</summary><code>' + esc(item["id"]) + '</code></details></li>'
