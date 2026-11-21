@@ -1491,6 +1491,647 @@
           }
         ]
       }
+    },
+    {
+      "operation": "algebra.factor",
+      "label": "Factor expressions",
+      "category": "Symbolic algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**2-1"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "algebra.polynomial_roots",
+      "label": "Polynomial roots",
+      "category": "Symbolic algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**2-1"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "algebra.simplify",
+      "label": "Simplify expressions",
+      "category": "Symbolic algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "(x**2-1)/(x-1)"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "algebra.solve",
+      "label": "Solve equations",
+      "category": "Symbolic algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "equations": {
+            "type": "array",
+            "description": "Expressions equal to zero; for x+1=3 supply x+1-3.",
+            "items": {
+              "type": "string",
+              "description": "Expression equal to zero.",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "symbols": {
+            "type": "array",
+            "description": "Unknown variable names.",
+            "items": {
+              "type": "string",
+              "description": "Variable name.",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "uniqueItems": true,
+            "default": [
+              "x"
+            ]
+          }
+        },
+        "required": [
+          "equations"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "equations": [
+              "x+1-3"
+            ],
+            "symbols": [
+              "x"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "calculus.diff",
+      "label": "Symbolic differentiation",
+      "category": "Symbolic calculus",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          },
+          "order": {
+            "type": "integer",
+            "description": "Nonnegative differentiation order.",
+            "minimum": 0,
+            "default": 1
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**3",
+            "order": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "calculus.integrate",
+      "label": "Symbolic integration",
+      "category": "Symbolic calculus",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          },
+          "bounds": {
+            "description": "Optional [lower, upper] limits. Omit, null, or [] for an indefinite integral.",
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  ],
+                  "description": "Number or symbolic value, such as 0, pi, or oo."
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "maxItems": 0
+              }
+            ]
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x",
+            "bounds": [
+              0,
+              2
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "calculus.limit",
+      "label": "Limits",
+      "category": "Symbolic calculus",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          },
+          "to": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "minLength": 1
+              }
+            ],
+            "description": "Number or symbolic value, such as 0, pi, or oo."
+          }
+        },
+        "required": [
+          "expression",
+          "to"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "sin(x)/x",
+            "to": 0
+          }
+        ]
+      }
+    },
+    {
+      "operation": "calculus.product",
+      "label": "Symbolic products",
+      "category": "Symbolic calculus",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Index variable name.",
+            "minLength": 1,
+            "default": "k"
+          },
+          "start": {
+            "type": "integer",
+            "description": "Inclusive first index."
+          },
+          "end": {
+            "type": "integer",
+            "description": "Inclusive last index."
+          }
+        },
+        "required": [
+          "expression",
+          "start",
+          "end"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "k",
+            "start": 1,
+            "end": 4
+          }
+        ]
+      }
+    },
+    {
+      "operation": "calculus.series",
+      "label": "Series expansions",
+      "category": "Symbolic calculus",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          },
+          "at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "minLength": 1
+              }
+            ],
+            "description": "Number or symbolic value, such as 0, pi, or oo.",
+            "default": 0
+          },
+          "order": {
+            "type": "integer",
+            "description": "Series truncation order.",
+            "minimum": 0,
+            "default": 6
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "exp(x)",
+            "order": 4
+          }
+        ]
+      }
+    },
+    {
+      "operation": "calculus.sum",
+      "label": "Symbolic summation",
+      "category": "Symbolic calculus",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Index variable name.",
+            "minLength": 1,
+            "default": "k"
+          },
+          "start": {
+            "type": "integer",
+            "description": "Inclusive first index."
+          },
+          "end": {
+            "type": "integer",
+            "description": "Inclusive last index."
+          }
+        },
+        "required": [
+          "expression",
+          "start",
+          "end"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "k",
+            "start": 1,
+            "end": 4
+          }
+        ]
+      }
+    },
+    {
+      "operation": "linear.det",
+      "label": "Matrix determinant",
+      "category": "Linear algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "A": {
+            "type": "array",
+            "description": "Numeric matrix, as rows. Linear operations require a square matrix.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "A"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "A": [
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                4
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "linear.eigen",
+      "label": "Eigenvalues and eigenvectors",
+      "category": "Linear algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "A": {
+            "type": "array",
+            "description": "Numeric matrix, as rows. Linear operations require a square matrix.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "A"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "A": [
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                4
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "linear.inv",
+      "label": "Matrix inverse",
+      "category": "Linear algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "A": {
+            "type": "array",
+            "description": "Numeric matrix, as rows. Linear operations require a square matrix.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "A"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "A": [
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                4
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "linear.solve",
+      "label": "Solve linear systems",
+      "category": "Linear algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "A": {
+            "type": "array",
+            "description": "Numeric matrix, as rows. Linear operations require a square matrix.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          },
+          "b": {
+            "description": "Right-hand-side vector, or matrix for multiple right-hand sides; one entry or row per row of A.",
+            "anyOf": [
+              {
+                "type": "array",
+                "description": "Right-hand-side vector.",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 1
+              },
+              {
+                "type": "array",
+                "description": "Right-hand sides as columns.",
+                "items": {
+                  "type": "array",
+                  "description": "One matrix row.",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 1
+                },
+                "minItems": 1
+              }
+            ]
+          }
+        },
+        "required": [
+          "A",
+          "b"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "A": [
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                4
+              ]
+            ],
+            "b": [
+              4,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numeric.integrate",
+      "label": "Numerical integration",
+      "category": "Numerical computation",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "a": {
+            "type": "number",
+            "description": "Lower interval bound for variable x."
+          },
+          "b": {
+            "type": "number",
+            "description": "Upper interval bound for variable x."
+          },
+          "epsabs": {
+            "type": "number",
+            "description": "Nonnegative absolute integration tolerance; zero uses the relative tolerance.",
+            "minimum": 0,
+            "default": 1e-10
+          }
+        },
+        "required": [
+          "expression",
+          "a",
+          "b"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**2",
+            "a": 0,
+            "b": 1
+          }
+        ]
+      }
     }
   ]
 }
