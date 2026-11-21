@@ -66,6 +66,7 @@ def test_starting_axiom_is_a_single_high_visibility_action_on_header_and_homepag
     ax=page("/products/axiom/")
     assert ax.select_one('a[href^="https://chatgpt.com/plugins/"][target="_blank"][rel*="noopener"]')
     assert len(ax.select(".axiom-start-steps > li"))==3
+    assert ax.select_one('section#axiom-start a[aria-label="Open Axiom in ChatGPT (opens in a new tab)"]')
 
 def test_contact_enquiry_is_explicitly_user_sent_from_local_email_app():
     soup=page("/contact/")
