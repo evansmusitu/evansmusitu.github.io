@@ -1,0 +1,771 @@
+{
+  "version": 1,
+  "snapshot_date": "2026-11-21",
+  "source": "Read-only MUSITU Axiom tool fetch for the published operation input schemas",
+  "operation_count": 74,
+  "scope": "Operation input argument schemas only; no output-schema or access guarantees",
+  "operations": [
+    {
+      "operation": "finance.beta",
+      "label": "Market beta",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "asset_returns": {
+            "type": "array",
+            "description": "Asset returns as decimals, paired with market_returns.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          },
+          "market_returns": {
+            "type": "array",
+            "description": "Benchmark returns as decimals; must have nonzero variance.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          }
+        },
+        "required": [
+          "asset_returns",
+          "market_returns"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "asset_returns": [
+              0.01,
+              -0.02,
+              0.03,
+              0.04
+            ],
+            "market_returns": [
+              0.02,
+              -0.01,
+              0.02,
+              0.03
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.black_scholes",
+      "label": "Black–Scholes option pricing",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "S": {
+            "type": "number",
+            "description": "Positive spot price.",
+            "exclusiveMinimum": 0
+          },
+          "K": {
+            "type": "number",
+            "description": "Positive strike price.",
+            "exclusiveMinimum": 0
+          },
+          "T": {
+            "type": "number",
+            "description": "Positive time to expiry in years.",
+            "exclusiveMinimum": 0
+          },
+          "r": {
+            "type": "number",
+            "description": "Continuously compounded annual risk-free rate."
+          },
+          "sigma": {
+            "type": "number",
+            "description": "Positive annual volatility as a decimal.",
+            "exclusiveMinimum": 0
+          },
+          "kind": {
+            "type": "string",
+            "description": "Option type.",
+            "minLength": 1,
+            "enum": [
+              "call",
+              "put"
+            ],
+            "default": "call"
+          },
+          "q": {
+            "type": "number",
+            "description": "Continuously compounded dividend yield.",
+            "default": 0
+          }
+        },
+        "required": [
+          "S",
+          "K",
+          "T",
+          "r",
+          "sigma"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "S": 100,
+            "K": 100,
+            "T": 1,
+            "r": 0.05,
+            "sigma": 0.2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.bond_price",
+      "label": "Bond pricing",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "face": {
+            "type": "number",
+            "description": "Bond face value.",
+            "exclusiveMinimum": 0,
+            "default": 100
+          },
+          "coupon_rate": {
+            "type": "number",
+            "description": "Annual coupon rate as a decimal."
+          },
+          "maturity": {
+            "type": "number",
+            "description": "Years to maturity.",
+            "exclusiveMinimum": 0
+          },
+          "frequency": {
+            "type": "integer",
+            "description": "Coupon payments per year.",
+            "minimum": 1,
+            "default": 2
+          },
+          "yield": {
+            "type": "number",
+            "description": "Annual yield as a decimal, greater than -frequency."
+          }
+        },
+        "required": [
+          "coupon_rate",
+          "maturity",
+          "yield"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "coupon_rate": 0.05,
+            "maturity": 2,
+            "yield": 0.04
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.bond_yield",
+      "label": "Bond yield",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "face": {
+            "type": "number",
+            "description": "Bond face value.",
+            "exclusiveMinimum": 0,
+            "default": 100
+          },
+          "coupon_rate": {
+            "type": "number",
+            "description": "Annual coupon rate as a decimal."
+          },
+          "maturity": {
+            "type": "number",
+            "description": "Years to maturity.",
+            "exclusiveMinimum": 0
+          },
+          "frequency": {
+            "type": "integer",
+            "description": "Coupon payments per year.",
+            "minimum": 1,
+            "default": 2
+          },
+          "price": {
+            "type": "number",
+            "description": "Positive observed bond price.",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "coupon_rate",
+          "maturity",
+          "price"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "coupon_rate": 0.05,
+            "maturity": 2,
+            "price": 100
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.compound",
+      "label": "Compound growth",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "principal": {
+            "type": "number",
+            "description": "Initial amount."
+          },
+          "rate": {
+            "type": "number",
+            "description": "Annual rate as a decimal, e.g. 0.05."
+          },
+          "years": {
+            "type": "number",
+            "description": "Investment duration in years."
+          },
+          "n": {
+            "type": "integer",
+            "description": "Compounding periods per year.",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        "required": [
+          "principal",
+          "rate",
+          "years"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "principal": 100,
+            "rate": 0.05,
+            "years": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.cvar_historical",
+      "label": "Historical expected shortfall (CVaR)",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "returns": {
+            "type": "array",
+            "description": "Period returns as decimals.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "alpha": {
+            "type": "number",
+            "description": "Confidence level as a decimal strictly between 0 and 1.",
+            "exclusiveMinimum": 0,
+            "exclusiveMaximum": 1,
+            "default": 0.99
+          }
+        },
+        "required": [
+          "returns"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "returns": [
+              -0.03,
+              -0.01,
+              0.01,
+              0.02,
+              0.04
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.drawdown",
+      "label": "Drawdown analysis",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "values": {
+            "type": "array",
+            "description": "Positive asset or portfolio values in time order.",
+            "items": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "values"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "values": [
+              100,
+              110,
+              99,
+              120
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.duration",
+      "label": "Bond duration",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "face": {
+            "type": "number",
+            "description": "Bond face value.",
+            "exclusiveMinimum": 0,
+            "default": 100
+          },
+          "coupon_rate": {
+            "type": "number",
+            "description": "Annual coupon rate as a decimal."
+          },
+          "maturity": {
+            "type": "number",
+            "description": "Years to maturity.",
+            "exclusiveMinimum": 0
+          },
+          "frequency": {
+            "type": "integer",
+            "description": "Coupon payments per year.",
+            "minimum": 1,
+            "default": 2
+          },
+          "yield": {
+            "type": "number",
+            "description": "Annual yield as a decimal, greater than -frequency."
+          }
+        },
+        "required": [
+          "coupon_rate",
+          "maturity",
+          "yield"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "coupon_rate": 0.05,
+            "maturity": 2,
+            "yield": 0.04
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.greeks",
+      "label": "Option Greeks",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "S": {
+            "type": "number",
+            "description": "Positive spot price.",
+            "exclusiveMinimum": 0
+          },
+          "K": {
+            "type": "number",
+            "description": "Positive strike price.",
+            "exclusiveMinimum": 0
+          },
+          "T": {
+            "type": "number",
+            "description": "Positive time to expiry in years.",
+            "exclusiveMinimum": 0
+          },
+          "r": {
+            "type": "number",
+            "description": "Continuously compounded annual risk-free rate."
+          },
+          "sigma": {
+            "type": "number",
+            "description": "Positive annual volatility as a decimal.",
+            "exclusiveMinimum": 0
+          },
+          "kind": {
+            "type": "string",
+            "description": "Option type.",
+            "minLength": 1,
+            "enum": [
+              "call",
+              "put"
+            ],
+            "default": "call"
+          },
+          "q": {
+            "type": "number",
+            "description": "Continuously compounded dividend yield.",
+            "default": 0
+          }
+        },
+        "required": [
+          "S",
+          "K",
+          "T",
+          "r",
+          "sigma"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "S": 100,
+            "K": 100,
+            "T": 1,
+            "r": 0.05,
+            "sigma": 0.2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.implied_vol",
+      "label": "Implied volatility",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "S": {
+            "type": "number",
+            "description": "Positive spot price.",
+            "exclusiveMinimum": 0
+          },
+          "K": {
+            "type": "number",
+            "description": "Positive strike price.",
+            "exclusiveMinimum": 0
+          },
+          "T": {
+            "type": "number",
+            "description": "Positive time to expiry in years.",
+            "exclusiveMinimum": 0
+          },
+          "r": {
+            "type": "number",
+            "description": "Continuously compounded annual risk-free rate."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Option type.",
+            "minLength": 1,
+            "enum": [
+              "call",
+              "put"
+            ],
+            "default": "call"
+          },
+          "q": {
+            "type": "number",
+            "description": "Continuously compounded dividend yield.",
+            "default": 0
+          },
+          "price": {
+            "type": "number",
+            "description": "Observed nonnegative option price.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "price",
+          "S",
+          "K",
+          "T",
+          "r"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "S": 100,
+            "K": 100,
+            "T": 1,
+            "r": 0.05,
+            "price": 10.450583572185565
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.monte_carlo_gbm",
+      "label": "Monte Carlo price scenarios",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "S0": {
+            "type": "number",
+            "description": "Positive initial asset price.",
+            "exclusiveMinimum": 0
+          },
+          "mu": {
+            "type": "number",
+            "description": "Annual drift as a decimal."
+          },
+          "sigma": {
+            "type": "number",
+            "description": "Annual volatility as a decimal.",
+            "minimum": 0
+          },
+          "T": {
+            "type": "number",
+            "description": "Simulation horizon in years.",
+            "minimum": 0
+          },
+          "steps": {
+            "type": "integer",
+            "description": "Time steps per simulated path.",
+            "minimum": 1,
+            "maximum": 5000,
+            "default": 252
+          },
+          "paths": {
+            "type": "integer",
+            "description": "Number of simulated paths.",
+            "minimum": 1,
+            "maximum": 20000,
+            "default": 1000
+          },
+          "seed": {
+            "type": "integer",
+            "description": "Nonnegative deterministic random seed.",
+            "minimum": 0,
+            "default": 0
+          }
+        },
+        "required": [
+          "S0",
+          "mu",
+          "sigma",
+          "T"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "S0": 100,
+            "mu": 0.05,
+            "sigma": 0.2,
+            "T": 1,
+            "steps": 10,
+            "paths": 100,
+            "seed": 0
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.npv",
+      "label": "Net present value (NPV)",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "cashflows": {
+            "type": "array",
+            "description": "Cash flows from time zero onward; include the initial investment as the first entry.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "rate": {
+            "type": "number",
+            "description": "Discount rate per period as a decimal; cannot equal -1.",
+            "not": {
+              "const": -1
+            }
+          }
+        },
+        "required": [
+          "cashflows",
+          "rate"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "cashflows": [
+              -100,
+              60,
+              60
+            ],
+            "rate": 0.1
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.portfolio_metrics",
+      "label": "Portfolio performance metrics",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "returns": {
+            "type": "array",
+            "description": "Period rows by asset columns; at least two observations.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 2
+          },
+          "weights": {
+            "type": "array",
+            "description": "One weight per asset; weights must sum to 1 within 1e-8.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "annualization": {
+            "type": "number",
+            "description": "Periods per year.",
+            "exclusiveMinimum": 0,
+            "default": 252
+          },
+          "risk_free": {
+            "type": "number",
+            "description": "Annual risk-free return as a decimal.",
+            "default": 0
+          }
+        },
+        "required": [
+          "returns",
+          "weights"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "returns": [
+              [
+                0.01,
+                0.02
+              ],
+              [
+                -0.01,
+                0.01
+              ],
+              [
+                0.03,
+                -0.02
+              ]
+            ],
+            "weights": [
+              0.5,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.returns",
+      "label": "Investment returns",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "prices": {
+            "type": "array",
+            "description": "At least two strictly positive prices, in time order.",
+            "items": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "minItems": 2
+          },
+          "kind": {
+            "type": "string",
+            "description": "Return convention.",
+            "minLength": 1,
+            "enum": [
+              "simple",
+              "log"
+            ],
+            "default": "simple"
+          }
+        },
+        "required": [
+          "prices"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "prices": [
+              100,
+              110,
+              105
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.var_historical",
+      "label": "Historical value at risk",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "returns": {
+            "type": "array",
+            "description": "Period returns as decimals.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "alpha": {
+            "type": "number",
+            "description": "Confidence level as a decimal strictly between 0 and 1.",
+            "exclusiveMinimum": 0,
+            "exclusiveMaximum": 1,
+            "default": 0.99
+          }
+        },
+        "required": [
+          "returns"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "returns": [
+              -0.03,
+              -0.01,
+              0.01,
+              0.02,
+              0.04
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
