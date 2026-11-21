@@ -77,7 +77,7 @@ def render_axiom_showcase() -> str:
         '</ol>'
         '<div class="axiom-start-action"><a class="button button-primary" href="' + esc(PLUGIN_URL) + '" '
         'target="_blank" rel="noopener noreferrer" '
-        'aria-label="Open MUSITU Axiom in ChatGPT (opens in a new tab)">Open Axiom in ChatGPT ↗</a>'
+        'aria-label="Open Axiom in ChatGPT (opens in a new tab)">Open Axiom in ChatGPT ↗</a>'
         '<a class="text-link" href="#axiom-demonstrations">See calculated examples ↓</a></div>'
         '</div></section>'
         '<section id="axiom-demonstrations" class="section section-tinted axiom-demos-section">'
