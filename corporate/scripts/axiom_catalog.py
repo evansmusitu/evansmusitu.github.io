@@ -98,7 +98,7 @@ def render_axiom_catalog() -> str:
         return (
             '<h4>Accepted inputs</h4><dl class="axiom-parameter-list">' + description + '</dl>'
             '<details class="axiom-raw-schema"><summary>Full input JSON schema</summary>'
-            '<pre><code>' + esc(json.dumps(schema, ensure_ascii=False, indent=2)) + '</code></pre></details>'
+            '<pre><code>' + esc(json.dumps(schema, ensure_ascii=False, indent=1, separators=(",", ": "))) + '</code></pre></details>'
         )
 
     navigation = "".join(
