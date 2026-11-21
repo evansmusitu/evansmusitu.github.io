@@ -52,19 +52,21 @@ def render_axiom_catalog() -> str:
     esc = lambda value: html.escape(str(value), quote=True)
     categories = data["categories"]
     navigation = "".join(
-        '<a href="#axiom-domain-' + esc(group["id"]) + '">' + esc(group["title"])
+        '<a data-axiom-nav href="#axiom-domain-' + esc(group["id"]) + '">' + esc(group["title"])
         + '<span aria-hidden="true">' + str(len(group["operations"])) + '</span></a>'
         for group in categories
     )
     panels = []
     for group in categories:
         entries = "".join(
-            '<li><span class="axiom-operation-label">' + esc(item["label"])
+            '<li data-axiom-operation data-search="' +
+            esc(" ".join((item["label"], item["id"], group["title"], group["description"])).lower()) +
+            '"><span class="axiom-operation-label">' + esc(item["label"])
             + '</span><code>' + esc(item["id"]) + '</code></li>'
             for item in group["operations"]
         )
         panels.append(
-            '<article class="axiom-domain" id="axiom-domain-' + esc(group["id"]) + '">'
+            '<article class="axiom-domain" data-axiom-category id="axiom-domain-' + esc(group["id"]) + '">'
             '<div class="axiom-domain-header"><div><h3>' + esc(group["title"]) + '</h3>'
             '<p>' + esc(group["description"]) + '</p></div>'
             '<span class="axiom-domain-count">' + str(len(group["operations"])) + ' operations</span></div>'
@@ -75,13 +77,22 @@ def render_axiom_catalog() -> str:
         '<div class="shell"><div class="section-heading">'
         '<span class="eyebrow">THE AXIOM CAPABILITY LIBRARY</span>'
         '<h2>Explore all 74 Axiom operations.</h2>'
-        '<p>Discover tools for financial analysis, statistics, mathematics, optimisation and more. '
-        'Browse by discipline and explore the exact capabilities behind each tool.</p>'
+        '<p>Find the right calculation by keyword, method or technical operation. '
+        'Search across finance, statistics, mathematics, optimisation and more.</p>'
         '</div><div class="axiom-metrics" aria-label="Axiom registry snapshot">'
         '<div><strong>74</strong><span>Registered operations</span></div>'
         '<div><strong>18</strong><span>Capability disciplines</span></div>'
-        '<div><strong>30</strong><span>Focused analytical tools</span></div>'
+        '<div><strong>4</strong><span>Executed examples</span></div>'
         '</div><p class="axiom-snapshot">Capability library updated ' + esc(data["snapshot_date"]) + '.</p>'
+        '<div class="axiom-filter-bar"><div>'
+        '<label for="axiom-capability-search">Find a capability</label>'
+        '<input id="axiom-capability-search" type="search" maxlength="90" '
+        'placeholder="e.g. bond yield, regression, optimise, calculus" '
+        'autocomplete="off" aria-describedby="axiom-capability-count"></div>'
+        '<button type="button" class="button button-outline" id="axiom-capability-reset" hidden>Clear search</button>'
+        '<span id="axiom-capability-count" role="status" aria-live="polite">74 operations across 18 disciplines</span>'
+        '</div><p class="axiom-search-empty" id="axiom-capability-empty" hidden>'
+        'No matching operation. Try a broader mathematical term or clear your search.</p>'
         '<nav class="axiom-directory-nav" aria-label="Jump to Axiom disciplines">'
         + navigation + '</nav>'
         '<div class="axiom-directory-grid">' + "".join(panels) + '</div>'
