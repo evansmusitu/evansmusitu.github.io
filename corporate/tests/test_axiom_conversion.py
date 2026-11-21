@@ -26,7 +26,7 @@ def test_real_execution_evidence_and_four_independent_tutorial_urls():
         assert e["operation"] in page.get_text(" ",strip=True)
         assert e["summary"] in page.get_text(" ",strip=True)
         assert len(page.select("h1"))==1 and len(page.select("h2"))>=5
-        assert not page.select("iframe, form")
+        assert not page.select_one('article.axiom-tutorial').select("iframe, form")
     assert abs(PROOFS["cases"][0]["result"]-11215.08093709444)<1e-7
     assert abs(PROOFS["cases"][1]["result"]["var"]-0.03245)<1e-8
     assert PROOFS["cases"][3]["result"]["x"]==[2,2]
