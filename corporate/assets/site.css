@@ -264,3 +264,66 @@ body::before{height:700px;background:radial-gradient(ellipse at 83% 7%,rgba(112,
 .axiom-product-cta h3{font-size:clamp(20px,2.3vw,28px);margin:0}
 .axiom-product-cta p{font-size:15px;line-height:1.65;color:var(--muted);max-width:720px;margin:0}
 .axiom-product-cta .button{margin-top:9px}
+
+/* Axiom conversion experience — unobtrusive, accessible, responsive. */
+.header-axiom-cta{white-space:nowrap;min-width:max-content}
+.axiom-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+.axiom-search-bar{border:1px solid var(--line);border-radius:17px;background:var(--surface-2);padding:20px 22px;margin:16px 0 22px}
+.axiom-search-bar label{display:block;font-weight:750;color:var(--text);font-size:16px;margin-bottom:12px}
+.axiom-search-controls{display:flex;gap:10px;align-items:stretch}
+.axiom-search-controls input{flex:1 1 320px;min-width:0;border:1px solid var(--line);border-radius:11px;background:var(--surface);color:var(--text);padding:12px 15px;font:inherit;outline-offset:3px}
+.axiom-search-controls button,.axiom-copy-prompt{border-radius:11px;border:1px solid var(--line);color:var(--text);background:var(--surface-2);cursor:pointer;font:inherit;font-weight:700;padding:10px 14px}
+.axiom-search-controls button:hover,.axiom-copy-prompt:hover{border-color:var(--mint);color:var(--mint)}
+.axiom-search-bar p{color:var(--muted);font-size:13px;margin-top:10px}
+.axiom-search-empty{border:1px dashed var(--line);border-radius:12px;padding:22px;color:var(--muted)}
+.axiom-operation[hidden],.axiom-domain[hidden],.axiom-search-empty[hidden]{display:none!important}
+.axiom-operation-list .axiom-operation{align-items:flex-start;gap:10px;flex-direction:column}
+.axiom-op-detail summary{cursor:pointer;list-style:revert;font-weight:600;color:var(--muted);font-size:12px}
+.axiom-op-detail code{display:block;margin-top:8px;color:var(--mint);overflow-wrap:anywhere}
+.axiom-start-steps{list-style:none;margin:24px 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.axiom-start-steps li{border:1px solid var(--line);border-radius:16px;background:var(--surface-2);padding:24px}
+.axiom-start-steps strong{font-size:17px}
+.axiom-start-steps p{color:var(--muted);font-size:14px;margin:9px 0 0;line-height:1.55}
+.axiom-start-prompt{background:var(--surface-2);border:1px solid var(--line);border-radius:18px;padding:24px;margin:26px 0 0}
+.axiom-prompt-text{font-size:17px;line-height:1.65;max-width:820px}
+.axiom-proof-grid,.axiom-tutorial-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.axiom-proof-card,.axiom-tutorial-card{min-width:0;border:1px solid var(--line);border-radius:18px;padding:24px;background:var(--surface-2);display:flex;flex-direction:column;gap:11px;scroll-margin-top:100px}
+.axiom-proof-card h3,.axiom-tutorial-card h3{font-size:22px;line-height:1.25;margin:0}
+.axiom-proof-question{color:var(--muted);font-size:14px}
+.axiom-proof-answer,.axiom-article-result{font-size:clamp(19px,2vw,25px);font-weight:800;line-height:1.3;color:var(--mint);letter-spacing:-.02em}
+.axiom-proof-meta{margin:0}
+.axiom-proof-meta div{border-top:1px solid var(--line);padding:10px 0}
+.axiom-proof-meta dt{font-size:12px;font-weight:700;color:var(--muted)}
+.axiom-proof-meta dd{font-size:14px;margin:4px 0 0;color:var(--text)}
+.axiom-proof-meta code{font-size:12px}
+.axiom-proof-details{border-top:1px solid var(--line);padding:12px 0;color:var(--muted);font-size:13px}
+.axiom-proof-details summary{cursor:pointer;font-weight:700;color:var(--text);padding:4px 0}
+.axiom-inputs,.axiom-tutorial pre{max-width:100%;overflow:auto;padding:13px 12px;border:1px solid var(--line);border-radius:11px;background:var(--surface);color:var(--text);font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.axiom-proof-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.axiom-proof-actions a{font-size:13px}
+.axiom-proof-state,.axiom-article-meta{font-size:12px;color:var(--muted)}
+.axiom-copy-status{color:var(--muted);font-size:13px;min-height:1.3em}
+.axiom-article-prompt{padding:22px;border-left:3px solid var(--mint);background:var(--surface-2);font-size:16px;line-height:1.65;overflow-wrap:anywhere}
+.axiom-formula{border-left:3px solid var(--mint);padding:12px 16px;background:var(--surface-2);font-weight:700;overflow-wrap:anywhere}
+.axiom-tutorial-card a{text-decoration:none;color:var(--text)}
+.axiom-tutorial-card .text-link{color:var(--mint);margin-top:auto}
+.axiom-tutorial-card p{font-size:14px;line-height:1.6;color:var(--muted)}
+.axiom-tutorial-card strong{font-size:15px;color:var(--mint)}
+.axiom-home-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.axiom-home-results a{text-decoration:none;border:1px solid var(--line);background:var(--surface-2);padding:25px 22px;border-radius:18px;display:flex;flex-direction:column;gap:9px}
+.axiom-home-results a:hover,.axiom-tutorial-card:focus-within{border-color:var(--mint)}
+.axiom-home-results span{color:var(--muted);font-size:11px;font-weight:750;letter-spacing:.08em}
+.axiom-home-results strong{color:var(--mint);font-size:clamp(23px,2.8vw,38px);letter-spacing:-.04em}
+.axiom-home-results small{color:var(--muted);font-size:13px}
+.musitu-enquiry-form{max-width:780px;border:1px solid var(--line);border-radius:18px;background:var(--surface-2);padding:clamp(20px,3vw,32px);display:flex;flex-direction:column;gap:10px}
+.enquiry-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.enquiry-grid>div{min-width:0;display:flex;flex-direction:column;gap:10px}
+.musitu-enquiry-form label{font-size:14px;font-weight:750;margin-top:8px}
+.musitu-enquiry-form select,.musitu-enquiry-form input,.musitu-enquiry-form textarea{box-sizing:border-box;max-width:100%;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:11px;color:var(--text);padding:12px 14px;font:inherit;line-height:1.5}
+.musitu-enquiry-form select:focus-visible,.musitu-enquiry-form input:focus-visible,.musitu-enquiry-form textarea:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+.musitu-enquiry-form .button{align-self:flex-start}
+.enquiry-privacy,.enquiry-status{color:var(--muted);font-size:13px;line-height:1.55}
+@media(max-width:1000px){.header-axiom-cta{font-size:12px;padding:10px 11px}}
+@media(max-width:780px){.axiom-start-steps,.axiom-home-results{grid-template-columns:minmax(0,1fr)}.axiom-proof-grid,.axiom-tutorial-grid{grid-template-columns:minmax(0,1fr)}.header-axiom-cta{display:none}}
+@media(max-width:560px){.enquiry-grid{grid-template-columns:minmax(0,1fr)}.axiom-search-controls{flex-wrap:wrap}.axiom-search-controls button{min-height:44px}.axiom-proof-card,.axiom-tutorial-card{padding:18px}.axiom-start-prompt{padding:18px}}
+@media(prefers-reduced-motion:reduce){.axiom-home-results a,.axiom-proof-card{transition:none}}
