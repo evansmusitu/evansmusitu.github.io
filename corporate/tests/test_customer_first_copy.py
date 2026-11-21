@@ -59,7 +59,7 @@ def test_axiom_directory_has_positive_action_instead_of_access_warning():
     assert cta.select_one("a")["aria-label"].startswith("Explore Axiom in ChatGPT")
     lead=main.select_one(".axiom-product-cta")
     assert lead and lead.select_one('a[href^="https://chatgpt.com/plugins/"]')
-    assert "74 documented operations" in main.get_text(" ",strip=True)
+    assert "74 listed mathematical operations" in main.get_text(" ",strip=True)
     assert "Availability and maturity" not in main.get_text(" ",strip=True)
 
 def test_live_news_developers_and_status_have_useful_content_not_internal_hold_notices():
