@@ -110,7 +110,7 @@ def test_contact_enquiry_is_explicitly_user_sent_from_local_email_app():
     script=(DIST/"assets/site.js").read_text(encoding="utf-8")
     assert "event.preventDefault()" in script and "checkValidity()" in script
     assert "href.length>1900" in script
-    assert "This website has not sent anything" in script
+    assert "Review it and press Send to contact MUSITU" in script
     assert "mailto:support@mftintelligence.com?subject=" in script
     assert "navigator.clipboard.writeText" in script
     assert "const axiomQuery=" in script
