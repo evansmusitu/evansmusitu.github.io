@@ -120,6 +120,17 @@ def main():
         page.screenshot(path=str(file),full_page=False,timeout=10000)
         screenshots.append({'route':route,'view':device,'width':width,'height':height,
           'filename':file.name,'sha256':sha256(file.read_bytes()).hexdigest()})
+    # Preserve a full view of the actual four-field enquiry builder, not only
+    # its page hero. All fields are empty and no message is composed or sent.
+    for width,height,device in ((1280,900,'desktop'),(390,844,'mobile')):
+      page.set_viewport_size({'width':width,'height':height})
+      page.set_content(offline('/contact/'),wait_until='domcontentloaded',timeout=8000)
+      form=page.locator('[data-enquiry-builder]')
+      assert form.count()==1
+      file=OUT/f'visual-review-contact-form-{device}-{engine}.png'
+      form.screenshot(path=str(file),timeout=10000)
+      screenshots.append({'route':'/contact/','view':'form-'+device,'width':width,'height':height,
+        'filename':file.name,'sha256':sha256(file.read_bytes()).hexdigest()})
     # Capture content farther down the Axiom page to make its recorded evidence
     # and technical catalog independently assessable by a human reviewer.
     page.set_viewport_size({'width':1280,'height':900})
