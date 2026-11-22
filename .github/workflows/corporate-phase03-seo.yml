@@ -66,6 +66,8 @@ jobs:
           set -euo pipefail
           python3 -m py_compile scripts/build.py scripts/axiom_catalog.py scripts/axiom_showcase.py tests/test_axiom_conversion.py tests/test_axiom_catalog.py scripts/phase03_publication.py tests/test_phase03_publication.py scripts/seo.py scripts/public_seo_observer.py tests/test_phase03_seo.py scripts/research_review.py scripts/international_growth_report.py scripts/render_growth_dashboard.py tests/test_phase03_growth.py tests/test_phase03_dashboard.py tests/phase03_axe_http_browser.py
           MUSITU_BUILD_MODE=review python3 scripts/build.py
+          test ! -e dist/manifest.json
+          test -s review-artifacts/build-manifest.json
           test "$(find dist -name index.html | wc -l)" -eq 38
           test ! -e dist/sitemap.xml
           grep -Fq 'Disallow: /' dist/robots.txt
@@ -168,6 +170,8 @@ jobs:
           set -euo pipefail
           python3 -m pip install --disable-pip-version-check 'pytest>=8,<10' 'beautifulsoup4>=4.12,<5'
           python3 scripts/build.py
+          test ! -e dist/manifest.json
+          test -s review-artifacts/build-manifest.json
           python3 -m pytest -q tests/test_site.py tests/test_http.py tests/test_sitemap.py tests/test_studio_and_store.py
           node --check assets/site.js
           node --check dist/assets/site-data.js
@@ -192,11 +196,15 @@ jobs:
           set -euo pipefail
           python3 -m pip install --disable-pip-version-check 'pytest>=8,<10' 'beautifulsoup4>=4.12,<5'
           python3 scripts/build.py
+          test ! -e dist/manifest.json
+          test -s review-artifacts/build-manifest.json
           python3 -m pytest -q tests/test_production_build.py tests/test_axiom_catalog.py tests/test_axiom_conversion.py tests/test_customer_first_copy.py
           python3 tests/test_public_artifact_boundary.py
-          first="$(sha256sum dist/manifest.json | awk '{print $1}')"
+          first="$(sha256sum review-artifacts/build-manifest.json | awk '{print $1}')"
           python3 scripts/build.py
-          second="$(sha256sum dist/manifest.json | awk '{print $1}')"
+          test ! -e dist/manifest.json
+          test -s review-artifacts/build-manifest.json
+          second="$(sha256sum review-artifacts/build-manifest.json | awk '{print $1}')"
           test "$first" = "$second"
           python3 - <<'PY'
           import sys, json
@@ -217,7 +225,7 @@ jobs:
           missing=Path("dist/404/index.html").read_text()
           assert 'type="application/ld+json"' not in missing
           assert len(list(Path("dist").rglob("index.html")))==38
-          manifest=json.loads(Path("dist/manifest.json").read_text())
+          manifest=json.loads(Path("review-artifacts/build-manifest.json").read_text())
           assert manifest["production_approved"] is False
           print(json.dumps({"production_candidate":"QUALIFIED_IN_SOURCE_ONLY",
             "article_publication":False,"deployed":False,"base_routes":38,
@@ -238,6 +246,8 @@ jobs:
           set -euo pipefail
           python3 -m unittest discover -s tests -p 'test_phase03_publication.py' -v
           python3 scripts/build.py
+          test ! -e dist/manifest.json
+          test -s review-artifacts/build-manifest.json
           python3 tests/test_public_artifact_boundary.py
           test "$(find dist -name index.html | wc -l)" -eq 53
           grep -Fq '/fr/research/' dist/sitemap.xml
@@ -246,7 +256,7 @@ jobs:
           python3 - <<'PY'
           import json
           from pathlib import Path
-          manifest=json.loads(Path('dist/manifest.json').read_text())
+          manifest=json.loads(Path('review-artifacts/build-manifest.json').read_text())
           assert manifest['phase03_publication_source_approved'] is True
           assert manifest['phase03_publication_indexable'] is True
           assert manifest['production_approved'] is False
@@ -284,6 +294,8 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/build.py
+          test ! -e dist/manifest.json
+          test -s review-artifacts/build-manifest.json
           python3 tests/browser_review.py
           python3 - <<'PY'
           import json
@@ -342,6 +354,8 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/build.py
+          test ! -e dist/manifest.json
+          test -s review-artifacts/build-manifest.json
           python3 tests/phase03_production_http_browser.py --engine "${MUSITU_BROWSER_ENGINE}"
           python3 - <<'PY'
           import json,os
@@ -401,6 +415,8 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/build.py
+          test ! -e dist/manifest.json
+          test -s review-artifacts/build-manifest.json
           python3 tests/phase03_publication_http_browser.py --engine "$MUSITU_BROWSER_ENGINE"
           python3 tests/phase03_axe_http_browser.py \
             --engine "$MUSITU_BROWSER_ENGINE" \
