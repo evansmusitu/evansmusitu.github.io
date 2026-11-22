@@ -371,3 +371,8 @@ body::before{height:700px;background:radial-gradient(ellipse at 83% 7%,rgba(112,
 .axiom-tutorial-result strong{font-size:clamp(24px,3vw,34px);color:var(--mint);overflow-wrap:anywhere}
 .axiom-article-evidence{font-size:13px!important}
 @media(max-width:580px){.axiom-longform .reading-section>p{line-height:1.65}.axiom-longform .hero-actions .button{width:100%}}
+
+/* Client-side validation applies only to the explicitly user-sent mailto handoff. */
+.enquiry-builder [aria-invalid="true"]{border-color:var(--focus);outline:2px solid var(--focus);outline-offset:1px}
+.enquiry-privacy-note{font-size:13px;line-height:1.6;max-width:760px;color:var(--muted)}
+.enquiry-privacy-note a{text-decoration:underline;text-underline-offset:3px}
