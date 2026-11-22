@@ -51,7 +51,7 @@ class HeadParser(HTMLParser):
 
 def get(route: str):
     """Fetch only one of a fixed set of public same-origin paths, never follow redirects."""
-    if route not in {*PAGE_PATHS, NEGATIVE_PATH, "/robots.txt", "/sitemap.xml"}:
+    if route not in {*PAGE_PATHS, NEGATIVE_PATH, "/robots.txt", "/sitemap.xml", "/manifest.json"}:
         raise ValueError("Route not in fixed, public, read-only observation set")
     request = Request(
         ORIGIN + route,
@@ -132,10 +132,33 @@ def inspect_discovery():
             "preserved_core_routes": list(PAGE_PATHS)}
 
 
+def inspect_public_build_metadata():
+    """Detect accidental exposure of internal build flags without logging any values."""
+    route = "/manifest.json"
+    status, url, _, raw = get(route)
+    if status == 404:
+        return {"path": route, "http_status": 404, "internal_release_fields_exposed": False}
+    if status != 200 or url != ORIGIN + route:
+        raise AssertionError("Unexpected public manifest response")
+    try:
+        value = json.loads(raw)
+    except (UnicodeError, ValueError, TypeError):
+        return {"path": route, "http_status": 200,
+                "internal_release_fields_exposed": False,
+                "non_json_response": True}
+    flagged = bool(isinstance(value, dict) and (
+        {"production_approved", "gated_routes", "brand_master_sha256",
+         "media_publication_approved", "phase03_publication_source_approved"} & set(value)
+    ))
+    return {"path": route, "http_status": 200,
+            "internal_release_fields_exposed": flagged}
+
+
 def audit():
     details = [inspect_page(path) for path in PAGE_PATHS]
     not_found = inspect_negative_control()
     discovery = inspect_discovery()
+    metadata = inspect_public_build_metadata()
     return {
         "schema": "musitu.public_baseline_observation.v1",
         "origin": ORIGIN,
@@ -148,6 +171,7 @@ def audit():
         "pages": details,
         "negative_control": not_found,
         "discovery": discovery,
+        "public_build_metadata": metadata,
     }
 
 
