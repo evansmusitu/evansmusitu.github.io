@@ -199,15 +199,31 @@ def main():
     check('axiom_example_copy_and_mobile_cta',axiom_prompts)
     page.set_content(offline('/contact/'),wait_until='domcontentloaded',timeout=8000)
     def enquiry():
+      # Incomplete submissions must be blocked before opening an external mail app.
+      page.locator('#enquiry-compose').click()
+      assert 'Please complete Product' in page.locator('#enquiry-feedback').inner_text()
+      assert page.locator('#enquiry-subject').get_attribute('aria-invalid')=='true'
       page.locator('#enquiry-topic').select_option(label='Technical collaboration')
       page.locator('#enquiry-subject').fill('Model discussion')
+      page.locator('#enquiry-email').fill('not-an-email')
       page.locator('#enquiry-message').fill('I would like to learn about Axiom use cases.')
+      page.locator('#enquiry-compose').click()
+      assert page.locator('#enquiry-email').get_attribute('aria-invalid')=='true'
+      page.locator('#enquiry-email').fill('customer@example.com')
+      assert page.locator('#enquiry-email').get_attribute('aria-invalid') is None
       href=page.locator('#enquiry-compose').get_attribute('href')
       assert href.startswith('mailto:support@mftintelligence.com?subject='),href
       assert 'Technical%20collaboration' in href
       assert 'Model%20discussion' in href
       assert 'Axiom%20use%20cases' in href
-    check('local_email_handoff_no_backend',enquiry)
+      assert 'customer%40example.com' in href
+      # Emojis expand in URL encoding; do not allow long, silently truncated mailto.
+      page.locator('#enquiry-message').fill('🧠'*500)
+      page.locator('#enquiry-compose').click()
+      assert 'Please shorten your message' in page.locator('#enquiry-feedback').inner_text()
+      assert page.locator('#enquiry-message').get_attribute('aria-invalid')=='true'
+      assert page.url=='about:blank'
+    check('validated_local_email_handoff_no_backend',enquiry)
     page.set_content(offline('/experiences/lab/'),wait_until='domcontentloaded',timeout=8000)
     def lab():
       assert page.locator('#npv-result').count()==1
