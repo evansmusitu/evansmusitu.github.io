@@ -103,6 +103,8 @@ def main():
       ('axiom','/products/axiom/'),
       ('contact','/contact/'),
       ('resources','/resources/'),
+      ('studio','/products/foundry/studio/'),
+      ('lab','/experiences/lab/'),
       ('npv','/resources/axiom-investment-npv/'),
       ('var','/resources/axiom-historical-var/'),
       ('regression','/resources/axiom-linear-regression/'),
