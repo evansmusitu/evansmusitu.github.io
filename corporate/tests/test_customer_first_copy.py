@@ -48,7 +48,7 @@ def test_musitu_marketing_pages_have_no_internal_release_warning_banners():
     assert "terms" in page("/legal/terms/").get_text(" ",strip=True).lower()
     # A source review must tell visitors what was recorded, not expose an internal
     # approval workflow. In production, the exact hash-approved video replaces it.
-    media=json.loads((DIST/"manifest.json").read_text(encoding="utf-8"))["studio_media_included"]
+    media=json.loads((DIST.parent/"review-artifacts"/"build-manifest.json").read_text(encoding="utf-8"))["studio_media_included"]
     for studio_route in ("/products/foundry/studio/","/experiences/lab/"):
         studio=page(studio_route)
         summary=studio.select_one(".studio-recording-summary")
