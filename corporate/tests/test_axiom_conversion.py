@@ -85,6 +85,11 @@ def test_starting_axiom_is_a_single_high_visibility_action_on_header_and_homepag
 def test_contact_enquiry_is_explicitly_user_sent_from_local_email_app():
     soup=page("/contact/")
     builder=soup.select_one("[data-enquiry-builder]")
+    assert soup.select_one('main.contact-page a.button[href="#contact-enquiry"]')
+    assert soup.select_one('#contact-enquiry .section-heading h2').get_text(strip=True)=="Tell us what you need."
+    stylesheet=(DIST/"assets/site.css").read_text(encoding="utf-8")
+    assert ".contact-page .page-hero" in stylesheet
+    assert ".contact-page #contact-enquiry" in stylesheet
     assert builder
     for element in ("enquiry-topic","enquiry-subject","enquiry-email","enquiry-message","enquiry-compose"):
         assert builder.select_one("#"+element)
