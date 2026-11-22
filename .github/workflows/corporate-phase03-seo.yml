@@ -179,7 +179,7 @@ jobs:
           import json
           from pathlib import Path
           artifact=Path("dist")
-          manifest=json.loads((artifact/"manifest.json").read_text(encoding="utf-8"))
+          manifest=json.loads(Path("review-artifacts/build-manifest.json").read_text(encoding="utf-8"))
           assert manifest["build_mode"]=="review"
           assert manifest["studio_media_included"] is True
           assert not (artifact/"sitemap.xml").exists()
