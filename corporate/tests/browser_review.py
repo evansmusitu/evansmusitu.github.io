@@ -136,7 +136,7 @@ def main():
       'browser_engine':engine,'source':'offline review DOM with CSP removed in local test only',
       'hosted_production_review':False,'real_device_review':False,
       'human_visual_approval':False,'captures':screenshots}
-    (OUT/f'visual-review-manifest-{engine}.json').write_text(json.dumps(visual_manifest,indent=2)+'\\n')
+    (OUT/f'visual-review-manifest-{engine}.json').write_text(json.dumps(visual_manifest,indent=2)+'\n')
     results['visual_review_capture_count']=len(screenshots)
     results['human_visual_approval']=False
     results['real_device_review']=False
