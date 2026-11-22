@@ -15,7 +15,7 @@ from phase03_production_http_browser import ROOT,DIST,OUTPUT,ORIGIN,Handler,pars
 def audit(engine:str)->dict:
     if engine not in {"chromium","firefox","webkit"}:
         raise ValueError("Unsupported Playwright engine")
-    manifest=json.loads((DIST/"manifest.json").read_text())
+    manifest=json.loads((DIST.parent/"review-artifacts"/"build-manifest.json").read_text())
     routes=manifest.get("phase03_publication_routes",[])
     assert manifest.get("build_mode")=="production" and manifest.get("route_count")==53
     assert len(routes)==15 and len(set(routes))==15
