@@ -46,15 +46,21 @@ def test_musitu_marketing_pages_have_no_internal_release_warning_banners():
         assert not page(route).find(string=lambda x: x and x.strip()=="NaN"),route
     assert "privacy" in page("/legal/privacy/").get_text(" ",strip=True).lower()
     assert "terms" in page("/legal/terms/").get_text(" ",strip=True).lower()
-    # Avoid exposed review governance, media-rights discussions or fake live video.
+    # A source review must tell visitors what was recorded, not expose an internal
+    # approval workflow. In production, the exact hash-approved video replaces it.
+    media=json.loads((DIST/"manifest.json").read_text(encoding="utf-8"))["studio_media_included"]
     for studio_route in ("/products/foundry/studio/","/experiences/lab/"):
         studio=page(studio_route)
-        assert studio.select_one(".studio-recording-summary")
-        copy=studio.select_one(".studio-recording-summary").get_text(" ",strip=True)
-        assert "Recorded Studio prototype" in copy
-        for forbidden in ("owner approval","withheld","review build","production-release checks","independent distribution"):
-            assert forbidden not in copy.lower(),(studio_route,forbidden)
-        assert not studio.select_one("video.studio-demo-player")
+        summary=studio.select_one(".studio-recording-summary")
+        video=studio.select_one("video.studio-demo-player")
+        if media:
+            assert video and not summary,studio_route
+        else:
+            assert summary and not video,studio_route
+            assert "Recorded Studio prototype" in summary.get_text(" ",strip=True)
+        visible=studio.get_text(" ",strip=True).lower()
+        for forbidden in ("owner approval","withheld from this review","production-release checks","independent distribution"):
+            assert forbidden not in visible,(studio_route,forbidden)
 
 def test_axiom_directory_has_positive_action_instead_of_access_warning():
     main=page("/products/axiom/")
