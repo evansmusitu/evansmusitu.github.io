@@ -484,6 +484,11 @@ jobs:
           assert evidence['scope']=='currently_live_production_only'
           assert evidence['production_mutations']==0
           assert evidence['candidate_hosted_acceptance'] is False
+          metadata=evidence['public_build_metadata']
+          if metadata['internal_release_fields_exposed']:
+            print('::warning::Current public website serves internal build manifest fields; next release must omit this file')
+          else:
+            print('Public internal release fields: not observed')
           print('Current hosted public baseline observed; the unmerged candidate itself is NOT hosted or released.')
           PY
       - name: Retain redacted public-only baseline evidence
