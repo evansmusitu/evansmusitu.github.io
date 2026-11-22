@@ -82,3 +82,12 @@ def test_dedicated_interactive_journeys_are_preserved():
     else:
         assert studio.select_one('.studio-recording-summary')
         assert not studio.select_one('video.studio-demo-player')
+
+
+def test_important_education_landing_pages_do_not_have_excessive_hero_gaps():
+    for route, classname in (("/products/axiom/","axiom-page"),("/resources/","resources-page")):
+        page=soup(route)
+        assert page.select_one(f"main#{'main'}.{classname} > .page-hero + .section"), route
+    styles=(ROOT / 'assets' / 'site.css').read_text(encoding='utf-8')
+    assert '.axiom-page>.page-hero+.section' in styles
+    assert '.resources-page>.page-hero+.section' in styles
