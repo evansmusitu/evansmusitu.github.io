@@ -96,7 +96,9 @@ def test_contact_enquiry_is_explicitly_user_sent_from_local_email_app():
     assert builder.select_one('a[href^="mailto:support@mftintelligence.com"]')
     assert not builder.select_one("form")
     assert "your own email app" in soup.get_text(" ",strip=True).lower()
-    assert "not submitted by this website" in builder.get_text(" ",strip=True).lower()
+    assert "press send to contact musitu" in builder.get_text(" ",strip=True).lower()
+    assert "what happens after you prepare an enquiry?" in soup.get_text(" ",strip=True).lower()
+    assert "01 / the approach" not in soup.get_text(" ",strip=True).lower()
     assert builder.select_one('a[href="/legal/privacy/"]')
     assert builder.select_one('#enquiry-feedback[role="status"][aria-live="polite"]')
     for element in ("enquiry-topic","enquiry-subject","enquiry-email","enquiry-message"):
