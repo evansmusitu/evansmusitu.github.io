@@ -151,7 +151,7 @@
         escapeSet(feedback,'Please shorten your message. Your email app may truncate very long prepared messages.');
         return;
       }
-      escapeSet(feedback,'Your email application should open. This website has not sent anything; press Send there to deliver the enquiry.');
+      escapeSet(feedback,'Your email app should open with the prepared draft. Review it and press Send to contact MUSITU.');
     });
     update();
   }
