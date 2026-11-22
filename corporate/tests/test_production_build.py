@@ -12,6 +12,16 @@ ROUTES=MANIFEST['routes']
 def soup(route):
  return BeautifulSoup((DIST/route.lstrip('/')/'index.html').read_text(),'html.parser')
 
+def test_private_build_provenance_cannot_ship_with_site():
+ assert not (DIST/'manifest.json').exists()
+ assert not (DIST/'build-manifest.json').exists()
+ private=ROOT/'review-artifacts'/'build-manifest.json'
+ assert private.is_file()
+ assert private.resolve().is_relative_to(ROOT.resolve())
+ assert not private.resolve().is_relative_to(DIST.resolve())
+ assert MANIFEST['production_approved'] is False
+ assert MANIFEST['route_count']==38
+
 def test_production_manifest_contract():
  assert MANIFEST['build_mode']=='production'
  assert MANIFEST['canonical_origin']==ORIGIN
