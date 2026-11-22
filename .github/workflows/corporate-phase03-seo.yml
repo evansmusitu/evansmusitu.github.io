@@ -296,6 +296,12 @@ jobs:
           assert result['nojs_checks']==38
           assert not result['errors'] and not result['runtime_exceptions'] and not result['overflow']
           assert len(result['interactions'])>=12
+          assert result['visual_review_capture_count']==16
+          assert result['human_visual_approval'] is False and result['real_device_review'] is False
+          visual=json.loads((Path('review-artifacts')/f"visual-review-manifest-{result['browser_engine']}.json").read_text())
+          assert len(visual['captures'])==16 and visual['human_visual_approval'] is False
+          assert visual['hosted_production_review'] is False and visual['real_device_review'] is False
+          assert all((Path('review-artifacts')/x['filename']).is_file() for x in visual['captures'])
           print(json.dumps({'engine':result['browser_engine'],'routes':38,'responsive_checks':114,'theme_checks':228,
             'nojs_checks':38,'interactions_passed':len(result['interactions']),'hosted_http_tested':False,
             'certified_wcag':False,'deployed':False},sort_keys=True))
@@ -425,6 +431,8 @@ jobs:
             corporate/review-artifacts/phase03-publication-http-${{ matrix.engine }}.json
             corporate/review-artifacts/homepage-desktop-dom.png
             corporate/review-artifacts/homepage-mobile-dom.png
+            corporate/review-artifacts/visual-review-*.png
+            corporate/review-artifacts/visual-review-manifest-*.json
           if-no-files-found: warn
           retention-days: 7
 
