@@ -376,3 +376,10 @@ body::before{height:700px;background:radial-gradient(ellipse at 83% 7%,rgba(112,
 .enquiry-builder [aria-invalid="true"]{border-color:var(--focus);outline:2px solid var(--focus);outline-offset:1px}
 .enquiry-privacy-note{font-size:13px;line-height:1.6;max-width:760px;color:var(--muted)}
 .enquiry-privacy-note a{text-decoration:underline;text-underline-offset:3px}
+
+/* Contact: reduce excessive pre-form whitespace and make the enquiry CTA visible sooner. */
+.contact-page .page-hero{padding-top:clamp(30px,4vw,48px);padding-bottom:clamp(28px,4vw,46px)}
+.contact-page #contact-enquiry{padding-block:clamp(32px,4vw,52px)}
+.contact-page #contact-enquiry .section-heading{margin-bottom:24px}
+.contact-page #contact-enquiry .section-heading h2{font-size:clamp(30px,3.3vw,44px)}
+.contact-page .hero-actions{margin-top:20px}
