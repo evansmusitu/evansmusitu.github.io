@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 from xml.etree.ElementTree import Element,SubElement,tostring
 import argparse,json
 ROOT=Path(__file__).resolve().parents[1]
-MANIFEST=json.loads((ROOT/'dist/manifest.json').read_text(encoding='utf-8'))
+MANIFEST=json.loads((ROOT/'review-artifacts/build-manifest.json').read_text(encoding='utf-8'))
 
 def make_sitemap(origin:str,cleared_routes=()):
  u=urlsplit(origin)
