@@ -63,7 +63,7 @@ class Handler(SimpleHTTPRequestHandler):
 def check(engine: str) -> dict:
     if engine not in {"chromium", "firefox", "webkit"}:
         raise ValueError("Unsupported browser")
-    manifest = json.loads((DIST / "manifest.json").read_text(encoding="utf-8"))
+    manifest = json.loads((DIST.parent / "review-artifacts" / "build-manifest.json").read_text(encoding="utf-8"))
     if manifest.get("build_mode") != "production" or manifest.get("studio_media_included") is not True:
         raise AssertionError("A full media-qualified production artifact is required")
     routes = manifest["routes"]
