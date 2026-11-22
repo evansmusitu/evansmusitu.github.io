@@ -6,7 +6,7 @@ import hashlib,json
 ROOT=Path(__file__).resolve().parents[1]
 DIST=ROOT/'dist'
 ORIGIN='https://mftintelligence.com'
-MANIFEST=json.loads((DIST/'manifest.json').read_text())
+MANIFEST=json.loads((DIST.parent/'review-artifacts'/'build-manifest.json').read_text())
 ROUTES=MANIFEST['routes']
 
 def soup(route):
