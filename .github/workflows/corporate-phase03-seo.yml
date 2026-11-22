@@ -36,6 +36,8 @@ on:
       - 'corporate/editorial/research-drafts/**'
       - 'corporate/editorial/PHASE03_SOURCE_SPECIFIC_REVIEW_DOCKET_20261110.md'
       - 'corporate/scripts/public_seo_observer.py'
+      - 'corporate/scripts/public_baseline_smoke.py'
+      - 'corporate/tests/test_public_baseline_smoke.py'
       - 'corporate/scripts/research_review.py'
       - 'corporate/scripts/international_growth_report.py'
       - 'corporate/tests/test_phase03_growth.py'
@@ -423,5 +425,48 @@ jobs:
             corporate/review-artifacts/phase03-publication-http-${{ matrix.engine }}.json
             corporate/review-artifacts/homepage-desktop-dom.png
             corporate/review-artifacts/homepage-mobile-dom.png
+          if-no-files-found: warn
+          retention-days: 7
+
+  # Observe the already-deployed public site only. This does NOT test a PR candidate
+  # on Cloudflare, endorse its release, access accounts, or mutate production.
+  hosted-current-production-baseline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout exact source revision without credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Enforce bounded public-observer unit contracts
+        working-directory: corporate
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_public_baseline_smoke.py' -v
+          python3 -m py_compile scripts/public_baseline_smoke.py
+      - name: Observe currently live public URLs, canonical signals and security headers (GET ONLY)
+        working-directory: corporate
+        run: |
+          set -euo pipefail
+          python3 scripts/public_baseline_smoke.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          evidence=json.loads(Path('review-artifacts/public-baseline-smoke.json').read_text())
+          assert evidence['status']=='PASS'
+          assert evidence['scope']=='currently_live_production_only'
+          assert evidence['production_mutations']==0
+          assert evidence['candidate_hosted_acceptance'] is False
+          print('Current hosted public baseline observed; the unmerged candidate itself is NOT hosted or released.')
+          PY
+      - name: Retain redacted public-only baseline evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: musitu-readonly-current-production-baseline
+          path: corporate/review-artifacts/public-baseline-smoke.json
           if-no-files-found: warn
           retention-days: 7
