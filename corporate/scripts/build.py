@@ -98,7 +98,7 @@ def add_protected_studio_player(body:str)->str:
   'aria-label="MUSITU Studio 82-second recorded offline 3D demonstration">'
   '<source src="/assets/studio-demo-82s.mp4" type="video/mp4">'
   'Your browser cannot play the recording. The Studio page provides the demonstration transcript.</video>')
- result,count=re.subn(r'<div class="video-clearance-gate" role="note">.*?</div>',player,body,count=1,flags=re.DOTALL)
+ result,count=re.subn(r'<div class="studio-recording-summary" role="note">.*?</div>',player,body,count=1,flags=re.DOTALL)
  if count!=1:raise ValueError('Studio media gate is missing in target route')
  return result
 
