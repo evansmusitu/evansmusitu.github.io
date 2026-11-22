@@ -51,10 +51,10 @@ html:not(.has-js) .navigator-panel,html:not(.has-js) .atlas-component{grid-templ
 .cta-panel h2,.page-hero h1,.hero-copy h1,.reading-section h2{overflow-wrap:anywhere}
 
 /* Rights gate: do not render unapproved recorded media or poster metadata. */
-.video-clearance-gate{min-height:250px;display:flex;flex-direction:column;justify-content:center;gap:9px;padding:clamp(20px,5vw,40px);background:var(--surface-2);border:1px dashed var(--violet);border-radius:20px;line-height:1.65}
-.video-clearance-gate strong{font-size:clamp(18px,2.7vw,25px)}
-.video-clearance-gate p{font-size:14px;color:var(--muted);max-width:620px;margin:0}
-@media(prefers-reduced-motion:reduce){.video-clearance-gate{transition:none}}
+.studio-recording-summary{min-height:250px;display:flex;flex-direction:column;justify-content:center;gap:9px;padding:clamp(20px,5vw,40px);background:var(--surface-2);border:1px dashed var(--violet);border-radius:20px;line-height:1.65}
+.studio-recording-summary strong{font-size:clamp(18px,2.7vw,25px)}
+.studio-recording-summary p{font-size:14px;color:var(--muted);max-width:620px;margin:0}
+@media(prefers-reduced-motion:reduce){.studio-recording-summary{transition:none}}
 
 /* Ensure theme selection remains available within the mobile navigation. */
 .mobile-menu-panel .mobile-theme-control{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:44px;height:auto;padding:10px 12px;font-size:13px;text-align:left;color:var(--text);background:var(--surface-2);border:1px solid var(--line);border-radius:9px}
