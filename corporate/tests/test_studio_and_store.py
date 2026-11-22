@@ -25,9 +25,12 @@ def test_video_gate_to_real_video_player():
     pages=json.loads((ROOT/'content/pages.json').read_text())
     for route in ('/products/foundry/studio/', '/experiences/lab/'):
         source=pages[route]['main']
-        assert 'video-clearance-gate' in source
+        assert 'studio-recording-summary' in source
+        assert 'Recorded Studio prototype' in source
+        assert 'owner approval' not in source.lower()
+        assert 'withheld from this review build' not in source.lower()
         result=add_protected_studio_player(source)
-        assert 'video-clearance-gate' not in result
+        assert 'studio-recording-summary' not in result
         assert 'studio-demo-82s.mp4' in result
         assert 'studio-poster.png' in result
         assert 'controls' in result and 'preload="metadata"' in result
