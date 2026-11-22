@@ -37,6 +37,8 @@ def test_artifact_is_a_static_public_subset_and_not_the_source_repository():
     assert not (DIST / ".github").exists()
     assert not (DIST / "content").exists()
     assert not (DIST / "scripts").exists()
+    assert not (DIST / "manifest.json").exists(), "Do not publish release-gate or build provenance fields"
+    assert not (DIST / "build-manifest.json").exists()
 
 
 def test_generated_public_text_has_no_credentials_or_review_only_records():
@@ -53,7 +55,7 @@ def test_generated_public_text_has_no_credentials_or_review_only_records():
 
 
 def test_default_review_build_cannot_accidentally_publish_international_routes():
-    manifest = json.loads((DIST / "manifest.json").read_text(encoding="utf-8"))
+    manifest = json.loads((DIST.parent / "review-artifacts" / "build-manifest.json").read_text(encoding="utf-8"))
     assert manifest["production_approved"] is False
     assert manifest["build_mode"] == "review"
     assert manifest["indexing_enabled"] is False
