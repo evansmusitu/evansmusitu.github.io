@@ -96,6 +96,50 @@ def main():
     page.screenshot(path=str(OUT/'homepage-desktop-dom.png'),full_page=False,timeout=8000)
     page.set_viewport_size({'width':390,'height':844})
     page.screenshot(path=str(OUT/'homepage-mobile-dom.png'),full_page=False,timeout=8000)
+    # Stable visual-review packet: rendered candidate DOM, not hosted screenshots or
+    # human-verified real-device acceptance. Fixed routes, no user data or remote calls.
+    from hashlib import sha256
+    visual_targets=[
+      ('axiom','/products/axiom/'),
+      ('contact','/contact/'),
+      ('resources','/resources/'),
+      ('npv','/resources/axiom-investment-npv/'),
+      ('var','/resources/axiom-historical-var/'),
+      ('regression','/resources/axiom-linear-regression/'),
+      ('optimisation','/resources/axiom-linear-optimisation/'),
+    ]
+    screenshots=[]
+    for slug, route in visual_targets:
+      assert route in ROUTES
+      page.close();page=ctx.new_page();page.set_default_timeout(2500);page.on('pageerror',pageerror)
+      for width,height,device in ((1280,900,'desktop'),(390,844,'mobile')):
+        page.set_viewport_size({'width':width,'height':height})
+        page.set_content(offline(route),wait_until='domcontentloaded',timeout=8000)
+        page.evaluate('() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+        file=OUT/f'visual-review-{slug}-{device}-{engine}.png'
+        page.screenshot(path=str(file),full_page=False,timeout=10000)
+        screenshots.append({'route':route,'view':device,'width':width,'height':height,
+          'filename':file.name,'sha256':sha256(file.read_bytes()).hexdigest()})
+    # Capture content farther down the Axiom page to make its recorded evidence
+    # and technical catalog independently assessable by a human reviewer.
+    page.set_viewport_size({'width':1280,'height':900})
+    page.set_content(offline('/products/axiom/'),wait_until='domcontentloaded',timeout=8000)
+    for slug,selector in (('examples','#axiom-demonstrations'),('directory','#axiom-full-capabilities')):
+      target=page.locator(selector)
+      assert target.count()==1,selector
+      target.scroll_into_view_if_needed()
+      file=OUT/f'visual-review-axiom-{slug}-{engine}.png'
+      page.screenshot(path=str(file),full_page=False,timeout=10000)
+      screenshots.append({'route':'/products/axiom/','view':slug,'width':1280,'height':900,
+        'filename':file.name,'sha256':sha256(file.read_bytes()).hexdigest()})
+    visual_manifest={'schema':'musitu.offline_visual_review_packet.v1',
+      'browser_engine':engine,'source':'offline review DOM with CSP removed in local test only',
+      'hosted_production_review':False,'real_device_review':False,
+      'human_visual_approval':False,'captures':screenshots}
+    (OUT/f'visual-review-manifest-{engine}.json').write_text(json.dumps(visual_manifest,indent=2)+'\\n')
+    results['visual_review_capture_count']=len(screenshots)
+    results['human_visual_approval']=False
+    results['real_device_review']=False
     # Interaction checks are run on a clean desktop DOM to avoid other modal interference.
     page.close();page=ctx.new_page();page.set_default_timeout(2500);page.on('pageerror',pageerror)
     page.set_viewport_size({'width':1280,'height':800})
