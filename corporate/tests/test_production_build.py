@@ -6,11 +6,18 @@ import hashlib,json
 ROOT=Path(__file__).resolve().parents[1]
 DIST=ROOT/'dist'
 ORIGIN='https://mftintelligence.com'
-MANIFEST=json.loads((DIST/'manifest.json').read_text())
+MANIFEST=json.loads((DIST.parent/'review-artifacts'/'build-manifest.json').read_text())
 ROUTES=MANIFEST['routes']
 
 def soup(route):
  return BeautifulSoup((DIST/route.lstrip('/')/'index.html').read_text(),'html.parser')
+
+def test_internal_build_provenance_is_not_a_public_route():
+ assert not (DIST/'manifest.json').exists()
+ assert not (DIST/'build-manifest.json').exists()
+ manifest=ROOT/'review-artifacts'/'build-manifest.json'
+ assert manifest.is_file()
+ assert not manifest.resolve().is_relative_to(DIST.resolve())
 
 def test_production_manifest_contract():
  assert MANIFEST['build_mode']=='production'

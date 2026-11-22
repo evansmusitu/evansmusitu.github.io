@@ -9,7 +9,7 @@ import json,re,html
 ROOT=Path(__file__).resolve().parents[1]
 DIST=ROOT/'dist'
 OUT=ROOT/'review-artifacts/MUSITU_34_ROUTE_PORTABLE_OWNER_REVIEW_LOCAL_ONLY.html'
-manifest=json.loads((DIST/'manifest.json').read_text())
+manifest=json.loads((DIST.parent/'review-artifacts'/'build-manifest.json').read_text())
 records=json.loads((ROOT/'content/pages.json').read_text())
 css=(ROOT/'assets/site.css').read_text()
 data=(DIST/'assets/site-data.js').read_text()
