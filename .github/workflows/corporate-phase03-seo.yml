@@ -441,3 +441,49 @@ jobs:
             corporate/review-artifacts/homepage-mobile-dom.png
           if-no-files-found: warn
           retention-days: 7
+
+  # Security hotfix proof: compare byte-identical public assets before and after.
+  # Separate PR-only source builds; no production requests, credentials or deployments.
+  hotfix-public-bytes-preservation:
+    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'hotfix/strip-public-build-manifest-20261122' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout original main for a clean baseline
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: public-before
+          persist-credentials: false
+      - name: Checkout exact hotfix head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: public-after
+          persist-credentials: false
+      - name: Compare all public files byte-for-byte, allowing only deleted manifest
+        run: |
+          set -euo pipefail
+          python3 public-before/corporate/scripts/build.py
+          python3 public-after/corporate/scripts/build.py
+          test -f public-before/corporate/dist/manifest.json
+          test ! -e public-after/corporate/dist/manifest.json
+          test -f public-after/corporate/review-artifacts/build-manifest.json
+          python3 - <<'PY'
+          from pathlib import Path
+          from hashlib import sha256
+          before=Path('public-before/corporate/dist')
+          after=Path('public-after/corporate/dist')
+          def digests(root):
+              return {p.relative_to(root).as_posix():sha256(p.read_bytes()).hexdigest()
+                      for p in sorted(root.rglob('*')) if p.is_file()}
+          old=digests(before)
+          new=digests(after)
+          assert set(old)-set(new)=={'manifest.json'},'Hotfix must remove only the internal manifest'
+          assert set(new)-set(old)==set(),'Hotfix must not introduce public files'
+          changes=[name for name in sorted(new) if old.get(name)!=new[name]]
+          assert not changes,'Hotfix must not modify any existing public bytes: '+str(changes[:5])
+          print('STATIC ARTIFACT PRESERVATION PASS: '+str(len(new))+' public files byte-identical; only internal manifest omitted. No deployment.')
+          PY
