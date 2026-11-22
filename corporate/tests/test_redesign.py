@@ -80,5 +80,5 @@ def test_dedicated_interactive_journeys_are_preserved():
     if manifest['studio_media_included']:
         assert studio.select_one('video.studio-demo-player')
     else:
-        assert studio.select_one('.video-clearance-gate')
+        assert studio.select_one('.studio-recording-summary')
         assert not studio.select_one('video.studio-demo-player')
