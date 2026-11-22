@@ -14,7 +14,7 @@ import json, re, time, os, shutil
 ROOT=Path(__file__).resolve().parents[1]
 DIST=ROOT/'dist'
 OUT=ROOT/'review-artifacts';OUT.mkdir(exist_ok=True)
-ROUTES=json.loads((DIST/'manifest.json').read_text())['routes']
+ROUTES=json.loads((DIST.parent/'review-artifacts'/'build-manifest.json').read_text())['routes']
 CSS=(ROOT/'assets/site.css').read_text()
 DATA=(DIST/'assets/site-data.js').read_text()
 APP=(ROOT/'assets/site.js').read_text()
