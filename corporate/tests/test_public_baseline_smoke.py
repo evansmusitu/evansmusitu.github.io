@@ -34,6 +34,8 @@ def fake_get(path):
             '<html lang="en"><head><meta name="robots" content="noindex,nofollow">'
             '</head><body><main id="main"><h1>Not found</h1></main></body></html>'
         ).encode()
+    if path == "/manifest.json":
+        return 404, origin + path, SECURITY, b""
     if path == "/robots.txt":
         return 200, origin + path, {}, (
             "User-agent: *\nAllow: /\nSitemap: " + origin + "/sitemap.xml\n"
@@ -51,13 +53,28 @@ class PublicBaselineSmokeUnitTests(unittest.TestCase):
     def test_full_pass_reports_live_baseline_not_candidate_acceptance(self):
         with patch.object(site, "get", side_effect=fake_get) as get:
             result = site.audit()
-        self.assertEqual(get.call_count, len(site.PAGE_PATHS) + 3)
+        self.assertEqual(get.call_count, len(site.PAGE_PATHS) + 4)
         self.assertEqual(result["status"], "PASS")
         self.assertFalse(result["candidate_hosted_acceptance"])
         self.assertFalse(result["human_visual_review"])
         self.assertFalse(result["core_web_vitals_test"])
         self.assertEqual(result["production_mutations"], 0)
         self.assertEqual(result["discovery"]["sitemap_entries"], 4)
+        self.assertFalse(result["public_build_metadata"]["internal_release_fields_exposed"])
+
+    def test_exposed_internal_build_flags_are_detected_without_copying_values(self):
+        def exposed(path):
+            if path == "/manifest.json":
+                return 200, site.ORIGIN + path, {"content-type": "application/json"}, (
+                    b'{"production_approved":false,"brand_master_sha256":"not-for-public-use"}'
+                )
+            return fake_get(path)
+        with patch.object(site, "get", side_effect=exposed):
+            result = site.audit()
+        self.assertEqual(result["public_build_metadata"]["http_status"], 200)
+        self.assertTrue(result["public_build_metadata"]["internal_release_fields_exposed"])
+        self.assertNotIn("brand_master_sha256", str(result))
+        self.assertNotIn("not-for-public-use", str(result))
 
     def test_security_header_regression_is_hard_failure(self):
         with self.assertRaisesRegex(AssertionError, "CSP protection"):
