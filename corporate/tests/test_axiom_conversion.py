@@ -92,7 +92,18 @@ def test_contact_enquiry_is_explicitly_user_sent_from_local_email_app():
     assert not builder.select_one("form")
     assert "your own email app" in soup.get_text(" ",strip=True).lower()
     assert "not submitted by this website" in builder.get_text(" ",strip=True).lower()
+    assert builder.select_one('a[href="/legal/privacy/"]')
+    assert builder.select_one('#enquiry-feedback[role="status"][aria-live="polite"]')
+    for element in ("enquiry-topic","enquiry-subject","enquiry-email","enquiry-message"):
+        field=builder.select_one("#"+element)
+        assert field.has_attr("required") and field.get("aria-required")=="true"
+    assert builder.select_one('#enquiry-email[type="email"]')
+    assert builder.select_one('#enquiry-subject[minlength="3"]')
+    assert builder.select_one('#enquiry-message[minlength="10"]')
     script=(DIST/"assets/site.js").read_text(encoding="utf-8")
+    assert "event.preventDefault()" in script and "checkValidity()" in script
+    assert "href.length>1900" in script
+    assert "This website has not sent anything" in script
     assert "mailto:support@mftintelligence.com?subject=" in script
     assert "navigator.clipboard.writeText" in script
     assert "const axiomQuery=" in script
