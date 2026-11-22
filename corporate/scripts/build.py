@@ -271,7 +271,11 @@ def build()->dict:
     'phase03_publication_indexable':publication_enabled and mode=='production',
     'phase03_article_publication_date':publication_date,
     'routes':ROUTES,'gated_routes':sorted(GATED),'files':compiled}
- (DST/'manifest.json').write_text(json.dumps(manifest,sort_keys=True,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+ # Confidential build provenance belongs outside dist/ (the exact uploadable site root).
+ audit_path=BASE/'review-artifacts'/'build-manifest.json'
+ audit_path.parent.mkdir(parents=True,exist_ok=True)
+ audit_path.write_text(json.dumps(manifest,sort_keys=True,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+ if (DST/'manifest.json').exists():raise AssertionError('Internal manifest unexpectedly present in deployable artifact')
  return manifest
 
 if __name__=='__main__':
