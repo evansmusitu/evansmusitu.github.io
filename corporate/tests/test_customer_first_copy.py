@@ -46,6 +46,15 @@ def test_musitu_marketing_pages_have_no_internal_release_warning_banners():
         assert not page(route).find(string=lambda x: x and x.strip()=="NaN"),route
     assert "privacy" in page("/legal/privacy/").get_text(" ",strip=True).lower()
     assert "terms" in page("/legal/terms/").get_text(" ",strip=True).lower()
+    # Avoid exposed review governance, media-rights discussions or fake live video.
+    for studio_route in ("/products/foundry/studio/","/experiences/lab/"):
+        studio=page(studio_route)
+        assert studio.select_one(".studio-recording-summary")
+        copy=studio.select_one(".studio-recording-summary").get_text(" ",strip=True)
+        assert "Recorded Studio prototype" in copy
+        for forbidden in ("owner approval","withheld","review build","production-release checks","independent distribution"):
+            assert forbidden not in copy.lower(),(studio_route,forbidden)
+        assert not studio.select_one("video.studio-demo-player")
 
 def test_axiom_directory_has_positive_action_instead_of_access_warning():
     main=page("/products/axiom/")
