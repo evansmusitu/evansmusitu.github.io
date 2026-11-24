@@ -1,0 +1,4047 @@
+{
+  "version": 1,
+  "snapshot_date": "2026-11-21",
+  "source": "Read-only MUSITU Axiom tool fetch for the published operation input schemas",
+  "operation_count": 74,
+  "scope": "Operation input argument schemas only; no output-schema or access guarantees",
+  "operations": [
+    {
+      "operation": "finance.beta",
+      "label": "Market beta",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "asset_returns": {
+            "type": "array",
+            "description": "Asset returns as decimals, paired with market_returns.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          },
+          "market_returns": {
+            "type": "array",
+            "description": "Benchmark returns as decimals; must have nonzero variance.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          }
+        },
+        "required": [
+          "asset_returns",
+          "market_returns"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "asset_returns": [
+              0.01,
+              -0.02,
+              0.03,
+              0.04
+            ],
+            "market_returns": [
+              0.02,
+              -0.01,
+              0.02,
+              0.03
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.black_scholes",
+      "label": "Black–Scholes option pricing",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "S": {
+            "type": "number",
+            "description": "Positive spot price.",
+            "exclusiveMinimum": 0
+          },
+          "K": {
+            "type": "number",
+            "description": "Positive strike price.",
+            "exclusiveMinimum": 0
+          },
+          "T": {
+            "type": "number",
+            "description": "Positive time to expiry in years.",
+            "exclusiveMinimum": 0
+          },
+          "r": {
+            "type": "number",
+            "description": "Continuously compounded annual risk-free rate."
+          },
+          "sigma": {
+            "type": "number",
+            "description": "Positive annual volatility as a decimal.",
+            "exclusiveMinimum": 0
+          },
+          "kind": {
+            "type": "string",
+            "description": "Option type.",
+            "minLength": 1,
+            "enum": [
+              "call",
+              "put"
+            ],
+            "default": "call"
+          },
+          "q": {
+            "type": "number",
+            "description": "Continuously compounded dividend yield.",
+            "default": 0
+          }
+        },
+        "required": [
+          "S",
+          "K",
+          "T",
+          "r",
+          "sigma"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "S": 100,
+            "K": 100,
+            "T": 1,
+            "r": 0.05,
+            "sigma": 0.2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.bond_price",
+      "label": "Bond pricing",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "face": {
+            "type": "number",
+            "description": "Bond face value.",
+            "exclusiveMinimum": 0,
+            "default": 100
+          },
+          "coupon_rate": {
+            "type": "number",
+            "description": "Annual coupon rate as a decimal."
+          },
+          "maturity": {
+            "type": "number",
+            "description": "Years to maturity.",
+            "exclusiveMinimum": 0
+          },
+          "frequency": {
+            "type": "integer",
+            "description": "Coupon payments per year.",
+            "minimum": 1,
+            "default": 2
+          },
+          "yield": {
+            "type": "number",
+            "description": "Annual yield as a decimal, greater than -frequency."
+          }
+        },
+        "required": [
+          "coupon_rate",
+          "maturity",
+          "yield"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "coupon_rate": 0.05,
+            "maturity": 2,
+            "yield": 0.04
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.bond_yield",
+      "label": "Bond yield",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "face": {
+            "type": "number",
+            "description": "Bond face value.",
+            "exclusiveMinimum": 0,
+            "default": 100
+          },
+          "coupon_rate": {
+            "type": "number",
+            "description": "Annual coupon rate as a decimal."
+          },
+          "maturity": {
+            "type": "number",
+            "description": "Years to maturity.",
+            "exclusiveMinimum": 0
+          },
+          "frequency": {
+            "type": "integer",
+            "description": "Coupon payments per year.",
+            "minimum": 1,
+            "default": 2
+          },
+          "price": {
+            "type": "number",
+            "description": "Positive observed bond price.",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "coupon_rate",
+          "maturity",
+          "price"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "coupon_rate": 0.05,
+            "maturity": 2,
+            "price": 100
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.compound",
+      "label": "Compound growth",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "principal": {
+            "type": "number",
+            "description": "Initial amount."
+          },
+          "rate": {
+            "type": "number",
+            "description": "Annual rate as a decimal, e.g. 0.05."
+          },
+          "years": {
+            "type": "number",
+            "description": "Investment duration in years."
+          },
+          "n": {
+            "type": "integer",
+            "description": "Compounding periods per year.",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        "required": [
+          "principal",
+          "rate",
+          "years"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "principal": 100,
+            "rate": 0.05,
+            "years": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.cvar_historical",
+      "label": "Historical expected shortfall (CVaR)",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "returns": {
+            "type": "array",
+            "description": "Period returns as decimals.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "alpha": {
+            "type": "number",
+            "description": "Confidence level as a decimal strictly between 0 and 1.",
+            "exclusiveMinimum": 0,
+            "exclusiveMaximum": 1,
+            "default": 0.99
+          }
+        },
+        "required": [
+          "returns"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "returns": [
+              -0.03,
+              -0.01,
+              0.01,
+              0.02,
+              0.04
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.drawdown",
+      "label": "Drawdown analysis",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "values": {
+            "type": "array",
+            "description": "Positive asset or portfolio values in time order.",
+            "items": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "values"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "values": [
+              100,
+              110,
+              99,
+              120
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.duration",
+      "label": "Bond duration",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "face": {
+            "type": "number",
+            "description": "Bond face value.",
+            "exclusiveMinimum": 0,
+            "default": 100
+          },
+          "coupon_rate": {
+            "type": "number",
+            "description": "Annual coupon rate as a decimal."
+          },
+          "maturity": {
+            "type": "number",
+            "description": "Years to maturity.",
+            "exclusiveMinimum": 0
+          },
+          "frequency": {
+            "type": "integer",
+            "description": "Coupon payments per year.",
+            "minimum": 1,
+            "default": 2
+          },
+          "yield": {
+            "type": "number",
+            "description": "Annual yield as a decimal, greater than -frequency."
+          }
+        },
+        "required": [
+          "coupon_rate",
+          "maturity",
+          "yield"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "coupon_rate": 0.05,
+            "maturity": 2,
+            "yield": 0.04
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.greeks",
+      "label": "Option Greeks",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "S": {
+            "type": "number",
+            "description": "Positive spot price.",
+            "exclusiveMinimum": 0
+          },
+          "K": {
+            "type": "number",
+            "description": "Positive strike price.",
+            "exclusiveMinimum": 0
+          },
+          "T": {
+            "type": "number",
+            "description": "Positive time to expiry in years.",
+            "exclusiveMinimum": 0
+          },
+          "r": {
+            "type": "number",
+            "description": "Continuously compounded annual risk-free rate."
+          },
+          "sigma": {
+            "type": "number",
+            "description": "Positive annual volatility as a decimal.",
+            "exclusiveMinimum": 0
+          },
+          "kind": {
+            "type": "string",
+            "description": "Option type.",
+            "minLength": 1,
+            "enum": [
+              "call",
+              "put"
+            ],
+            "default": "call"
+          },
+          "q": {
+            "type": "number",
+            "description": "Continuously compounded dividend yield.",
+            "default": 0
+          }
+        },
+        "required": [
+          "S",
+          "K",
+          "T",
+          "r",
+          "sigma"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "S": 100,
+            "K": 100,
+            "T": 1,
+            "r": 0.05,
+            "sigma": 0.2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.implied_vol",
+      "label": "Implied volatility",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "S": {
+            "type": "number",
+            "description": "Positive spot price.",
+            "exclusiveMinimum": 0
+          },
+          "K": {
+            "type": "number",
+            "description": "Positive strike price.",
+            "exclusiveMinimum": 0
+          },
+          "T": {
+            "type": "number",
+            "description": "Positive time to expiry in years.",
+            "exclusiveMinimum": 0
+          },
+          "r": {
+            "type": "number",
+            "description": "Continuously compounded annual risk-free rate."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Option type.",
+            "minLength": 1,
+            "enum": [
+              "call",
+              "put"
+            ],
+            "default": "call"
+          },
+          "q": {
+            "type": "number",
+            "description": "Continuously compounded dividend yield.",
+            "default": 0
+          },
+          "price": {
+            "type": "number",
+            "description": "Observed nonnegative option price.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "price",
+          "S",
+          "K",
+          "T",
+          "r"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "S": 100,
+            "K": 100,
+            "T": 1,
+            "r": 0.05,
+            "price": 10.450583572185565
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.monte_carlo_gbm",
+      "label": "Monte Carlo price scenarios",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "S0": {
+            "type": "number",
+            "description": "Positive initial asset price.",
+            "exclusiveMinimum": 0
+          },
+          "mu": {
+            "type": "number",
+            "description": "Annual drift as a decimal."
+          },
+          "sigma": {
+            "type": "number",
+            "description": "Annual volatility as a decimal.",
+            "minimum": 0
+          },
+          "T": {
+            "type": "number",
+            "description": "Simulation horizon in years.",
+            "minimum": 0
+          },
+          "steps": {
+            "type": "integer",
+            "description": "Time steps per simulated path.",
+            "minimum": 1,
+            "maximum": 5000,
+            "default": 252
+          },
+          "paths": {
+            "type": "integer",
+            "description": "Number of simulated paths.",
+            "minimum": 1,
+            "maximum": 20000,
+            "default": 1000
+          },
+          "seed": {
+            "type": "integer",
+            "description": "Nonnegative deterministic random seed.",
+            "minimum": 0,
+            "default": 0
+          }
+        },
+        "required": [
+          "S0",
+          "mu",
+          "sigma",
+          "T"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "S0": 100,
+            "mu": 0.05,
+            "sigma": 0.2,
+            "T": 1,
+            "steps": 10,
+            "paths": 100,
+            "seed": 0
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.npv",
+      "label": "Net present value (NPV)",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "cashflows": {
+            "type": "array",
+            "description": "Cash flows from time zero onward; include the initial investment as the first entry.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "rate": {
+            "type": "number",
+            "description": "Discount rate per period as a decimal; cannot equal -1.",
+            "not": {
+              "const": -1
+            }
+          }
+        },
+        "required": [
+          "cashflows",
+          "rate"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "cashflows": [
+              -100,
+              60,
+              60
+            ],
+            "rate": 0.1
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.portfolio_metrics",
+      "label": "Portfolio performance metrics",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "returns": {
+            "type": "array",
+            "description": "Period rows by asset columns; at least two observations.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 2
+          },
+          "weights": {
+            "type": "array",
+            "description": "One weight per asset; weights must sum to 1 within 1e-8.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "annualization": {
+            "type": "number",
+            "description": "Periods per year.",
+            "exclusiveMinimum": 0,
+            "default": 252
+          },
+          "risk_free": {
+            "type": "number",
+            "description": "Annual risk-free return as a decimal.",
+            "default": 0
+          }
+        },
+        "required": [
+          "returns",
+          "weights"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "returns": [
+              [
+                0.01,
+                0.02
+              ],
+              [
+                -0.01,
+                0.01
+              ],
+              [
+                0.03,
+                -0.02
+              ]
+            ],
+            "weights": [
+              0.5,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.returns",
+      "label": "Investment returns",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "prices": {
+            "type": "array",
+            "description": "At least two strictly positive prices, in time order.",
+            "items": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "minItems": 2
+          },
+          "kind": {
+            "type": "string",
+            "description": "Return convention.",
+            "minLength": 1,
+            "enum": [
+              "simple",
+              "log"
+            ],
+            "default": "simple"
+          }
+        },
+        "required": [
+          "prices"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "prices": [
+              100,
+              110,
+              105
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.var_historical",
+      "label": "Historical value at risk",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "returns": {
+            "type": "array",
+            "description": "Period returns as decimals.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "alpha": {
+            "type": "number",
+            "description": "Confidence level as a decimal strictly between 0 and 1.",
+            "exclusiveMinimum": 0,
+            "exclusiveMaximum": 1,
+            "default": 0.99
+          }
+        },
+        "required": [
+          "returns"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "returns": [
+              -0.03,
+              -0.01,
+              0.01,
+              0.02,
+              0.04
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "finance.var_parametric",
+      "label": "Parametric value at risk",
+      "category": "Finance, portfolios & risk",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "returns": {
+            "type": "array",
+            "description": "Period returns as decimals.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          },
+          "alpha": {
+            "type": "number",
+            "description": "Confidence level as a decimal strictly between 0 and 1.",
+            "exclusiveMinimum": 0,
+            "exclusiveMaximum": 1,
+            "default": 0.99
+          }
+        },
+        "required": [
+          "returns"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "returns": [
+              -0.03,
+              -0.01,
+              0.01,
+              0.02,
+              0.04
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.correlation",
+      "label": "Correlation",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "description": "First numeric sample.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          },
+          "y": {
+            "type": "array",
+            "description": "Second numeric sample. Paired analyses require the same length as x.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": [
+              1,
+              2,
+              4,
+              5
+            ],
+            "y": [
+              2,
+              4,
+              5,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.covariance",
+      "label": "Covariance",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "description": "First numeric sample.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          },
+          "y": {
+            "type": "array",
+            "description": "Second numeric sample. Paired analyses require the same length as x.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": [
+              1,
+              2,
+              4,
+              5
+            ],
+            "y": [
+              2,
+              4,
+              5,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.describe",
+      "label": "Descriptive statistics",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Numeric observations in their original order.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              2,
+              4,
+              6,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.normal_fit",
+      "label": "Fit a normal distribution",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Numeric observations in their original order.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              1,
+              2,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.quantile",
+      "label": "Quantiles and percentiles",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Numeric observations in their original order.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "q": {
+            "type": "number",
+            "description": "Quantile probability between 0 and 1.",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "data",
+          "q"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "q": 0.5
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.regression",
+      "label": "Regression",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "description": "First numeric sample.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          },
+          "y": {
+            "type": "array",
+            "description": "Second numeric sample. Paired analyses require the same length as x.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": [
+              1,
+              2,
+              4,
+              5
+            ],
+            "y": [
+              2,
+              4,
+              5,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.ttest_ind",
+      "label": "Two-sample t-test",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "description": "First numeric sample.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "y": {
+            "type": "array",
+            "description": "Second numeric sample. Paired analyses require the same length as x.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "equal_var": {
+            "type": "boolean",
+            "description": "Use pooled variance when true (combined sample size at least 3); Welch test when false (each sample size at least 2).",
+            "default": false
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": [
+              1,
+              2,
+              4,
+              5
+            ],
+            "y": [
+              2,
+              4,
+              5,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "statistics.zscore",
+      "label": "Standard scores (z-scores)",
+      "category": "Statistics & inference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Nonconstant numeric sample.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "ddof": {
+            "type": "integer",
+            "description": "Degrees-of-freedom correction; must be less than sample size.",
+            "minimum": 0,
+            "default": 0
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              1,
+              2,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "optimization.linear_program",
+      "label": "Linear programming",
+      "category": "Constrained optimization",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "c": {
+            "type": "array",
+            "description": "Objective coefficients to minimize c dot x.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "A_ub": {
+            "type": "array",
+            "description": "Inequality coefficient rows for A_ub x <= b_ub.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          },
+          "b_ub": {
+            "type": "array",
+            "description": "One upper limit per row of A_ub.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "A_eq": {
+            "type": "array",
+            "description": "Equality coefficient rows for A_eq x = b_eq.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          },
+          "b_eq": {
+            "type": "array",
+            "description": "One target per row of A_eq.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "bounds": {
+            "description": "[lower,upper] for all variables, or one such pair per variable. A null endpoint means unbounded; null for the whole bounds value uses default nonnegative bounds [0,null].",
+            "default": [
+              0,
+              null
+            ],
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                "minItems": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "c"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "c": [
+              -3,
+              -2
+            ],
+            "A_ub": [
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            "b_ub": [
+              4,
+              2,
+              3
+            ],
+            "bounds": [
+              0,
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "optimization.quadratic",
+      "label": "Quadratic optimization",
+      "category": "Constrained optimization",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "Q": {
+            "type": "array",
+            "description": "Square symmetric quadratic matrix for 0.5*x.T*Q*x+c.T*x.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          },
+          "c": {
+            "type": "array",
+            "description": "Linear objective coefficients.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "x0": {
+            "type": "array",
+            "description": "Initial point; defaults to the zero vector.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "Q",
+          "c"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "Q": [
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                2
+              ]
+            ],
+            "c": [
+              -2,
+              -4
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "timeseries.ewma",
+      "label": "Exponentially weighted moving average",
+      "category": "Time-series analysis",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Numeric observations in their original order.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "alpha": {
+            "type": "number",
+            "description": "Recursive smoothing weight in (0,1].",
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "default": 0.2
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "alpha": 0.5
+          }
+        ]
+      }
+    },
+    {
+      "operation": "timeseries.moving_average",
+      "label": "Moving averages",
+      "category": "Time-series analysis",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Numeric observations in their original order.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "window": {
+            "type": "integer",
+            "description": "Window length; cannot exceed the data length.",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "data",
+          "window"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "window": 3
+          }
+        ]
+      }
+    },
+    {
+      "operation": "timeseries.rolling_volatility",
+      "label": "Rolling volatility",
+      "category": "Time-series analysis",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "returns": {
+            "type": "array",
+            "description": "Period return observations as decimals.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2
+          },
+          "window": {
+            "type": "integer",
+            "description": "Window length, from 2 through the returns length.",
+            "minimum": 2
+          },
+          "annualization": {
+            "type": "number",
+            "description": "Periods per year.",
+            "exclusiveMinimum": 0,
+            "default": 252
+          }
+        },
+        "required": [
+          "returns",
+          "window"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "returns": [
+              -0.01,
+              0.02,
+              0.01,
+              -0.02
+            ],
+            "window": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "algebra.expand",
+      "label": "Expand expressions",
+      "category": "Symbolic algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "(x+1)**2"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "algebra.factor",
+      "label": "Factor expressions",
+      "category": "Symbolic algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**2-1"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "algebra.polynomial_roots",
+      "label": "Polynomial roots",
+      "category": "Symbolic algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**2-1"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "algebra.simplify",
+      "label": "Simplify expressions",
+      "category": "Symbolic algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "(x**2-1)/(x-1)"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "algebra.solve",
+      "label": "Solve equations",
+      "category": "Symbolic algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "equations": {
+            "type": "array",
+            "description": "Expressions equal to zero; for x+1=3 supply x+1-3.",
+            "items": {
+              "type": "string",
+              "description": "Expression equal to zero.",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "symbols": {
+            "type": "array",
+            "description": "Unknown variable names.",
+            "items": {
+              "type": "string",
+              "description": "Variable name.",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "uniqueItems": true,
+            "default": [
+              "x"
+            ]
+          }
+        },
+        "required": [
+          "equations"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "equations": [
+              "x+1-3"
+            ],
+            "symbols": [
+              "x"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "calculus.diff",
+      "label": "Symbolic differentiation",
+      "category": "Symbolic calculus",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          },
+          "order": {
+            "type": "integer",
+            "description": "Nonnegative differentiation order.",
+            "minimum": 0,
+            "default": 1
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**3",
+            "order": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "calculus.integrate",
+      "label": "Symbolic integration",
+      "category": "Symbolic calculus",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          },
+          "bounds": {
+            "description": "Optional [lower, upper] limits. Omit, null, or [] for an indefinite integral.",
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  ],
+                  "description": "Number or symbolic value, such as 0, pi, or oo."
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "maxItems": 0
+              }
+            ]
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x",
+            "bounds": [
+              0,
+              2
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "calculus.limit",
+      "label": "Limits",
+      "category": "Symbolic calculus",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          },
+          "to": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "minLength": 1
+              }
+            ],
+            "description": "Number or symbolic value, such as 0, pi, or oo."
+          }
+        },
+        "required": [
+          "expression",
+          "to"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "sin(x)/x",
+            "to": 0
+          }
+        ]
+      }
+    },
+    {
+      "operation": "calculus.product",
+      "label": "Symbolic products",
+      "category": "Symbolic calculus",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Index variable name.",
+            "minLength": 1,
+            "default": "k"
+          },
+          "start": {
+            "type": "integer",
+            "description": "Inclusive first index."
+          },
+          "end": {
+            "type": "integer",
+            "description": "Inclusive last index."
+          }
+        },
+        "required": [
+          "expression",
+          "start",
+          "end"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "k",
+            "start": 1,
+            "end": 4
+          }
+        ]
+      }
+    },
+    {
+      "operation": "calculus.series",
+      "label": "Series expansions",
+      "category": "Symbolic calculus",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          },
+          "at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "minLength": 1
+              }
+            ],
+            "description": "Number or symbolic value, such as 0, pi, or oo.",
+            "default": 0
+          },
+          "order": {
+            "type": "integer",
+            "description": "Series truncation order.",
+            "minimum": 0,
+            "default": 6
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "exp(x)",
+            "order": 4
+          }
+        ]
+      }
+    },
+    {
+      "operation": "calculus.sum",
+      "label": "Symbolic summation",
+      "category": "Symbolic calculus",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Index variable name.",
+            "minLength": 1,
+            "default": "k"
+          },
+          "start": {
+            "type": "integer",
+            "description": "Inclusive first index."
+          },
+          "end": {
+            "type": "integer",
+            "description": "Inclusive last index."
+          }
+        },
+        "required": [
+          "expression",
+          "start",
+          "end"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "k",
+            "start": 1,
+            "end": 4
+          }
+        ]
+      }
+    },
+    {
+      "operation": "linear.det",
+      "label": "Matrix determinant",
+      "category": "Linear algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "A": {
+            "type": "array",
+            "description": "Numeric matrix, as rows. Linear operations require a square matrix.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "A"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "A": [
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                4
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "linear.eigen",
+      "label": "Eigenvalues and eigenvectors",
+      "category": "Linear algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "A": {
+            "type": "array",
+            "description": "Numeric matrix, as rows. Linear operations require a square matrix.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "A"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "A": [
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                4
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "linear.inv",
+      "label": "Matrix inverse",
+      "category": "Linear algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "A": {
+            "type": "array",
+            "description": "Numeric matrix, as rows. Linear operations require a square matrix.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "A"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "A": [
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                4
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "linear.solve",
+      "label": "Solve linear systems",
+      "category": "Linear algebra",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "A": {
+            "type": "array",
+            "description": "Numeric matrix, as rows. Linear operations require a square matrix.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          },
+          "b": {
+            "description": "Right-hand-side vector, or matrix for multiple right-hand sides; one entry or row per row of A.",
+            "anyOf": [
+              {
+                "type": "array",
+                "description": "Right-hand-side vector.",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 1
+              },
+              {
+                "type": "array",
+                "description": "Right-hand sides as columns.",
+                "items": {
+                  "type": "array",
+                  "description": "One matrix row.",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 1
+                },
+                "minItems": 1
+              }
+            ]
+          }
+        },
+        "required": [
+          "A",
+          "b"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "A": [
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                4
+              ]
+            ],
+            "b": [
+              4,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numeric.integrate",
+      "label": "Numerical integration",
+      "category": "Numerical computation",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "a": {
+            "type": "number",
+            "description": "Lower interval bound for variable x."
+          },
+          "b": {
+            "type": "number",
+            "description": "Upper interval bound for variable x."
+          },
+          "epsabs": {
+            "type": "number",
+            "description": "Nonnegative absolute integration tolerance; zero uses the relative tolerance.",
+            "minimum": 0,
+            "default": 1e-10
+          }
+        },
+        "required": [
+          "expression",
+          "a",
+          "b"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**2",
+            "a": 0,
+            "b": 1
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numeric.interpolate",
+      "label": "Interpolation",
+      "category": "Numerical computation",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "description": "Strictly increasing sample coordinates.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "y": {
+            "type": "array",
+            "description": "Sample values, one per x coordinate.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "at": {
+            "description": "Coordinate or coordinates to interpolate. Outside x, uses the closest endpoint value.",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "array",
+                "description": "Interpolation coordinates.",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 1
+              }
+            ]
+          }
+        },
+        "required": [
+          "x",
+          "y",
+          "at"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": [
+              0,
+              1,
+              2
+            ],
+            "y": [
+              0,
+              2,
+              4
+            ],
+            "at": [
+              0.5,
+              1.5
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numeric.least_squares",
+      "label": "Least-squares fitting",
+      "category": "Numerical computation",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "A": {
+            "type": "array",
+            "description": "Numeric matrix, as rows. Linear operations require a square matrix.",
+            "items": {
+              "type": "array",
+              "description": "One matrix row.",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "minItems": 1
+          },
+          "b": {
+            "description": "Right-hand-side vector, or matrix for multiple right-hand sides; one entry or row per row of A.",
+            "anyOf": [
+              {
+                "type": "array",
+                "description": "Right-hand-side vector.",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 1
+              },
+              {
+                "type": "array",
+                "description": "Right-hand sides as columns.",
+                "items": {
+                  "type": "array",
+                  "description": "One matrix row.",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 1
+                },
+                "minItems": 1
+              }
+            ]
+          }
+        },
+        "required": [
+          "A",
+          "b"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "A": [
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                4
+              ]
+            ],
+            "b": [
+              4,
+              8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numeric.ode",
+      "label": "Ordinary differential equations",
+      "category": "Numerical computation",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "rhs": {
+            "type": "string",
+            "description": "Right-hand side f(t,y) of scalar y'=f(t,y).",
+            "minLength": 1
+          },
+          "t0": {
+            "type": "number",
+            "description": "Initial independent-variable value."
+          },
+          "t1": {
+            "type": "number",
+            "description": "Final independent-variable value."
+          },
+          "y0": {
+            "type": "number",
+            "description": "Initial value y(t0)."
+          },
+          "rtol": {
+            "type": "number",
+            "description": "Relative solver tolerance.",
+            "exclusiveMinimum": 0,
+            "default": 1e-8
+          },
+          "atol": {
+            "type": "number",
+            "description": "Absolute solver tolerance.",
+            "exclusiveMinimum": 0,
+            "default": 1e-10
+          }
+        },
+        "required": [
+          "rhs",
+          "t0",
+          "t1",
+          "y0"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "rhs": "y",
+            "t0": 0,
+            "t1": 1,
+            "y0": 1
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numeric.optimize_scalar",
+      "label": "Scalar optimization",
+      "category": "Numerical computation",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "a": {
+            "type": "number",
+            "description": "Lower interval bound for variable x."
+          },
+          "b": {
+            "type": "number",
+            "description": "Upper interval bound for variable x."
+          }
+        },
+        "required": [
+          "expression",
+          "a",
+          "b"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**2",
+            "a": 0,
+            "b": 1
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numeric.root",
+      "label": "Numerical root finding",
+      "category": "Numerical computation",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          },
+          "guess": {
+            "type": "number",
+            "description": "Initial numerical root estimate."
+          }
+        },
+        "required": [
+          "expression",
+          "guess"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**2-2",
+            "guess": 1
+          }
+        ]
+      }
+    },
+    {
+      "operation": "probability.binomial_pmf",
+      "label": "Binomial probabilities",
+      "category": "Probability distributions",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "k": {
+            "type": "integer",
+            "description": "Observed successes."
+          },
+          "n": {
+            "type": "integer",
+            "description": "Number of trials.",
+            "minimum": 0
+          },
+          "p": {
+            "type": "number",
+            "description": "Success probability.",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "k",
+          "n",
+          "p"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "k": 2,
+            "n": 4,
+            "p": 0.5
+          }
+        ]
+      }
+    },
+    {
+      "operation": "probability.chi2_cdf",
+      "label": "Chi-square cumulative probability",
+      "category": "Probability distributions",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "description": "Value at which to evaluate the CDF."
+          },
+          "df": {
+            "type": "number",
+            "description": "Positive degrees of freedom.",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "x",
+          "df"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": 2,
+            "df": 3
+          }
+        ]
+      }
+    },
+    {
+      "operation": "probability.exponential_cdf",
+      "label": "Exponential cumulative probability",
+      "category": "Probability distributions",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "description": "Value at which to evaluate the CDF."
+          },
+          "rate": {
+            "type": "number",
+            "description": "Positive exponential rate.",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "x",
+          "rate"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": 1,
+            "rate": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "probability.normal_cdf",
+      "label": "Normal cumulative probability",
+      "category": "Probability distributions",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "description": "Value at which to evaluate the CDF."
+          },
+          "mu": {
+            "type": "number",
+            "description": "Distribution mean.",
+            "default": 0
+          },
+          "sigma": {
+            "type": "number",
+            "description": "Positive standard deviation.",
+            "exclusiveMinimum": 0,
+            "default": 1
+          }
+        },
+        "required": [
+          "x"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "x": 0
+          }
+        ]
+      }
+    },
+    {
+      "operation": "probability.normal_ppf",
+      "label": "Normal quantiles",
+      "category": "Probability distributions",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "p": {
+            "type": "number",
+            "description": "Cumulative probability. Endpoints give extended-real quantiles.",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "mu": {
+            "type": "number",
+            "description": "Distribution mean.",
+            "default": 0
+          },
+          "sigma": {
+            "type": "number",
+            "description": "Positive standard deviation.",
+            "exclusiveMinimum": 0,
+            "default": 1
+          }
+        },
+        "required": [
+          "p"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "p": 0.5
+          }
+        ]
+      }
+    },
+    {
+      "operation": "probability.poisson_pmf",
+      "label": "Poisson probabilities",
+      "category": "Probability distributions",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "k": {
+            "type": "integer",
+            "description": "Observed event count."
+          },
+          "mu": {
+            "type": "number",
+            "description": "Expected event count.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "k",
+          "mu"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "k": 2,
+            "mu": 3
+          }
+        ]
+      }
+    },
+    {
+      "operation": "arithmetic.evaluate",
+      "label": "Arithmetic expressions",
+      "category": "Arithmetic",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "40+2"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "verify.crosscheck",
+      "label": "Cross-check calculations",
+      "category": "Computation checks",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "arithmetic.evaluate",
+              "algebra.simplify",
+              "algebra.expand",
+              "algebra.factor",
+              "algebra.polynomial_roots",
+              "algebra.solve",
+              "calculus.diff",
+              "calculus.integrate",
+              "calculus.limit",
+              "calculus.series",
+              "calculus.sum",
+              "calculus.product",
+              "numeric.root",
+              "numeric.integrate",
+              "numeric.optimize_scalar",
+              "numeric.ode",
+              "linear.det",
+              "linear.inv",
+              "linear.eigen",
+              "linear.solve",
+              "numeric.least_squares",
+              "numeric.interpolate",
+              "verified.interval_eval",
+              "statistics.describe",
+              "statistics.correlation",
+              "statistics.covariance",
+              "statistics.regression",
+              "statistics.ttest_ind",
+              "statistics.quantile",
+              "statistics.zscore",
+              "statistics.normal_fit",
+              "probability.normal_cdf",
+              "probability.normal_ppf",
+              "probability.binomial_pmf",
+              "probability.poisson_pmf",
+              "probability.exponential_cdf",
+              "probability.chi2_cdf",
+              "finance.compound",
+              "finance.npv",
+              "finance.black_scholes",
+              "finance.greeks",
+              "finance.implied_vol",
+              "finance.var_historical",
+              "finance.var_parametric",
+              "finance.cvar_historical",
+              "finance.returns",
+              "finance.portfolio_metrics",
+              "finance.beta",
+              "finance.drawdown",
+              "finance.bond_price",
+              "finance.bond_yield",
+              "finance.duration",
+              "finance.monte_carlo_gbm",
+              "timeseries.moving_average",
+              "timeseries.ewma",
+              "timeseries.rolling_volatility",
+              "geometry.distance",
+              "geometry.area_circle",
+              "geometry.volume_sphere",
+              "transforms.fft",
+              "transforms.ifft",
+              "optimization.linear_program",
+              "optimization.quadratic",
+              "units.convert",
+              "knowledge.constant",
+              "knowledge.element",
+              "combinatorics.factorial",
+              "combinatorics.binomial",
+              "numbertheory.isprime",
+              "numbertheory.factorint",
+              "numbertheory.gcd",
+              "numbertheory.lcm",
+              "verify.evaluate",
+              "verify.crosscheck"
+            ],
+            "description": "Exact runtime operation identifier."
+          },
+          "args": {
+            "type": "object",
+            "description": "Inputs for the selected operation; see its operation-specific branch."
+          }
+        },
+        "required": [
+          "operation",
+          "args"
+        ],
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "properties": {
+              "operation": {
+                "const": "arithmetic.evaluate"
+              },
+              "args": {
+                "$ref": "#/$defs/arithmetic.evaluate"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "algebra.simplify"
+              },
+              "args": {
+                "$ref": "#/$defs/algebra.simplify"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "algebra.expand"
+              },
+              "args": {
+                "$ref": "#/$defs/algebra.expand"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "algebra.factor"
+              },
+              "args": {
+                "$ref": "#/$defs/algebra.factor"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "algebra.polynomial_roots"
+              },
+              "args": {
+                "$ref": "#/$defs/algebra.polynomial_roots"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "algebra.solve"
+              },
+              "args": {
+                "$ref": "#/$defs/algebra.solve"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "calculus.diff"
+              },
+              "args": {
+                "$ref": "#/$defs/calculus.diff"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "calculus.integrate"
+              },
+              "args": {
+                "$ref": "#/$defs/calculus.integrate"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "calculus.limit"
+              },
+              "args": {
+                "$ref": "#/$defs/calculus.limit"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "calculus.series"
+              },
+              "args": {
+                "$ref": "#/$defs/calculus.series"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "calculus.sum"
+              },
+              "args": {
+                "$ref": "#/$defs/calculus.sum"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "calculus.product"
+              },
+              "args": {
+                "$ref": "#/$defs/calculus.product"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numeric.root"
+              },
+              "args": {
+                "$ref": "#/$defs/numeric.root"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numeric.integrate"
+              },
+              "args": {
+                "$ref": "#/$defs/numeric.integrate"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numeric.optimize_scalar"
+              },
+              "args": {
+                "$ref": "#/$defs/numeric.optimize_scalar"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numeric.ode"
+              },
+              "args": {
+                "$ref": "#/$defs/numeric.ode"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "linear.det"
+              },
+              "args": {
+                "$ref": "#/$defs/linear.det"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "linear.inv"
+              },
+              "args": {
+                "$ref": "#/$defs/linear.inv"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "linear.eigen"
+              },
+              "args": {
+                "$ref": "#/$defs/linear.eigen"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "linear.solve"
+              },
+              "args": {
+                "$ref": "#/$defs/linear.solve"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numeric.least_squares"
+              },
+              "args": {
+                "$ref": "#/$defs/numeric.least_squares"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numeric.interpolate"
+              },
+              "args": {
+                "$ref": "#/$defs/numeric.interpolate"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "verified.interval_eval"
+              },
+              "args": {
+                "$ref": "#/$defs/verified.interval_eval"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.describe"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.describe"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.correlation"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.correlation"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.covariance"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.covariance"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.regression"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.regression"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.ttest_ind"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.ttest_ind"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.quantile"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.quantile"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.zscore"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.zscore"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "statistics.normal_fit"
+              },
+              "args": {
+                "$ref": "#/$defs/statistics.normal_fit"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "probability.normal_cdf"
+              },
+              "args": {
+                "$ref": "#/$defs/probability.normal_cdf"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "probability.normal_ppf"
+              },
+              "args": {
+                "$ref": "#/$defs/probability.normal_ppf"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "probability.binomial_pmf"
+              },
+              "args": {
+                "$ref": "#/$defs/probability.binomial_pmf"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "probability.poisson_pmf"
+              },
+              "args": {
+                "$ref": "#/$defs/probability.poisson_pmf"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "probability.exponential_cdf"
+              },
+              "args": {
+                "$ref": "#/$defs/probability.exponential_cdf"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "probability.chi2_cdf"
+              },
+              "args": {
+                "$ref": "#/$defs/probability.chi2_cdf"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.compound"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.compound"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.npv"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.npv"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.black_scholes"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.black_scholes"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.greeks"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.greeks"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.implied_vol"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.implied_vol"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.var_historical"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.var_historical"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.var_parametric"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.var_parametric"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.cvar_historical"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.cvar_historical"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.returns"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.returns"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.portfolio_metrics"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.portfolio_metrics"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.beta"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.beta"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.drawdown"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.drawdown"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.bond_price"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.bond_price"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.bond_yield"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.bond_yield"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.duration"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.duration"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "finance.monte_carlo_gbm"
+              },
+              "args": {
+                "$ref": "#/$defs/finance.monte_carlo_gbm"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "timeseries.moving_average"
+              },
+              "args": {
+                "$ref": "#/$defs/timeseries.moving_average"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "timeseries.ewma"
+              },
+              "args": {
+                "$ref": "#/$defs/timeseries.ewma"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "timeseries.rolling_volatility"
+              },
+              "args": {
+                "$ref": "#/$defs/timeseries.rolling_volatility"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "geometry.distance"
+              },
+              "args": {
+                "$ref": "#/$defs/geometry.distance"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "geometry.area_circle"
+              },
+              "args": {
+                "$ref": "#/$defs/geometry.area_circle"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "geometry.volume_sphere"
+              },
+              "args": {
+                "$ref": "#/$defs/geometry.volume_sphere"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "transforms.fft"
+              },
+              "args": {
+                "$ref": "#/$defs/transforms.fft"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "transforms.ifft"
+              },
+              "args": {
+                "$ref": "#/$defs/transforms.ifft"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "optimization.linear_program"
+              },
+              "args": {
+                "$ref": "#/$defs/optimization.linear_program"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "optimization.quadratic"
+              },
+              "args": {
+                "$ref": "#/$defs/optimization.quadratic"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "units.convert"
+              },
+              "args": {
+                "$ref": "#/$defs/units.convert"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "knowledge.constant"
+              },
+              "args": {
+                "$ref": "#/$defs/knowledge.constant"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "knowledge.element"
+              },
+              "args": {
+                "$ref": "#/$defs/knowledge.element"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "combinatorics.factorial"
+              },
+              "args": {
+                "$ref": "#/$defs/combinatorics.factorial"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "combinatorics.binomial"
+              },
+              "args": {
+                "$ref": "#/$defs/combinatorics.binomial"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numbertheory.isprime"
+              },
+              "args": {
+                "$ref": "#/$defs/numbertheory.isprime"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numbertheory.factorint"
+              },
+              "args": {
+                "$ref": "#/$defs/numbertheory.factorint"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numbertheory.gcd"
+              },
+              "args": {
+                "$ref": "#/$defs/numbertheory.gcd"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "numbertheory.lcm"
+              },
+              "args": {
+                "$ref": "#/$defs/numbertheory.lcm"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "verify.evaluate"
+              },
+              "args": {
+                "$ref": "#/$defs/verify.evaluate"
+              }
+            }
+          },
+          {
+            "properties": {
+              "operation": {
+                "const": "verify.crosscheck"
+              },
+              "args": {
+                "$ref": "#/$defs/verify.crosscheck"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "operation": "verify.evaluate",
+      "label": "Evaluation verification",
+      "category": "Computation checks",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "lhs": {
+            "type": "string",
+            "description": "Left-hand symbolic expression.",
+            "minLength": 1
+          },
+          "rhs": {
+            "type": "string",
+            "description": "Right-hand symbolic expression.",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "lhs",
+          "rhs"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "lhs": "(x+1)**2",
+            "rhs": "x**2+2*x+1"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "verified.interval_eval",
+      "label": "Interval evaluation",
+      "category": "Verified intervals",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "SymPy expression, such as x**2, sin(x), pi, or 40+2. Use ** for powers.",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Variable or summation index name.",
+            "minLength": 1,
+            "default": "x"
+          },
+          "interval": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "description": "Numeric [lower, upper] interval."
+          }
+        },
+        "required": [
+          "expression",
+          "interval"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "expression": "x**2",
+            "interval": [
+              1,
+              2
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "geometry.area_circle",
+      "label": "Circle area",
+      "category": "Geometry",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "radius": {
+            "type": "number",
+            "description": "Nonnegative radius.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "radius"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "radius": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "geometry.distance",
+      "label": "Distance between points",
+      "category": "Geometry",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "p": {
+            "type": "array",
+            "description": "First point coordinates.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          },
+          "q": {
+            "type": "array",
+            "description": "Second point coordinates with the same dimension as p.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "p",
+          "q"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "p": [
+              0,
+              0
+            ],
+            "q": [
+              3,
+              4
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "geometry.volume_sphere",
+      "label": "Sphere volume",
+      "category": "Geometry",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "radius": {
+            "type": "number",
+            "description": "Nonnegative radius.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "radius"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "radius": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "transforms.fft",
+      "label": "Fast Fourier transform (FFT)",
+      "category": "Signal transforms",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Numeric observations in their original order.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operation": "transforms.ifft",
+      "label": "Inverse Fourier transform (IFFT)",
+      "category": "Signal transforms",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Real-FFT frequency bins, not a full complex spectrum.",
+            "minItems": 1,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "description": "Python-compatible finite complex value, such as 1+2j.",
+                  "minLength": 1,
+                  "pattern": "^\\s*(?:(?:[+-]?(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?|[+-]?(?:(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?)?[jJ]|[+-]?(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?[+-](?:(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?)?[jJ])|\\(\\s*(?:[+-]?(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?|[+-]?(?:(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?)?[jJ]|[+-]?(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?[+-](?:(?:\\d(?:_?\\d)*(?:\\.(?:\\d(?:_?\\d)*)?)?|\\.\\d(?:_?\\d)*)(?:[eE][+-]?\\d(?:_?\\d)*)?)?[jJ])\\s*\\))\\s*$"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "re": {
+                      "type": "number",
+                      "description": "Real part.",
+                      "default": 0
+                    },
+                    "im": {
+                      "type": "number",
+                      "description": "Imaginary part.",
+                      "default": 0
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "n": {
+            "description": "Output sample count. Omit or null for 2*(number of bins-1).",
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "data": [
+              {
+                "re": 10,
+                "im": 0
+              },
+              {
+                "re": -2,
+                "im": 2
+              },
+              {
+                "re": -2,
+                "im": 0
+              }
+            ],
+            "n": 4
+          }
+        ]
+      }
+    },
+    {
+      "operation": "combinatorics.binomial",
+      "label": "Binomial coefficients",
+      "category": "Combinatorics",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "description": "Upper binomial argument."
+          },
+          "k": {
+            "type": "integer",
+            "description": "Lower binomial argument."
+          }
+        },
+        "required": [
+          "n",
+          "k"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "n": 5,
+            "k": 2
+          }
+        ]
+      }
+    },
+    {
+      "operation": "combinatorics.factorial",
+      "label": "Factorials",
+      "category": "Combinatorics",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "description": "Nonnegative factorial argument.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "n"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "n": 5
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numbertheory.factorint",
+      "label": "Integer factorization",
+      "category": "Number theory",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "description": "Integer to analyze."
+          }
+        },
+        "required": [
+          "n"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "n": 42
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numbertheory.gcd",
+      "label": "Greatest common divisor",
+      "category": "Number theory",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "integer",
+            "description": "First integer."
+          },
+          "b": {
+            "type": "integer",
+            "description": "Second integer."
+          }
+        },
+        "required": [
+          "a",
+          "b"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "a": 12,
+            "b": 18
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numbertheory.isprime",
+      "label": "Primality testing",
+      "category": "Number theory",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "description": "Integer to analyze."
+          }
+        },
+        "required": [
+          "n"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "n": 42
+          }
+        ]
+      }
+    },
+    {
+      "operation": "numbertheory.lcm",
+      "label": "Least common multiple",
+      "category": "Number theory",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "integer",
+            "description": "First integer."
+          },
+          "b": {
+            "type": "integer",
+            "description": "Second integer."
+          }
+        },
+        "required": [
+          "a",
+          "b"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "a": 12,
+            "b": 18
+          }
+        ]
+      }
+    },
+    {
+      "operation": "units.convert",
+      "label": "Unit conversion",
+      "category": "Unit conversion",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number",
+            "description": "Quantity to convert."
+          },
+          "from": {
+            "type": "string",
+            "description": "Source unit; must be dimensionally compatible with to.",
+            "minLength": 1,
+            "enum": [
+              "m",
+              "km",
+              "cm",
+              "mm",
+              "kg",
+              "g",
+              "s",
+              "min",
+              "h",
+              "Pa",
+              "kPa",
+              "MPa",
+              "C",
+              "F",
+              "K"
+            ]
+          },
+          "to": {
+            "type": "string",
+            "description": "Target unit.",
+            "minLength": 1,
+            "enum": [
+              "m",
+              "km",
+              "cm",
+              "mm",
+              "kg",
+              "g",
+              "s",
+              "min",
+              "h",
+              "Pa",
+              "kPa",
+              "MPa",
+              "C",
+              "F",
+              "K"
+            ]
+          }
+        },
+        "required": [
+          "value",
+          "from",
+          "to"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "value": 1,
+            "from": "km",
+            "to": "m"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "knowledge.constant",
+      "label": "Scientific constants",
+      "category": "Scientific reference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Embedded scientific constant identifier.",
+            "minLength": 1,
+            "enum": [
+              "c",
+              "G",
+              "h",
+              "e",
+              "k_B",
+              "N_A"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "name": "c"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "knowledge.element",
+      "label": "Chemical element lookup",
+      "category": "Scientific reference",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Case-sensitive chemical symbol, embedded elements H through Ca.",
+            "minLength": 1,
+            "enum": [
+              "H",
+              "He",
+              "Li",
+              "Be",
+              "B",
+              "C",
+              "N",
+              "O",
+              "F",
+              "Ne",
+              "Na",
+              "Mg",
+              "Al",
+              "Si",
+              "P",
+              "S",
+              "Cl",
+              "Ar",
+              "K",
+              "Ca"
+            ]
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "symbol": "C"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -7,7 +7,7 @@ import pytest
 ROOT=Path(__file__).resolve().parents[1]
 DIST=ROOT/'dist'
 SITE=json.loads((ROOT/'content/pages.json').read_text())
-MANIFEST=json.loads((DIST/'manifest.json').read_text())
+MANIFEST=json.loads((DIST.parent/'review-artifacts'/'build-manifest.json').read_text())
 ROUTES=MANIFEST['routes']
 
 def path_for(route): return DIST/route.lstrip('/')/'index.html'

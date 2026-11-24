@@ -8,7 +8,7 @@ import pytest
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'scripts'))
 from preview_server import Handler, ROOT as STATIC_ROOT
-ROUTES=json.loads((ROOT/'dist/manifest.json').read_text())['routes']
+ROUTES=json.loads((ROOT/'review-artifacts/build-manifest.json').read_text())['routes']
 
 @pytest.fixture(scope='module')
 def server():

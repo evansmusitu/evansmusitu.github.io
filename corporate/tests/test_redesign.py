@@ -60,8 +60,8 @@ def test_homepage_is_a_distinct_editorial_journey():
     assert len(main.select('section')) == 6
     assert len(main.get_text(' ', strip=True).split()) < 650
     assert not main.select('[data-atlas-component], [data-navigator], [data-catalog-item]')
-    assert 'ILLUSTRATIVE' in main.get_text(' ',strip=True)
-    assert 'Illustrative workflow' in main.get_text(' ',strip=True)
+    assert 'REAL EXECUTION' in main.get_text(' ',strip=True)
+    assert 'NPV +721.26 units' in main.get_text(' ',strip=True)
     for path in ('/products/', '/products/axiom/', '/products/education/', '/products/foundry/',
                  '/products/foundry/studio/', '/products/education/chemistry-rescue/',
                  '/evidence/', '/trust/', '/contact/'):
@@ -73,7 +73,7 @@ def test_dedicated_interactive_journeys_are_preserved():
     assert soup('/products/').select_one('[data-catalog-item]')
     assert soup('/ecosystem/').select_one('[data-atlas-component]')
     assert soup('/experiences/lab/').select_one('#npv-result')
-    manifest = json.loads((DIST / 'manifest.json').read_text(encoding='utf-8'))
+    manifest = json.loads((DIST.parent / 'review-artifacts' / 'build-manifest.json').read_text(encoding='utf-8'))
     studio = soup('/products/foundry/studio/')
     if manifest['studio_media_included']:
         assert studio.select_one('video.studio-demo-player')

@@ -51,7 +51,7 @@ def test_axiom_directory_has_positive_action_instead_of_access_warning():
     main=page("/products/axiom/")
     directory=main.select_one("section#axiom-full-capabilities")
     assert directory is not None
-    assert len(directory.select(".axiom-operation-list code"))==74
+    assert len(directory.select(".axiom-operation-tech > p > code"))==74
     assert len(directory.select(".axiom-domain"))==18
     assert not directory.select(".axiom-access-note,.notice")
     cta=directory.select_one(".axiom-explore-cta")
@@ -59,7 +59,7 @@ def test_axiom_directory_has_positive_action_instead_of_access_warning():
     assert cta.select_one("a")["aria-label"].startswith("Explore Axiom in ChatGPT")
     lead=main.select_one(".axiom-product-cta")
     assert lead and lead.select_one('a[href^="https://chatgpt.com/plugins/"]')
-    assert "74 documented operations" in main.get_text(" ",strip=True)
+    assert "74 listed mathematical operations" in main.get_text(" ",strip=True)
     assert "Availability and maturity" not in main.get_text(" ",strip=True)
 
 def test_live_news_developers_and_status_have_useful_content_not_internal_hold_notices():

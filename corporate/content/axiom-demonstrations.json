@@ -1,7 +1,7 @@
 {
   "version": 1,
   "executed_date": "2026-11-21",
-  "provenance": "Executed against the connected certified MUSITU Axiom operations using fictional, non-customer inputs. Numeric displays rounded for readability.",
+  "provenance": "20 genuine MUSITU Axiom executions using fictional inputs: four source-locked calculations from the released 21 November 2026 website and 16 new operations executed in this session. Only the original NPV and linear programming outputs have independent checker evidence. Results are rounded for presentation.",
   "examples": [
     {
       "id": "npv",
@@ -12,7 +12,18 @@
       "inputs": "cashflows = [-10000, 4000, 4300, 4700]; rate = 0.10",
       "result": "+721.26 units",
       "detail": "Positive net present value under the stated cash-flow and discount-rate assumptions.",
-      "verification": "Independent computation check passed"
+      "verification": "Independent computation check passed",
+      "method": "Discount each period's cash flow by (1 + r)^t and sum all periods.",
+      "arguments": {
+        "cashflows": [
+          -10000,
+          4000,
+          4300,
+          4700
+        ],
+        "rate": 0.1
+      },
+      "evidence_status": "Axiom calculation independently checked"
     },
     {
       "id": "statistics",
@@ -23,7 +34,19 @@
       "inputs": "data = [12, 15, 18, 19, 21, 25]",
       "result": "Mean 18.33 · median 18.5",
       "detail": "Sample standard deviation approximately 4.55; six observations.",
-      "verification": "Axiom calculation executed"
+      "verification": "Axiom calculation executed",
+      "method": "Compute the sample mean, median and sample standard deviation of six values.",
+      "arguments": {
+        "data": [
+          12,
+          15,
+          18,
+          19,
+          21,
+          25
+        ]
+      },
+      "evidence_status": "Recorded Axiom calculation"
     },
     {
       "id": "options",
@@ -34,7 +57,17 @@
       "inputs": "S=100; K=105; T=1; r=0.04; sigma=0.20; kind=call",
       "result": "7.57 model units",
       "detail": "A model-derived theoretical call value for the specified parameters.",
-      "verification": "Axiom calculation executed"
+      "verification": "Axiom calculation executed",
+      "method": "Black–Scholes call pricing from spot, strike, expiry, risk-free rate and assumed volatility.",
+      "arguments": {
+        "S": 100,
+        "K": 105,
+        "T": 1,
+        "r": 0.04,
+        "sigma": 0.2,
+        "kind": "call"
+      },
+      "evidence_status": "Recorded Axiom calculation"
     },
     {
       "id": "optimization",
@@ -45,7 +78,433 @@
       "inputs": "c=[-3,-5]; A_ub=[[1,0],[0,2],[3,2]]; b_ub=[4,12,18]",
       "result": "Maximum 36 · x=2, y=6",
       "detail": "A feasible optimum for the stated linear constraints and objective.",
-      "verification": "Independent primal–dual verification passed"
+      "verification": "Independent primal–dual verification passed",
+      "method": "Solve a linear programme by minimising the negative objective under the stated constraints.",
+      "arguments": {
+        "c": [
+          -3,
+          -5
+        ],
+        "A_ub": [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            3,
+            2
+          ]
+        ],
+        "b_ub": [
+          4,
+          12,
+          18
+        ]
+      },
+      "evidence_status": "Axiom calculation independently checked"
+    },
+    {
+      "id": "portfolio-var",
+      "title": "Estimate portfolio loss at risk",
+      "discipline": "Portfolio risk",
+      "operation": "finance.var_historical",
+      "question": "What is historical 95% value at risk for 20 fictional periodic portfolio returns?",
+      "inputs": "{\"returns\":[0.012,-0.018,0.009,-0.025,0.015,-0.041,0.022,-0.012,0.017,-0.032,0.006,-0.008,0.019,-0.022,0.01,-0.015,0.013,-0.028,0.004,-0.011],\"alpha\":0.95}",
+      "arguments": {
+        "returns": [
+          0.012,
+          -0.018,
+          0.009,
+          -0.025,
+          0.015,
+          -0.041,
+          0.022,
+          -0.012,
+          0.017,
+          -0.032,
+          0.006,
+          -0.008,
+          0.019,
+          -0.022,
+          0.01,
+          -0.015,
+          0.013,
+          -0.028,
+          0.004,
+          -0.011
+        ],
+        "alpha": 0.95
+      },
+      "method": "Historical loss-tail quantile from 20 synthetic returns.",
+      "result": "3.245% loss per period",
+      "detail": "A tiny synthetic sample is unsuitable for production risk limits.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "regression",
+      "title": "Fit an explanatory regression",
+      "discipline": "Statistics",
+      "operation": "statistics.regression",
+      "question": "Fit a linear regression to x=[1,2,3,4,5,6,7,8] and y=[3.1,4.8,7.2,8.9,11.1,12.8,15,17.2].",
+      "inputs": "{\"x\":[1,2,3,4,5,6,7,8],\"y\":[3.1,4.8,7.2,8.9,11.1,12.8,15,17.2]}",
+      "arguments": {
+        "x": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "y": [
+          3.1,
+          4.8,
+          7.2,
+          8.9,
+          11.1,
+          12.8,
+          15,
+          17.2
+        ]
+      },
+      "method": "Ordinary least squares estimates a slope and intercept.",
+      "result": "y ≈ 0.975 + 2.0083x",
+      "detail": "The fitted association for fictional observations is not evidence of causation.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "correlation",
+      "title": "Measure two-variable association",
+      "discipline": "Statistics",
+      "operation": "statistics.correlation",
+      "question": "What is the correlation between [1,2,3,4,5] and [2,4,6,8,10]?",
+      "inputs": "{\"x\":[1,2,3,4,5],\"y\":[2,4,6,8,10]}",
+      "arguments": {
+        "x": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "y": [
+          2,
+          4,
+          6,
+          8,
+          10
+        ]
+      },
+      "method": "Pearson's correlation measures standardized linear association.",
+      "result": "Pearson correlation ≈ 1.000",
+      "detail": "These deliberately proportional synthetic series move perfectly together.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "compound",
+      "title": "Project compound growth",
+      "discipline": "Finance",
+      "operation": "finance.compound",
+      "question": "What does 1,000 units become after three years at 5% compounded annually?",
+      "inputs": "{\"principal\":1000,\"rate\":0.05,\"years\":3}",
+      "arguments": {
+        "principal": 1000,
+        "rate": 0.05,
+        "years": 3
+      },
+      "method": "Future value = principal × (1 + annual rate)^years.",
+      "result": "1,157.625 units",
+      "detail": "An assumed constant annual rate produces this hypothetical value.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "quantile",
+      "title": "Find the median percentile",
+      "discipline": "Statistics",
+      "operation": "statistics.quantile",
+      "question": "What is the 50th percentile of [1,2,3,4,5,6,7,8,9]?",
+      "inputs": "{\"data\":[1,2,3,4,5,6,7,8,9],\"q\":0.5}",
+      "arguments": {
+        "data": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "q": 0.5
+      },
+      "method": "Calculate the requested empirical sample quantile.",
+      "result": "50th percentile = 5",
+      "detail": "The middle observation of this ordered fictional series is 5.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "moving-average",
+      "title": "Smooth recent observations",
+      "discipline": "Time series",
+      "operation": "timeseries.moving_average",
+      "question": "Calculate a trailing three-point moving average for [1,2,3,4,5,6].",
+      "inputs": "{\"data\":[1,2,3,4,5,6],\"window\":3}",
+      "arguments": {
+        "data": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "window": 3
+      },
+      "method": "Take the arithmetic mean of each consecutive three-value window.",
+      "result": "[2, 3, 4, 5]",
+      "detail": "The first average is (1 + 2 + 3) / 3 = 2.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "rolling-volatility",
+      "title": "Track changing volatility",
+      "discipline": "Time series",
+      "operation": "timeseries.rolling_volatility",
+      "question": "Calculate three-observation rolling volatility for returns [0.02,-0.01,0.03,-0.02,0.01,0.015,-0.005].",
+      "inputs": "{\"returns\":[0.02,-0.01,0.03,-0.02,0.01,0.015,-0.005],\"window\":3}",
+      "arguments": {
+        "returns": [
+          0.02,
+          -0.01,
+          0.03,
+          -0.02,
+          0.01,
+          0.015,
+          -0.005
+        ],
+        "window": 3
+      },
+      "method": "Three-observation rolling sample volatility, annualised by the operation.",
+      "result": "First window ≈ 0.33045",
+      "detail": "The five recorded volatility estimates start at 0.33045; short samples fluctuate.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "bond-price",
+      "title": "Estimate a fixed-rate bond price",
+      "discipline": "Bond analysis",
+      "operation": "finance.bond_price",
+      "question": "Price a five-year bond with 1,000 face value, 5% annual coupon, 4% yield and semiannual payments.",
+      "inputs": "{\"face\":1000,\"coupon_rate\":0.05,\"maturity\":5,\"frequency\":2,\"yield\":0.04}",
+      "arguments": {
+        "face": 1000,
+        "coupon_rate": 0.05,
+        "maturity": 5,
+        "frequency": 2,
+        "yield": 0.04
+      },
+      "method": "Discount each coupon and face redemption at the specified semiannual yield.",
+      "result": "1,044.9129 units",
+      "detail": "In this simplified fixed-coupon model, the bond trades above par.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "bond-yield",
+      "title": "Solve yield from a bond price",
+      "discipline": "Bond analysis",
+      "operation": "finance.bond_yield",
+      "question": "Find the yield of a five-year 1,000-face bond priced at 1,020 with a 5% coupon and semiannual payments.",
+      "inputs": "{\"price\":1020,\"face\":1000,\"coupon_rate\":0.05,\"maturity\":5,\"frequency\":2}",
+      "arguments": {
+        "price": 1020,
+        "face": 1000,
+        "coupon_rate": 0.05,
+        "maturity": 5,
+        "frequency": 2
+      },
+      "method": "Numerically solve the yield that matches discounted coupon and face cash flows to price.",
+      "result": "4.5483% annual yield",
+      "detail": "The assumed premium price implies a yield below the 5% coupon rate.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "parametric-var",
+      "title": "Estimate normal-model portfolio risk",
+      "discipline": "Portfolio risk",
+      "operation": "finance.var_parametric",
+      "question": "Estimate 95% parametric VaR from fictional returns [0.01,-0.02,0.03,0.015,-0.01,0.02,-0.005,0.025].",
+      "inputs": "{\"returns\":[0.01,-0.02,0.03,0.015,-0.01,0.02,-0.005,0.025],\"alpha\":0.95}",
+      "arguments": {
+        "returns": [
+          0.01,
+          -0.02,
+          0.03,
+          0.015,
+          -0.01,
+          0.02,
+          -0.005,
+          0.025
+        ],
+        "alpha": 0.95
+      },
+      "method": "Apply an estimated mean/volatility and normal-quantile tail to the return sample.",
+      "result": "2.1344% loss per period",
+      "detail": "Eight synthetic returns do not establish predictive risk or normality.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "portfolio-metrics",
+      "title": "Summarise a two-asset portfolio",
+      "discipline": "Portfolio analysis",
+      "operation": "finance.portfolio_metrics",
+      "question": "Calculate portfolio performance for five fictional two-asset observations and weights 60% / 40%.",
+      "inputs": "{\"returns\":[[0.01,-0.02],[0.02,0.01],[-0.01,0.005],[0.03,-0.02],[0.015,0.01]],\"weights\":[0.6,0.4],\"annualization\":252,\"risk_free\":0.02}",
+      "arguments": {
+        "returns": [
+          [
+            0.01,
+            -0.02
+          ],
+          [
+            0.02,
+            0.01
+          ],
+          [
+            -0.01,
+            0.005
+          ],
+          [
+            0.03,
+            -0.02
+          ],
+          [
+            0.015,
+            0.01
+          ]
+        ],
+        "weights": [
+          0.6,
+          0.4
+        ],
+        "annualization": 252,
+        "risk_free": 0.02
+      },
+      "method": "Weight each return row then annualise the mean and sample volatility.",
+      "result": "Annualised volatility ≈ 14.357%",
+      "detail": "Five fictional observations are much too few for investment forecasts; the resulting annualised return is not a real performance record.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "normal-cdf",
+      "title": "Compute normal probability",
+      "discipline": "Probability",
+      "operation": "probability.normal_cdf",
+      "question": "What is the standard normal cumulative probability at z = 1?",
+      "inputs": "{\"x\":1,\"mu\":0,\"sigma\":1}",
+      "arguments": {
+        "x": 1,
+        "mu": 0,
+        "sigma": 1
+      },
+      "method": "Evaluate the normal cumulative distribution function at x=1.",
+      "result": "P(Z ≤ 1) ≈ 0.841345",
+      "detail": "Under a standard normal model, approximately 84.13% of mass lies below z=1.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "differentiate",
+      "title": "Differentiate a polynomial",
+      "discipline": "Calculus",
+      "operation": "calculus.diff",
+      "question": "Differentiate x^3 + 2x with respect to x.",
+      "inputs": "{\"expression\":\"x**3 + 2*x\",\"symbol\":\"x\"}",
+      "arguments": {
+        "expression": "x**3 + 2*x",
+        "symbol": "x"
+      },
+      "method": "Apply the derivative power rule term by term.",
+      "result": "3x² + 2",
+      "detail": "The symbolic derivative is returned as 3*x**2 + 2.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "units",
+      "title": "Convert metric distances",
+      "discipline": "Unit conversion",
+      "operation": "units.convert",
+      "question": "Convert 10 kilometres into metres.",
+      "inputs": "{\"value\":10,\"from\":\"km\",\"to\":\"m\"}",
+      "arguments": {
+        "value": 10,
+        "from": "km",
+        "to": "m"
+      },
+      "method": "Convert compatible metric length units using the 1 km = 1,000 m scale.",
+      "result": "10,000 metres",
+      "detail": "Ten kilometres equals exactly ten thousand metres.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "determinant",
+      "title": "Evaluate a matrix determinant",
+      "discipline": "Linear algebra",
+      "operation": "linear.det",
+      "question": "Find the determinant of the 2×2 matrix [[1,2],[3,4]].",
+      "inputs": "{\"A\":[[1,2],[3,4]]}",
+      "arguments": {
+        "A": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ]
+        ]
+      },
+      "method": "For a 2×2 matrix use ad − bc.",
+      "result": "Determinant ≈ −2",
+      "detail": "The small floating-point residual is consistent with an exact determinant of −2.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
+    },
+    {
+      "id": "circle-area",
+      "title": "Calculate a circular area",
+      "discipline": "Geometry",
+      "operation": "geometry.area_circle",
+      "question": "Calculate the area of a circle with radius 3 units.",
+      "inputs": "{\"radius\":3}",
+      "arguments": {
+        "radius": 3
+      },
+      "method": "Apply the circle area formula πr².",
+      "result": "28.2743 square units",
+      "detail": "For r = 3, the exact symbolic area is 9π square units.",
+      "verification": "Actual connected Axiom execution recorded on 21 November 2026",
+      "evidence_status": "Recorded Axiom calculation"
     }
   ]
 }

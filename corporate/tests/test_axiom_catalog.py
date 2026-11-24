@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from axiom_catalog import load_capability_catalog, render_axiom_catalog
+from axiom_catalog import load_capability_catalog, load_operation_schemas, render_axiom_catalog
 
 DIST = ROOT / "dist"
 EXPECTED_OPERATIONS = {
@@ -107,7 +107,18 @@ def test_directory_contains_every_plain_language_operation_and_valid_jump_target
     assert section is not None
     assert len(section.select(".axiom-domain")) == 18
     assert len(section.select(".axiom-operation-list li")) == 74
-    assert {code.get_text(strip=True) for code in section.select(".axiom-operation-list code")} == EXPECTED_OPERATIONS
+    assert len(section.select(".axiom-operation-tech")) == 74
+    for operation,words in {
+        "finance.bond_yield": ("calculate","bond","yield"),
+        "timeseries.rolling_volatility": ("forecast","volatility"),
+        "algebra.solve": ("solve","equations"),
+    }.items():
+        node=section.select_one("#axiom-operation-"+operation.replace(".","-"))
+        assert node is not None
+        assert all(term in node["data-search"] for term in words)
+    assert len(section.select(".axiom-raw-schema")) == 74
+    assert sum(len(x.select(".axiom-parameter-list > div")) for x in section.select(".axiom-operation-tech")) == 193
+    assert {code.get_text(strip=True) for code in section.select(".axiom-operation-tech > p > code")} == EXPECTED_OPERATIONS
     actual_by_id = {entry.select_one("code").get_text(strip=True): entry.select_one(".axiom-operation-label").get_text(" ", strip=True)
                     for entry in section.select(".axiom-operation-list li")}
     for group in data["categories"]:
@@ -128,7 +139,7 @@ def test_directory_contains_every_plain_language_operation_and_valid_jump_target
 def test_only_flagship_page_includes_complete_directory():
     axiom = BeautifulSoup((DIST / "products/axiom/index.html").read_text(encoding="utf-8"), "html.parser")
     assert len(axiom.select("section#axiom-full-capabilities")) == 1
-    assert {x.get_text(strip=True) for x in axiom.select(".axiom-operation-list code")} == EXPECTED_OPERATIONS
+    assert {x.get_text(strip=True) for x in axiom.select(".axiom-operation-tech > p > code")} == EXPECTED_OPERATIONS
     assert not axiom.find(string=lambda x: x and "AXIOM_CAPABILITY_DIRECTORY" in x)
     assert axiom.select_one('a[href^="https://chatgpt.com/plugins/"]')
     assert axiom.select_one("section#axiom-full-capabilities .axiom-explore-cta")
@@ -162,3 +173,23 @@ def test_no_overstated_access_or_backend_requests():
     assert "fetch(" not in directory
     assert "sk-proj-" not in directory
     assert data["snapshot_date"] == "2026-11-20"
+
+def test_all_74_operation_input_schemas_match_exact_catalog():
+    catalog = load_capability_catalog()
+    schema = load_operation_schemas(catalog)
+    expected = [op["id"] for group in catalog["categories"] for op in group["operations"]]
+    assert len(schema) == len(expected) == 74
+    assert list(schema) == expected
+    assert sum(len(s["properties"]) for s in schema.values()) == 193
+    for operation, fields in schema.items():
+        assert fields["type"] == "object", operation
+        assert fields["additionalProperties"] is False, operation
+        assert all(x in fields["properties"] for x in fields["required"]), operation
+        assert all(isinstance(p, dict) for p in fields["properties"].values()), operation
+    browser = BeautifulSoup(render_axiom_catalog(), "html.parser")
+    for operation in expected:
+        row = browser.select_one("#axiom-operation-" + operation.replace(".", "-"))
+        assert row is not None
+        assert row.select_one(".axiom-operation-tech > summary")
+        assert row.select_one(".axiom-raw-schema > pre > code")
+        assert row.select_one(".axiom-parameter-list")

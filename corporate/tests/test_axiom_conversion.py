@@ -17,12 +17,12 @@ from axiom_showcase import load_axiom_demonstrations, render_axiom_showcase
 def page(route):
     return BeautifulSoup((DIST/route.lstrip("/")/"index.html").read_text(encoding="utf-8"),"html.parser")
 
-def test_four_examples_match_executed_axiom_values():
+def test_twenty_examples_match_executed_axiom_values():
     data=load_axiom_demonstrations()
     assert data["executed_date"]=="2026-11-21"
     examples=data["examples"]
-    assert len(examples)==4
-    assert [x["operation"] for x in examples]==[
+    assert len(examples)==20
+    assert [x["operation"] for x in examples[:4]]==[
         "finance.npv","statistics.describe","finance.black_scholes",
         "optimization.linear_program"
     ]
@@ -34,15 +34,29 @@ def test_four_examples_match_executed_axiom_values():
     assert "Independent" in examples[3]["verification"]
     assert all("Independent" not in examples[i]["verification"] for i in [1,2])
     assert "fictional" in data["provenance"].lower()
+    assert len({x["operation"] for x in examples}) == 20
+    assert all(isinstance(x["arguments"], dict) and x["method"] for x in examples)
+    assert all(x["evidence_status"] == "Recorded Axiom calculation" for x in examples[4:])
+    assert examples[4]["operation"] == "finance.var_historical"
+    assert examples[4]["result"] == "3.245% loss per period"
+    assert examples[5]["operation"] == "statistics.regression"
+    assert "2.0083" in examples[5]["result"]
+    assert examples[12]["operation"] == "finance.bond_yield"
+    assert examples[12]["result"] == "4.5483% annual yield"
 
 def test_axiom_product_renders_onboarding_and_search_without_giving_up_directory():
     soup=page("/products/axiom/")
     assert soup.select_one("section#axiom-start")
     assert soup.select_one("section#axiom-demonstrations")
-    assert len(soup.select(".axiom-demo-card"))==4
-    assert len(soup.select(".axiom-demo-prompt"))==4
-    assert len(soup.select("[data-axiom-copy]"))==4
-    assert len(soup.select(".axiom-demo-output strong"))==4
+    assert len(soup.select(".axiom-demo-card"))==20
+    assert len(soup.select(".axiom-demo-prompt"))==20
+    assert len(soup.select("[data-axiom-copy]"))==25
+    assert len(soup.select(".axiom-demo-output strong"))==20
+    assert len(soup.select(".axiom-starter-card"))==5
+    assert len(soup.select(".axiom-demo-method pre code"))==20
+    assert len(soup.select(".axiom-operation-tech"))==74
+    assert len(soup.select(".axiom-raw-schema"))==74
+    assert len(soup.select(".axiom-parameter-list > div"))==193
     assert not soup.find(string=lambda x:x and "AXIOM_AUTHENTIC_EXAMPLES" in x)
     assert soup.select_one("#axiom-capability-search[type=search][maxlength='90']")
     assert soup.select_one("#axiom-capability-count[aria-live=polite]")
@@ -50,8 +64,8 @@ def test_axiom_product_renders_onboarding_and_search_without_giving_up_directory
     assert len(soup.select("[data-axiom-category]"))==18
     assert len(soup.select("[data-axiom-operation]"))==74
     assert len(soup.select("[data-axiom-nav]"))==18
-    assert len(soup.select(".axiom-operation-list code"))==74
-    assert len({c.get_text(strip=True) for c in soup.select(".axiom-operation-list code")})==74
+    assert len(soup.select(".axiom-operation-tech > p > code"))==74
+    assert len({c.get_text(strip=True) for c in soup.select(".axiom-operation-tech > p > code")})==74
     assert not soup.select("section#axiom-demonstrations script, section#axiom-start iframe")
 
 def test_starting_axiom_is_a_single_high_visibility_action_on_header_and_homepage():
@@ -72,12 +86,12 @@ def test_contact_enquiry_is_explicitly_user_sent_from_local_email_app():
     soup=page("/contact/")
     builder=soup.select_one("[data-enquiry-builder]")
     assert builder
-    for element in ("enquiry-topic","enquiry-subject","enquiry-message","enquiry-compose"):
+    for element in ("enquiry-topic","enquiry-subject","enquiry-email","enquiry-message","enquiry-compose"):
         assert builder.select_one("#"+element)
     assert builder.select_one('a[href^="mailto:support@mftintelligence.com"]')
     assert not builder.select_one("form")
     assert "your own email app" in soup.get_text(" ",strip=True).lower()
-    assert "open your email app" in builder.get_text(" ",strip=True).lower()
+    assert "not submitted by this website" in builder.get_text(" ",strip=True).lower()
     script=(DIST/"assets/site.js").read_text(encoding="utf-8")
     assert "mailto:support@mftintelligence.com?subject=" in script
     assert "navigator.clipboard.writeText" in script
@@ -99,3 +113,15 @@ def test_marketing_seo_uses_customer_facing_descriptions_not_internal_release_co
         legal=page(route).get_text(" ",strip=True)
         assert "support@mftintelligence.com" in legal
     assert page("/products/axiom/").select_one('meta[name=description]')
+
+def test_four_on_page_guides_link_to_specific_capabilities():
+    resources=page("/resources/")
+    guide=resources.select_one("#axiom-practical-guides")
+    assert guide is not None
+    assert len(guide.select(".axiom-guide"))==4
+    expected=("finance-npv","finance-var_historical","statistics-regression","optimization-linear_program")
+    for item in expected:
+        assert guide.select_one('a[href="/products/axiom/#axiom-operation-'+item+'"]')
+    directory=page("/products/axiom/")
+    for item in expected:
+        assert directory.select_one("#axiom-operation-"+item)

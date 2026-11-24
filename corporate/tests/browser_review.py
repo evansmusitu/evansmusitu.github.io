@@ -14,7 +14,7 @@ import json, re, time, os, shutil
 ROOT=Path(__file__).resolve().parents[1]
 DIST=ROOT/'dist'
 OUT=ROOT/'review-artifacts';OUT.mkdir(exist_ok=True)
-ROUTES=json.loads((DIST/'manifest.json').read_text())['routes']
+ROUTES=json.loads((DIST.parent/'review-artifacts'/'build-manifest.json').read_text())['routes']
 CSS=(ROOT/'assets/site.css').read_text()
 DATA=(DIST/'assets/site-data.js').read_text()
 APP=(ROOT/'assets/site.js').read_text()
@@ -75,7 +75,19 @@ def main():
             main:document.querySelector('main').getBoundingClientRect().width})''')
           results['theme_checks']+=1
           if measurements['scroll']>measurements['client']+3:
-            results['overflow'].append({'route':route,'width':width,'theme':theme,'measure':measurements})
+            offenders=page.evaluate('''() => Array.from(document.querySelectorAll('body *'))
+              .filter(el=>{const r=el.getBoundingClientRect(); const cs=getComputedStyle(el);
+                return cs.display!=='none' && cs.visibility!=='hidden' && r.right>innerWidth+3 && r.width>0;})
+              .slice(0,12).map(el=>({tag:el.tagName,cls:String(el.className).slice(0,90),
+                right:Math.round(el.getBoundingClientRect().right),
+                width:Math.round(el.getBoundingClientRect().width)}))''')
+            wide_parents=page.evaluate('''() => Array.from(document.querySelectorAll('body *'))
+              .filter(el=>{const c=getComputedStyle(el);return c.display!=='none' && el.clientWidth>0
+                && el.scrollWidth>el.clientWidth+4})
+              .map(el=>({tag:el.tagName,cls:String(el.className).slice(0,90),
+                client:el.clientWidth,scroll:el.scrollWidth,excess:el.scrollWidth-el.clientWidth}))
+              .sort((a,b)=>b.excess-a.excess).slice(0,15)''')
+            results['overflow'].append({'route':route,'width':width,'theme':theme,'measure':measurements,'offenders':offenders,'wide_parents':wide_parents})
         results['responsive_checks']+=1
     # Showcase homepage screenshots from actual rendered offline DOM.
     page.close();page=ctx.new_page();page.set_default_timeout(2500);page.on('pageerror',pageerror)
@@ -161,12 +173,17 @@ def main():
     # Genuine Axiom examples, local search and responsive get-started CTA.
     page.set_content(offline('/products/axiom/'),wait_until='domcontentloaded',timeout=8000)
     def axiom_search():
-      assert page.locator('.axiom-demo-card').count()==4
+      assert page.locator('.axiom-demo-card').count()==20
       assert page.locator('[data-axiom-operation]').count()==74
       assert page.locator('#axiom-capability-count').inner_text().startswith('74 of 74')
-      page.locator('#axiom-capability-search').fill('bond yield')
+      page.locator('#axiom-capability-search').fill('calculate bond yield')
       assert page.locator('[data-axiom-operation]:visible').count()==1
+      page.locator('[data-axiom-operation]:visible .axiom-operation-tech summary').first.click()
       assert page.locator('[data-axiom-operation]:visible code').first.inner_text()=='finance.bond_yield'
+      page.locator('#axiom-capability-search').fill('forecast volatility')
+      assert page.locator('[data-axiom-operation]:visible').count()==2
+      page.locator('#axiom-capability-search').fill('solve equations')
+      assert page.locator('[data-axiom-operation]:visible').count()>=2
       page.locator('#axiom-capability-search').fill('impossible-nonexistent-operation')
       assert page.locator('[data-axiom-operation]:visible').count()==0
       assert page.locator('#axiom-capability-empty').is_visible()
@@ -224,7 +241,7 @@ def main():
     check('nojs_mobile_navigation',nojsmenu)
     nopage.set_content(offline('/products/axiom/',js=False),wait_until='domcontentloaded',timeout=8000)
     def axiom_nojs():
-      assert nopage.locator('.axiom-demo-card').count()==4
+      assert nopage.locator('.axiom-demo-card').count()==20
       assert nopage.locator('[data-axiom-operation]').count()==74
       assert nopage.locator('#axiom-capability-search').is_hidden()
     check('axiom_nojs_full_directory',axiom_nojs)
