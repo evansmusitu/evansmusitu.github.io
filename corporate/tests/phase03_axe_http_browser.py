@@ -26,7 +26,7 @@ def audit(engine: str, axe_path: Path, publication_only: bool = False) -> dict:
     script = axe_path.resolve(strict=True)
     if not script.is_file() or script.stat().st_size < 100_000:
         raise ValueError("A genuine locally installed axe-core asset is required")
-    manifest = json.loads((DIST / "manifest.json").read_text(encoding="utf-8"))
+    manifest = json.loads((DIST.parent / "review-artifacts" / "build-manifest.json").read_text(encoding="utf-8"))
     expected_routes = 49 if publication_only else 34
     if manifest.get("build_mode") != "production" or manifest.get("route_count") != expected_routes:
         raise AssertionError("Unexpected production candidate route count")
