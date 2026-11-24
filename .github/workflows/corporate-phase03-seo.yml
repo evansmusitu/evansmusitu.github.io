@@ -36,6 +36,8 @@ on:
       - 'corporate/editorial/research-drafts/**'
       - 'corporate/editorial/PHASE03_SOURCE_SPECIFIC_REVIEW_DOCKET_20261110.md'
       - 'corporate/scripts/public_seo_observer.py'
+      - 'corporate/scripts/public_baseline_smoke.py'
+      - 'corporate/tests/test_public_baseline_smoke.py'
       - 'corporate/scripts/research_review.py'
       - 'corporate/scripts/international_growth_report.py'
       - 'corporate/tests/test_phase03_growth.py'
@@ -66,7 +68,7 @@ jobs:
           MUSITU_BUILD_MODE=review python3 scripts/build.py
           test ! -e dist/manifest.json
           test -s review-artifacts/build-manifest.json
-          test "$(find dist -name index.html | wc -l)" -eq 34
+          test "$(find dist -name index.html | wc -l)" -eq 38
           test ! -e dist/sitemap.xml
           grep -Fq 'Disallow: /' dist/robots.txt
       - name: Phase 03 SEO contract and isolation tests
@@ -116,7 +118,7 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_phase03_publication.py' -v
           grep -Fq 'Disallow: /' dist/robots.txt
           test ! -e dist/sitemap.xml
-          test "$(find dist -name index.html | wc -l)" -eq 49
+          test "$(find dist -name index.html | wc -l)" -eq 53
 
   production-artifact-contract:
     # Never expose approved media artifacts to arbitrary fork pull-request code.
@@ -182,7 +184,7 @@ jobs:
           assert manifest["studio_media_included"] is True
           assert not (artifact/"sitemap.xml").exists()
           assert (artifact/"robots.txt").read_text().splitlines()==["User-agent: *","Disallow: /"]
-          print("Inherited review suite checked exact 34-route source with approved Studio media. No deployment.")
+          print("Inherited review suite checked exact 38-route source with approved Studio media. No deployment.")
           PY
       - name: Qualify immutable production-mode candidate (local artifact, not deployed)
         working-directory: corporate
@@ -211,7 +213,7 @@ jobs:
           from public_seo_observer import MetadataParser
           from seo import ORIGIN, read_catalog
           routes=read_catalog()["routes"]
-          assert len(routes)==33
+          assert len(routes)==37
           for route in routes:
               raw=(Path("dist")/route.lstrip("/")/"index.html").read_text()
               p=MetadataParser()
@@ -222,11 +224,11 @@ jobs:
               assert p.jsonld[0]["@context"]=="https://schema.org",route
           missing=Path("dist/404/index.html").read_text()
           assert 'type="application/ld+json"' not in missing
-          assert len(list(Path("dist").rglob("index.html")))==34
+          assert len(list(Path("dist").rglob("index.html")))==38
           manifest=json.loads(Path("review-artifacts/build-manifest.json").read_text())
           assert manifest["production_approved"] is False
           print(json.dumps({"production_candidate":"QUALIFIED_IN_SOURCE_ONLY",
-            "article_publication":False,"deployed":False,"base_routes":34,
+            "article_publication":False,"deployed":False,"base_routes":38,
             "verified_jsonld_routes":len(routes),
             "source_commit":"${{ github.event.pull_request.head.sha || github.sha }}"}))
           PY
@@ -247,10 +249,10 @@ jobs:
           test ! -e dist/manifest.json
           test -s review-artifacts/build-manifest.json
           python3 tests/test_public_artifact_boundary.py
-          test "$(find dist -name index.html | wc -l)" -eq 49
+          test "$(find dist -name index.html | wc -l)" -eq 53
           grep -Fq '/fr/research/' dist/sitemap.xml
           grep -Fq '/research/articles/model-risk-governance-2026/' dist/sitemap.xml
-          test "$(grep -o '<loc>' dist/sitemap.xml | wc -l)" -eq 48
+          test "$(grep -o '<loc>' dist/sitemap.xml | wc -l)" -eq 52
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -258,7 +260,7 @@ jobs:
           assert manifest['phase03_publication_source_approved'] is True
           assert manifest['phase03_publication_indexable'] is True
           assert manifest['production_approved'] is False
-          print('49 approved route publication candidate rendered; 48 sitemap entries. NOT DEPLOYED.')
+          print('53 approved route publication candidate rendered; 52 sitemap entries. NOT DEPLOYED.')
           PY
 
 
@@ -284,7 +286,7 @@ jobs:
           set -euo pipefail
           python3 -m pip install --disable-pip-version-check 'playwright>=1.56,<1.61'
           python3 -m playwright install --with-deps '${{ matrix.engine }}'
-      - name: Run offline review-mode 34-route responsive and interaction checks
+      - name: Run offline review-mode 38-route responsive and interaction checks
         working-directory: corporate
         env:
           MUSITU_BROWSER_ENGINE: ${{ matrix.engine }}
@@ -300,14 +302,20 @@ jobs:
           from pathlib import Path
           result=json.loads(Path('review-artifacts/browser-dom-results.json').read_text(encoding='utf-8'))
           assert result['passed'] is True
-          assert result['routes_tested']==34
-          assert result['responsive_checks']==102
-          assert result['theme_checks']==204
-          assert result['nojs_checks']==34
+          assert result['routes_tested']==38
+          assert result['responsive_checks']==114
+          assert result['theme_checks']==228
+          assert result['nojs_checks']==38
           assert not result['errors'] and not result['runtime_exceptions'] and not result['overflow']
           assert len(result['interactions'])>=12
-          print(json.dumps({'engine':result['browser_engine'],'routes':34,'responsive_checks':102,'theme_checks':204,
-            'nojs_checks':34,'interactions_passed':len(result['interactions']),'hosted_http_tested':False,
+          assert result['visual_review_capture_count']==22
+          assert result['human_visual_approval'] is False and result['real_device_review'] is False
+          visual=json.loads((Path('review-artifacts')/f"visual-review-manifest-{result['browser_engine']}.json").read_text())
+          assert len(visual['captures'])==22 and visual['human_visual_approval'] is False
+          assert visual['hosted_production_review'] is False and visual['real_device_review'] is False
+          assert all((Path('review-artifacts')/x['filename']).is_file() for x in visual['captures'])
+          print(json.dumps({'engine':result['browser_engine'],'routes':38,'responsive_checks':114,'theme_checks':228,
+            'nojs_checks':38,'interactions_passed':len(result['interactions']),'hosted_http_tested':False,
             'certified_wcag':False,'deployed':False},sort_keys=True))
           PY
       - name: Extract previous qualified media for isolated candidate test
@@ -355,9 +363,9 @@ jobs:
           eng=os.environ['MUSITU_BROWSER_ENGINE']
           path=Path('review-artifacts')/f'phase03-production-local-http-{eng}.json'
           result=json.loads(path.read_text(encoding='utf-8'))
-          assert result['checked_routes']==34
-          assert result['headers_checked']==34
-          assert result['jsonld_checked']==33
+          assert result['checked_routes']==38
+          assert result['headers_checked']==38
+          assert result['jsonld_checked']==37
           assert result['interactions_checked']==3
           assert result['local_assets_real_network_loaded'] is True
           assert result['hosted_cloudflare_verified'] is False
@@ -388,7 +396,7 @@ jobs:
           engine=os.environ['MUSITU_BROWSER_ENGINE']
           report=json.loads((Path('review-artifacts')/f'phase03-axe-{engine}.json').read_text())
           assert report['axe_version']=='4.14.0'
-          assert report['routes']==34 and report['scans']==68
+          assert report['routes']==38 and report['scans']==76
           assert report['passed'] is True and not report['violations']
           assert report['hosted_cloudflare_verified'] is False
           assert report['manual_wcag_22_aa_certified'] is False
@@ -439,51 +447,55 @@ jobs:
             corporate/review-artifacts/phase03-publication-http-${{ matrix.engine }}.json
             corporate/review-artifacts/homepage-desktop-dom.png
             corporate/review-artifacts/homepage-mobile-dom.png
+            corporate/review-artifacts/visual-review-*.png
+            corporate/review-artifacts/visual-review-manifest-*.json
           if-no-files-found: warn
           retention-days: 7
 
-  # Security hotfix proof: compare byte-identical public assets before and after.
-  # Separate PR-only source builds; no production requests, credentials or deployments.
-  hotfix-public-bytes-preservation:
-    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'hotfix/strip-public-build-manifest-20261122' }}
+  # Observe the already-deployed public site only. This does NOT test a PR candidate
+  # on Cloudflare, endorse its release, access accounts, or mutate production.
+  hosted-current-production-baseline:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 4
     permissions:
       contents: read
     steps:
-      - name: Checkout original main for a clean baseline
+      - name: Checkout exact source revision without credentials
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          path: public-before
           persist-credentials: false
-      - name: Checkout exact hotfix head
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: public-after
-          persist-credentials: false
-      - name: Compare all public files byte-for-byte, allowing only deleted manifest
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Enforce bounded public-observer unit contracts
+        working-directory: corporate
         run: |
           set -euo pipefail
-          python3 public-before/corporate/scripts/build.py
-          python3 public-after/corporate/scripts/build.py
-          test -f public-before/corporate/dist/manifest.json
-          test ! -e public-after/corporate/dist/manifest.json
-          test -f public-after/corporate/review-artifacts/build-manifest.json
+          python3 -m unittest discover -s tests -p 'test_public_baseline_smoke.py' -v
+          python3 -m py_compile scripts/public_baseline_smoke.py
+      - name: Observe currently live public URLs, canonical signals and security headers (GET ONLY)
+        working-directory: corporate
+        run: |
+          set -euo pipefail
+          python3 scripts/public_baseline_smoke.py
           python3 - <<'PY'
+          import json
           from pathlib import Path
-          from hashlib import sha256
-          before=Path('public-before/corporate/dist')
-          after=Path('public-after/corporate/dist')
-          def digests(root):
-              return {p.relative_to(root).as_posix():sha256(p.read_bytes()).hexdigest()
-                      for p in sorted(root.rglob('*')) if p.is_file()}
-          old=digests(before)
-          new=digests(after)
-          assert set(old)-set(new)=={'manifest.json'},'Hotfix must remove only the internal manifest'
-          assert set(new)-set(old)==set(),'Hotfix must not introduce public files'
-          changes=[name for name in sorted(new) if old.get(name)!=new[name]]
-          assert not changes,'Hotfix must not modify any existing public bytes: '+str(changes[:5])
-          print('STATIC ARTIFACT PRESERVATION PASS: '+str(len(new))+' public files byte-identical; only internal manifest omitted. No deployment.')
+          evidence=json.loads(Path('review-artifacts/public-baseline-smoke.json').read_text())
+          assert evidence['status']=='PASS'
+          assert evidence['scope']=='currently_live_production_only'
+          assert evidence['production_mutations']==0
+          assert evidence['candidate_hosted_acceptance'] is False
+          metadata=evidence['public_build_metadata']
+          if metadata['internal_release_fields_exposed']:
+            print('::warning::Current public website serves internal build manifest fields; next release must omit this file')
+          else:
+            print('Public internal release fields: not observed')
+          print('Current hosted public baseline observed; the unmerged candidate itself is NOT hosted or released.')
           PY
+      - name: Retain redacted public-only baseline evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: musitu-readonly-current-production-baseline
+          path: corporate/review-artifacts/public-baseline-smoke.json
+          if-no-files-found: warn
+          retention-days: 7

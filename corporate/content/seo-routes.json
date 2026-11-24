@@ -241,6 +241,34 @@
       "search_intent": "informational",
       "target_scope": "international-English",
       "review_status": "proposed"
+    },
+    "/resources/axiom-investment-npv/": {
+      "primary_query": "how to calculate investment NPV discounted cash flows",
+      "page_kind": "tutorial",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/resources/axiom-historical-var/": {
+      "primary_query": "historical portfolio value at risk example",
+      "page_kind": "tutorial",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/resources/axiom-linear-regression/": {
+      "primary_query": "simple linear regression slope intercept example",
+      "page_kind": "tutorial",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
+    },
+    "/resources/axiom-linear-optimisation/": {
+      "primary_query": "linear programming resource allocation constraints example",
+      "page_kind": "tutorial",
+      "search_intent": "informational",
+      "target_scope": "international-English",
+      "review_status": "proposed"
     }
   }
 }

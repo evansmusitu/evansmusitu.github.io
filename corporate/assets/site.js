@@ -112,19 +112,47 @@
       escapeSet(feedback,'Question copied. Open Axiom in ChatGPT to try it.');
     }catch(_){escapeSet(feedback,'Select the question text above and copy it manually.');}
   }));
-  // Build a local mailto handoff. No contact message is sent by this website.
+  // Fail-closed local mailto handoff. No network request or success claim.
   const enquiry=$('[data-enquiry-builder]');
   if(enquiry){
     const topic=$('#enquiry-topic',enquiry),subject=$('#enquiry-subject',enquiry);
     const message=$('#enquiry-message',enquiry),reply=$('#enquiry-email',enquiry),compose=$('#enquiry-compose',enquiry);
+    const feedback=$('#enquiry-feedback',enquiry);
+    const fields=[topic,subject,reply,message];
     const update=()=>{
-      const title=(subject?.value||'').trim().slice(0,110)||'Product enquiry';
+      const title=(subject?.value||'').trim().slice(0,110);
       const body=(message?.value||'').trim().slice(0,1800);
       const mailSubject='MUSITU | '+(topic?.value||'General')+' | '+title;
-      const mailBody='Product: '+(topic?.value||'General')+'\nPurpose: '+title+'\nReply email: '+(reply?.value||'Use sender address').trim().slice(0,254)+'\n\n'+(body||'Please contact me regarding my enquiry.')+'\n';
-      if(compose)compose.href='mailto:support@mftintelligence.com?subject='+encodeURIComponent(mailSubject)+'&body='+encodeURIComponent(mailBody);
+      const mailBody='Product: '+(topic?.value||'General')+'\nPurpose: '+title+'\nReply email: '+(reply?.value||'').trim().slice(0,254)+'\n\n'+body+'\n';
+      const mailto='mailto:support@mftintelligence.com?subject='+encodeURIComponent(mailSubject)+'&body='+encodeURIComponent(mailBody);
+      if(compose)compose.href=mailto;
+      return mailto;
     };
-    [topic,subject,reply,message].forEach(el=>el?.addEventListener('input',update));
+    fields.forEach(el=>el?.addEventListener('input',()=>{
+      el.removeAttribute('aria-invalid');
+      update();
+    }));
+    compose?.addEventListener('click',event=>{
+      const invalid=fields.find(el=>!el||!el.checkValidity()||!el.value.trim()
+        ||(el===subject&&el.value.trim().length<3)
+        ||(el===message&&el.value.trim().length<10));
+      if(invalid){
+        event.preventDefault();
+        invalid?.setAttribute('aria-invalid','true');
+        invalid?.focus();
+        escapeSet(feedback,'Please complete Product, Purpose, a valid Reply email and a message of at least 10 characters.');
+        return;
+      }
+      const href=update();
+      if(href.length>1900){
+        event.preventDefault();
+        message.setAttribute('aria-invalid','true');
+        message.focus();
+        escapeSet(feedback,'Please shorten your message. Your email app may truncate very long prepared messages.');
+        return;
+      }
+      escapeSet(feedback,'Your email app should open with the prepared draft. Review it and press Send to contact MUSITU.');
+    });
     update();
   }
   // Product comparison uses actual documented family attributes and enforces 3 selections.

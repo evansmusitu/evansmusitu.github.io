@@ -8,14 +8,14 @@ from sitemap import make_sitemap
 
 def test_public_template_excludes_404_and_conditional_pages():
  xml,inc=make_sitemap('https://example.invalid')
- assert len(inc)==34-1-5
+ assert len(inc)==38-1-5
  assert '/404/' not in inc and '/status/' not in inc and '/' in inc
  assert b'https://example.invalid/products/axiom/' in xml
  ElementTree.fromstring(xml)
 
 def test_clear_only_individually_released_conditional_route():
  xml,inc=make_sitemap('https://example.invalid',cleared_routes=['/legal/privacy/'])
- assert len(inc)==29
+ assert len(inc)==33
  assert '/legal/privacy/' in inc and '/status/' not in inc
 
 def test_reject_unapproved_origin_shape_and_extra_clearance():

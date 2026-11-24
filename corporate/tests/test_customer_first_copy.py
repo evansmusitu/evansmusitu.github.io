@@ -35,7 +35,7 @@ def page(route):
     return BeautifulSoup((DIST/route.lstrip("/")/"index.html").read_text(encoding="utf-8"),"html.parser")
 
 def test_musitu_marketing_pages_have_no_internal_release_warning_banners():
-    assert len(PAGES)==34
+    assert len(PAGES)==38
     for route in PAGES:
         if route.startswith("/legal/"):
             continue  # Preserve required policy and terms disclosures.
@@ -46,6 +46,21 @@ def test_musitu_marketing_pages_have_no_internal_release_warning_banners():
         assert not page(route).find(string=lambda x: x and x.strip()=="NaN"),route
     assert "privacy" in page("/legal/privacy/").get_text(" ",strip=True).lower()
     assert "terms" in page("/legal/terms/").get_text(" ",strip=True).lower()
+    # A source review must tell visitors what was recorded, not expose an internal
+    # approval workflow. In production, the exact hash-approved video replaces it.
+    media=json.loads((DIST.parent/"review-artifacts"/"build-manifest.json").read_text(encoding="utf-8"))["studio_media_included"]
+    for studio_route in ("/products/foundry/studio/","/experiences/lab/"):
+        studio=page(studio_route)
+        summary=studio.select_one(".studio-recording-summary")
+        video=studio.select_one("video.studio-demo-player")
+        if media:
+            assert video and not summary,studio_route
+        else:
+            assert summary and not video,studio_route
+            assert "Recorded Studio prototype" in summary.get_text(" ",strip=True)
+        visible=studio.get_text(" ",strip=True).lower()
+        for forbidden in ("owner approval","withheld from this review","production-release checks","independent distribution"):
+            assert forbidden not in visible,(studio_route,forbidden)
 
 def test_axiom_directory_has_positive_action_instead_of_access_warning():
     main=page("/products/axiom/")
@@ -81,7 +96,7 @@ def test_evidence_dialog_and_compare_table_focus_on_facts():
                for f in RECORDS["families"])
     assert all(r["limits"].strip() and not r["limits"].startswith(("No ","Not ","Does not"))
                for r in RECORDS["evidence"])
-    assert RECORDS["routes"] and len(RECORDS["routes"])==34
+    assert RECORDS["routes"] and len(RECORDS["routes"])==38
 
 def test_marketing_remains_truthful_and_legal_disclosures_remain():
     ax=page("/products/axiom/").get_text(" ",strip=True)

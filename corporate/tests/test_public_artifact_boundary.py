@@ -37,7 +37,7 @@ def test_artifact_is_a_static_public_subset_and_not_the_source_repository():
     assert not (DIST / ".github").exists()
     assert not (DIST / "content").exists()
     assert not (DIST / "scripts").exists()
-    assert not (DIST / "manifest.json").exists()
+    assert not (DIST / "manifest.json").exists(), "Do not publish release-gate or build provenance fields"
     assert not (DIST / "build-manifest.json").exists()
 
 
@@ -59,7 +59,7 @@ def test_default_review_build_cannot_accidentally_publish_international_routes()
     assert manifest["production_approved"] is False
     assert manifest["build_mode"] == "review"
     assert manifest["indexing_enabled"] is False
-    assert manifest["route_count"] == 34
+    assert manifest["route_count"] == 38
     assert manifest["phase03_publication_routes"] == []
     assert manifest["phase03_publication_indexable"] is False
     assert not (DIST / "fr").exists()

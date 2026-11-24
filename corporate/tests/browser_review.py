@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""No-network cross-engine DOM verification for all 34 generated MUSITU review routes.
+"""No-network cross-engine DOM verification for all 38 generated MUSITU review routes.
 
 Managed runners may prohibit loopback navigation. To avoid false claims, this
 suite loads each generated HTML document using set_content, substitutes its
@@ -96,6 +96,63 @@ def main():
     page.screenshot(path=str(OUT/'homepage-desktop-dom.png'),full_page=False,timeout=8000)
     page.set_viewport_size({'width':390,'height':844})
     page.screenshot(path=str(OUT/'homepage-mobile-dom.png'),full_page=False,timeout=8000)
+    # Stable visual-review packet: rendered candidate DOM, not hosted screenshots or
+    # human-verified real-device acceptance. Fixed routes, no user data or remote calls.
+    from hashlib import sha256
+    visual_targets=[
+      ('axiom','/products/axiom/'),
+      ('contact','/contact/'),
+      ('resources','/resources/'),
+      ('studio','/products/foundry/studio/'),
+      ('lab','/experiences/lab/'),
+      ('npv','/resources/axiom-investment-npv/'),
+      ('var','/resources/axiom-historical-var/'),
+      ('regression','/resources/axiom-linear-regression/'),
+      ('optimisation','/resources/axiom-linear-optimisation/'),
+    ]
+    screenshots=[]
+    for slug, route in visual_targets:
+      assert route in ROUTES
+      page.close();page=ctx.new_page();page.set_default_timeout(2500);page.on('pageerror',pageerror)
+      for width,height,device in ((1280,900,'desktop'),(390,844,'mobile')):
+        page.set_viewport_size({'width':width,'height':height})
+        page.set_content(offline(route),wait_until='domcontentloaded',timeout=8000)
+        page.evaluate('() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+        file=OUT/f'visual-review-{slug}-{device}-{engine}.png'
+        page.screenshot(path=str(file),full_page=False,timeout=10000)
+        screenshots.append({'route':route,'view':device,'width':width,'height':height,
+          'filename':file.name,'sha256':sha256(file.read_bytes()).hexdigest()})
+    # Preserve a full view of the actual four-field enquiry builder, not only
+    # its page hero. All fields are empty and no message is composed or sent.
+    for width,height,device in ((1280,900,'desktop'),(390,844,'mobile')):
+      page.set_viewport_size({'width':width,'height':height})
+      page.set_content(offline('/contact/'),wait_until='domcontentloaded',timeout=8000)
+      form=page.locator('[data-enquiry-builder]')
+      assert form.count()==1
+      file=OUT/f'visual-review-contact-form-{device}-{engine}.png'
+      form.screenshot(path=str(file),timeout=10000)
+      screenshots.append({'route':'/contact/','view':'form-'+device,'width':width,'height':height,
+        'filename':file.name,'sha256':sha256(file.read_bytes()).hexdigest()})
+    # Capture content farther down the Axiom page to make its recorded evidence
+    # and technical catalog independently assessable by a human reviewer.
+    page.set_viewport_size({'width':1280,'height':900})
+    page.set_content(offline('/products/axiom/'),wait_until='domcontentloaded',timeout=8000)
+    for slug,selector in (('examples','#axiom-demonstrations'),('directory','#axiom-full-capabilities')):
+      target=page.locator(selector)
+      assert target.count()==1,selector
+      target.scroll_into_view_if_needed()
+      file=OUT/f'visual-review-axiom-{slug}-{engine}.png'
+      page.screenshot(path=str(file),full_page=False,timeout=10000)
+      screenshots.append({'route':'/products/axiom/','view':slug,'width':1280,'height':900,
+        'filename':file.name,'sha256':sha256(file.read_bytes()).hexdigest()})
+    visual_manifest={'schema':'musitu.offline_visual_review_packet.v1',
+      'browser_engine':engine,'source':'offline review DOM with CSP removed in local test only',
+      'hosted_production_review':False,'real_device_review':False,
+      'human_visual_approval':False,'captures':screenshots}
+    (OUT/f'visual-review-manifest-{engine}.json').write_text(json.dumps(visual_manifest,indent=2)+'\n')
+    results['visual_review_capture_count']=len(screenshots)
+    results['human_visual_approval']=False
+    results['real_device_review']=False
     # Interaction checks are run on a clean desktop DOM to avoid other modal interference.
     page.close();page=ctx.new_page();page.set_default_timeout(2500);page.on('pageerror',pageerror)
     page.set_viewport_size({'width':1280,'height':800})
@@ -199,15 +256,31 @@ def main():
     check('axiom_example_copy_and_mobile_cta',axiom_prompts)
     page.set_content(offline('/contact/'),wait_until='domcontentloaded',timeout=8000)
     def enquiry():
+      # Incomplete submissions must be blocked before opening an external mail app.
+      page.locator('#enquiry-compose').click()
+      assert 'Please complete Product' in page.locator('#enquiry-feedback').inner_text()
+      assert page.locator('#enquiry-subject').get_attribute('aria-invalid')=='true'
       page.locator('#enquiry-topic').select_option(label='Technical collaboration')
       page.locator('#enquiry-subject').fill('Model discussion')
+      page.locator('#enquiry-email').fill('not-an-email')
       page.locator('#enquiry-message').fill('I would like to learn about Axiom use cases.')
+      page.locator('#enquiry-compose').click()
+      assert page.locator('#enquiry-email').get_attribute('aria-invalid')=='true'
+      page.locator('#enquiry-email').fill('customer@example.com')
+      assert page.locator('#enquiry-email').get_attribute('aria-invalid') is None
       href=page.locator('#enquiry-compose').get_attribute('href')
       assert href.startswith('mailto:support@mftintelligence.com?subject='),href
       assert 'Technical%20collaboration' in href
       assert 'Model%20discussion' in href
       assert 'Axiom%20use%20cases' in href
-    check('local_email_handoff_no_backend',enquiry)
+      assert 'customer%40example.com' in href
+      # Emojis expand in URL encoding; do not allow long, silently truncated mailto.
+      page.locator('#enquiry-message').fill('🧠'*500)
+      page.locator('#enquiry-compose').click()
+      assert 'Please shorten your message' in page.locator('#enquiry-feedback').inner_text()
+      assert page.locator('#enquiry-message').get_attribute('aria-invalid')=='true'
+      assert page.url=='about:blank'
+    check('validated_local_email_handoff_no_backend',enquiry)
     page.set_content(offline('/experiences/lab/'),wait_until='domcontentloaded',timeout=8000)
     def lab():
       assert page.locator('#npv-result').count()==1

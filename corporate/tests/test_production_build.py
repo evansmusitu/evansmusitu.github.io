@@ -12,12 +12,15 @@ ROUTES=MANIFEST['routes']
 def soup(route):
  return BeautifulSoup((DIST/route.lstrip('/')/'index.html').read_text(),'html.parser')
 
-def test_internal_build_provenance_is_not_a_public_route():
+def test_private_build_provenance_cannot_ship_with_site():
  assert not (DIST/'manifest.json').exists()
  assert not (DIST/'build-manifest.json').exists()
- manifest=ROOT/'review-artifacts'/'build-manifest.json'
- assert manifest.is_file()
- assert not manifest.resolve().is_relative_to(DIST.resolve())
+ private=ROOT/'review-artifacts'/'build-manifest.json'
+ assert private.is_file()
+ assert private.resolve().is_relative_to(ROOT.resolve())
+ assert not private.resolve().is_relative_to(DIST.resolve())
+ assert MANIFEST['production_approved'] is False
+ assert MANIFEST['route_count']==38
 
 def test_production_manifest_contract():
  assert MANIFEST['build_mode']=='production'
@@ -25,7 +28,7 @@ def test_production_manifest_contract():
  assert MANIFEST['indexing_enabled'] is True
  assert MANIFEST['production_approved'] is False
  assert MANIFEST['studio_media_included'] is True
- assert MANIFEST['route_count']==34
+ assert MANIFEST['route_count']==38
 
 def test_production_indexing_and_canonical_contract():
  for route in ROUTES:
@@ -46,7 +49,7 @@ def test_production_robots_sitemap_and_headers():
  assert robots==f'User-agent: *\nAllow: /\nSitemap: {ORIGIN}/sitemap.xml\n'
  root=ElementTree.parse(DIST/'sitemap.xml').getroot()
  locs=[x.text for x in root.findall('{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc')]
- assert len(locs)==33 and ORIGIN+'/' in locs and ORIGIN+'/404/' not in locs
+ assert len(locs)==37 and ORIGIN+'/' in locs and ORIGIN+'/404/' not in locs
  headers=(DIST/'_headers').read_text()
  assert "Content-Security-Policy:" in headers and "frame-ancestors 'none'" in headers
  assert 'X-Content-Type-Options: nosniff' in headers
@@ -68,7 +71,12 @@ def test_production_legal_identity_and_media():
  poster=DIST/'assets/studio-poster.png'
  assert hashlib.sha256(video.read_bytes()).hexdigest()=='afd6dfd3c73668e544f3f8a857697fed0abaadccd4927202bb3a185612c2dea0'
  assert hashlib.sha256(poster.read_bytes()).hexdigest()=='0ea5e961d916375029010dbae01bf8a1783e5fd6b90f74c006dc852df1c285d0'
- assert soup('/products/foundry/studio/').select_one('video.studio-demo-player source[src="/assets/studio-demo-82s.mp4"]')
+ for route in ("/products/foundry/studio/","/experiences/lab/"):
+  rendered=soup(route)
+  assert rendered.select_one('video.studio-demo-player source[src="/assets/studio-demo-82s.mp4"]'),route
+  assert not rendered.select_one('.studio-recording-summary'),route
+  text=rendered.get_text(' ',strip=True).lower()
+  assert "owner approval" not in text and "withheld from this review" not in text,route
 def test_production_copy_does_not_reference_private_review():
  stale={
   '/products/foundry/studio/':('STAGING-ONLY MEDIA','can be enabled in an authorized protected preview'),

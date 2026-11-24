@@ -134,8 +134,8 @@ def audit():
     article_pages = set(article_routes(approved_sources()))
     french_pages = set(FR_EN)
     routes = core_routes | article_pages | french_pages
-    if (len(core_routes) != 33 or len(article_pages) != 12
-            or len(french_pages) != 3 or len(routes) != 48 or "/404/" in routes):
+    if (len(core_routes) != 37 or len(article_pages) != 12
+            or len(french_pages) != 3 or len(routes) != 52 or "/404/" in routes):
         raise AssertionError("Unexpected Phase 03 release cohort")
     status, url, _, robots = get("/robots.txt")
     if status != 200 or url != ORIGIN + "/robots.txt" or b"Sitemap: https://mftintelligence.com/sitemap.xml" not in robots:
@@ -154,7 +154,7 @@ def audit():
         if s.scheme != "https" or s.netloc != "mftintelligence.com" or s.username or s.password or s.fragment:
             raise AssertionError("Off-origin or malformed sitemap entry")
     if set(locs) != {ORIGIN + p for p in routes}:
-        raise AssertionError("Phase 03 live sitemap must contain exactly 48 approved URLs")
+        raise AssertionError("Phase 03 live sitemap must contain exactly 52 approved URLs")
     validate_not_found()
     passed = []
     with ThreadPoolExecutor(max_workers=5) as pool:

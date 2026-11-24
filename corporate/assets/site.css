@@ -51,10 +51,10 @@ html:not(.has-js) .navigator-panel,html:not(.has-js) .atlas-component{grid-templ
 .cta-panel h2,.page-hero h1,.hero-copy h1,.reading-section h2{overflow-wrap:anywhere}
 
 /* Rights gate: do not render unapproved recorded media or poster metadata. */
-.video-clearance-gate{min-height:250px;display:flex;flex-direction:column;justify-content:center;gap:9px;padding:clamp(20px,5vw,40px);background:var(--surface-2);border:1px dashed var(--violet);border-radius:20px;line-height:1.65}
-.video-clearance-gate strong{font-size:clamp(18px,2.7vw,25px)}
-.video-clearance-gate p{font-size:14px;color:var(--muted);max-width:620px;margin:0}
-@media(prefers-reduced-motion:reduce){.video-clearance-gate{transition:none}}
+.studio-recording-summary{min-height:250px;display:flex;flex-direction:column;justify-content:center;gap:9px;padding:clamp(20px,5vw,40px);background:var(--surface-2);border:1px solid var(--line);border-radius:20px;line-height:1.65}
+.studio-recording-summary strong{font-size:clamp(18px,2.7vw,25px)}
+.studio-recording-summary p{font-size:14px;color:var(--muted);max-width:620px;margin:0}
+@media(prefers-reduced-motion:reduce){.studio-recording-summary{transition:none}}
 
 /* Ensure theme selection remains available within the mobile navigation. */
 .mobile-menu-panel .mobile-theme-control{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:44px;height:auto;padding:10px 12px;font-size:13px;text-align:left;color:var(--text);background:var(--surface-2);border:1px solid var(--line);border-radius:9px}
@@ -354,3 +354,36 @@ body::before{height:700px;background:radial-gradient(ellipse at 83% 7%,rgba(112,
 .axiom-raw-schema>summary{font-size:12px;color:var(--mint);font-weight:700;cursor:pointer}
 .axiom-raw-schema pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);padding:12px}
 .axiom-raw-schema pre code{white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* Canonical Axiom tutorial pages — readable long-form analysis with native disclosure. */
+.axiom-longform .page-hero{padding-bottom:clamp(28px,4vw,55px)}
+.axiom-longform .section{padding-block:clamp(38px,5vw,72px)}
+.axiom-longform .reading-section{max-width:850px}
+.axiom-longform .reading-section>h2{font-size:clamp(27px,3.5vw,43px)}
+.axiom-longform .reading-section>p{font-size:clamp(15px,1.4vw,18px);line-height:1.8;overflow-wrap:anywhere}
+.axiom-article-meta{color:var(--muted);font-size:13px;line-height:1.6}
+.axiom-article-formula{font-size:clamp(16px,1.7vw,21px)!important;color:var(--mint)!important;overflow-wrap:anywhere}
+.axiom-tutorial-inputs{margin-top:19px;border:1px solid var(--line);padding:17px;border-radius:12px;background:var(--surface-2)}
+.axiom-tutorial-inputs>summary{cursor:pointer;font-weight:700;color:var(--text);font-size:14px}
+.axiom-tutorial-inputs pre{overflow-x:auto;max-width:100%;margin:14px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.6}
+.axiom-tutorial-result{padding:clamp(18px,3vw,29px);display:flex;flex-direction:column;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:15px;margin:18px 0}
+.axiom-tutorial-result span{font-size:12px;color:var(--muted)}
+.axiom-tutorial-result strong{font-size:clamp(24px,3vw,34px);color:var(--mint);overflow-wrap:anywhere}
+.axiom-article-evidence{font-size:13px!important}
+@media(max-width:580px){.axiom-longform .reading-section>p{line-height:1.65}.axiom-longform .hero-actions .button{width:100%}}
+
+/* Client-side validation applies only to the explicitly user-sent mailto handoff. */
+.enquiry-builder [aria-invalid="true"]{border-color:var(--focus);outline:2px solid var(--focus);outline-offset:1px}
+.enquiry-privacy-note{font-size:13px;line-height:1.6;max-width:760px;color:var(--muted)}
+.enquiry-privacy-note a{text-decoration:underline;text-underline-offset:3px}
+
+/* Contact: reduce excessive pre-form whitespace and make the enquiry CTA visible sooner. */
+.contact-page .page-hero{padding-top:clamp(30px,4vw,48px);padding-bottom:clamp(28px,4vw,46px)}
+.contact-page #contact-enquiry{padding-block:clamp(32px,4vw,52px)}
+.contact-page #contact-enquiry .section-heading{margin-bottom:24px}
+.contact-page #contact-enquiry .section-heading h2{font-size:clamp(30px,3.3vw,44px)}
+.contact-page .hero-actions{margin-top:20px}
+
+/* Bring the next useful section into view sooner on Axiom and Resources landing pages. */
+.axiom-page>.page-hero,.resources-page>.page-hero{padding-bottom:clamp(25px,3.5vw,48px)}
+.axiom-page>.page-hero+.section,.resources-page>.page-hero+.section{padding-top:clamp(34px,4.5vw,62px)}

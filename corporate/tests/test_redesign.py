@@ -24,13 +24,15 @@ def soup(route):
     return BeautifulSoup((DIST / route.lstrip('/') / 'index.html').read_text(encoding='utf-8'), 'html.parser')
 
 def test_shared_header_source_and_content_contract():
-    assert len(RECORDS) == 34
+    assert len(RECORDS) == 38
     assert all('header' not in record for record in RECORDS.values())
     template = (ROOT / 'templates/header.html').read_text(encoding='utf-8')
     assert template.count('class="site-header"') == 1
     assert template.count('class="desktop-nav"') == 1
     assert 'aria-label="Mobile navigation"' in template
-    assert not any('<header' in page['main'] for page in RECORDS.values())
+    # A tutorial article may have a semantic <header>; only the shared site header must stay templated.
+    assert not any('class="site-header"' in page['main'] for page in RECORDS.values())
+    assert not any('aria-label="Primary navigation"' in page['main'] for page in RECORDS.values())
 
 def test_navigation_generated_consistently_across_all_routes():
     for route in ROUTES:
@@ -78,5 +80,14 @@ def test_dedicated_interactive_journeys_are_preserved():
     if manifest['studio_media_included']:
         assert studio.select_one('video.studio-demo-player')
     else:
-        assert studio.select_one('.video-clearance-gate')
+        assert studio.select_one('.studio-recording-summary')
         assert not studio.select_one('video.studio-demo-player')
+
+
+def test_important_education_landing_pages_do_not_have_excessive_hero_gaps():
+    for route, classname in (("/products/axiom/","axiom-page"),("/resources/","resources-page")):
+        page=soup(route)
+        assert page.select_one(f"main#{'main'}.{classname} > .page-hero + .section"), route
+    styles=(ROOT / 'assets' / 'site.css').read_text(encoding='utf-8')
+    assert '.axiom-page>.page-hero+.section' in styles
+    assert '.resources-page>.page-hero+.section' in styles

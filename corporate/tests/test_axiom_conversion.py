@@ -85,14 +85,32 @@ def test_starting_axiom_is_a_single_high_visibility_action_on_header_and_homepag
 def test_contact_enquiry_is_explicitly_user_sent_from_local_email_app():
     soup=page("/contact/")
     builder=soup.select_one("[data-enquiry-builder]")
+    assert soup.select_one('main.contact-page a.button[href="#contact-enquiry"]')
+    assert soup.select_one('#contact-enquiry .section-heading h2').get_text(strip=True)=="Tell us what you need."
+    stylesheet=(DIST/"assets/site.css").read_text(encoding="utf-8")
+    assert ".contact-page .page-hero" in stylesheet
+    assert ".contact-page #contact-enquiry" in stylesheet
     assert builder
     for element in ("enquiry-topic","enquiry-subject","enquiry-email","enquiry-message","enquiry-compose"):
         assert builder.select_one("#"+element)
     assert builder.select_one('a[href^="mailto:support@mftintelligence.com"]')
     assert not builder.select_one("form")
     assert "your own email app" in soup.get_text(" ",strip=True).lower()
-    assert "not submitted by this website" in builder.get_text(" ",strip=True).lower()
+    assert "press send to contact musitu" in builder.get_text(" ",strip=True).lower()
+    assert "what happens after you prepare an enquiry?" in soup.get_text(" ",strip=True).lower()
+    assert "01 / the approach" not in soup.get_text(" ",strip=True).lower()
+    assert builder.select_one('a[href="/legal/privacy/"]')
+    assert builder.select_one('#enquiry-feedback[role="status"][aria-live="polite"]')
+    for element in ("enquiry-topic","enquiry-subject","enquiry-email","enquiry-message"):
+        field=builder.select_one("#"+element)
+        assert field.has_attr("required") and field.get("aria-required")=="true"
+    assert builder.select_one('#enquiry-email[type="email"]')
+    assert builder.select_one('#enquiry-subject[minlength="3"]')
+    assert builder.select_one('#enquiry-message[minlength="10"]')
     script=(DIST/"assets/site.js").read_text(encoding="utf-8")
+    assert "event.preventDefault()" in script and "checkValidity()" in script
+    assert "href.length>1900" in script
+    assert "Review it and press Send to contact MUSITU" in script
     assert "mailto:support@mftintelligence.com?subject=" in script
     assert "navigator.clipboard.writeText" in script
     assert "const axiomQuery=" in script
@@ -125,3 +143,47 @@ def test_four_on_page_guides_link_to_specific_capabilities():
     directory=page("/products/axiom/")
     for item in expected:
         assert directory.select_one("#axiom-operation-"+item)
+
+
+def test_four_canonical_tutorials_are_source_accurate_and_connect_to_operations():
+    pages=json.loads((ROOT/"content/pages.json").read_text(encoding="utf-8"))
+    evidence=load_axiom_demonstrations()
+    operations={
+        "/resources/axiom-investment-npv/":("npv","finance.npv"),
+        "/resources/axiom-historical-var/":("portfolio-var","finance.var_historical"),
+        "/resources/axiom-linear-regression/":("regression","statistics.regression"),
+        "/resources/axiom-linear-optimisation/":("optimization","optimization.linear_program"),
+    }
+    cases={x["id"]:x for x in evidence["examples"]}
+    for route,(example_id,operation) in operations.items():
+        assert route in pages
+        source=pages[route]
+        article=page(route)
+        assert article.select_one("article.axiom-longform")
+        assert article.select_one('time[datetime="2026-11-21"]')
+        assert article.select_one('link[rel="stylesheet"][href="/assets/site.css"]')
+        assert article.select_one('a[href="/products/axiom/#axiom-operation-'+operation.replace(".", "-")+'"]')
+        assert article.select_one('a[href="/resources/#axiom-practical-guides"]')
+        assert len(article.select("main#main"))==1 and len(article.select("h1"))==1
+        assert len(article.select("h2"))>=6
+        assert not article.select("article.axiom-longform form, article.axiom-longform iframe")
+        assert cases[example_id]["result"] in article.get_text(" ",strip=True)
+        exact=article.select_one(".axiom-tutorial-inputs pre code")
+        assert exact is not None
+        assert json.loads(exact.get_text())==cases[example_id]["arguments"]
+    resources=page("/resources/")
+    assert len(resources.select('#axiom-practical-guides a[href^="/resources/axiom-"]'))==4
+    demos=page("/products/axiom/")
+    assert len(demos.select('.axiom-demo-card a[href^="/resources/axiom-"]'))==4
+
+def test_four_tutorials_have_distinct_indexable_intents_in_seo_source():
+    pages=json.loads((ROOT/"content/pages.json").read_text(encoding="utf-8"))
+    seo=json.loads((ROOT/"content/seo-routes.json").read_text(encoding="utf-8"))
+    tutorial_urls=[route for route in pages if route.startswith("/resources/axiom-")]
+    assert len(tutorial_urls)==4
+    assert len(seo["routes"])==37
+    keywords={seo["routes"][route]["primary_query"] for route in tutorial_urls}
+    assert len(keywords)==4
+    for route in tutorial_urls:
+        assert seo["routes"][route]["page_kind"]=="tutorial"
+        assert pages[route]["title"] in page(route).title.get_text()

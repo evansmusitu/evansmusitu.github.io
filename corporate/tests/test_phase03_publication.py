@@ -67,7 +67,7 @@ class PublicationContract(unittest.TestCase):
         with patch.dict(os.environ,{"MUSITU_BUILD_MODE":"review","MUSITU_PUBLISH_PHASE03":"0",
                                   "MUSITU_PROTECTED_STAGING_MEDIA":"0"},clear=False):
             baseline=build()
-        self.assertEqual(baseline["route_count"],34)
+        self.assertEqual(baseline["route_count"],38)
         self.assertEqual(baseline["phase03_publication_routes"],[])
         self.assertIsNone(baseline["phase03_article_publication_date"])
         # Cloudflare Pages requires a root-level 404.html or unknown routes become HTTP 200 SPA fallbacks.
@@ -79,7 +79,7 @@ class PublicationContract(unittest.TestCase):
         with patch.dict(os.environ,{"MUSITU_BUILD_MODE":"review","MUSITU_PUBLISH_PHASE03":"1",
                                   "MUSITU_PROTECTED_STAGING_MEDIA":"0"},clear=False):
             candidate=build()
-        self.assertEqual(candidate["route_count"],49)
+        self.assertEqual(candidate["route_count"],53)
         self.assertEqual(len(candidate["phase03_publication_routes"]),15)
         self.assertFalse(candidate["phase03_publication_indexable"])
         self.assertIsNone(candidate["phase03_article_publication_date"])
@@ -102,7 +102,7 @@ class PublicationContract(unittest.TestCase):
             self.assertIn('<article class="section shell phase03-article">',html)
             self.assertNotIn("not approved for public release",html.lower())
 
-    def test_production_jsonld_sitemap_49_pages_with_media(self):
+    def test_production_jsonld_sitemap_53_pages_with_media(self):
         # Production test runs only when the parent CI job has added the hash-approved assets.
         if not (ROOT/"assets"/"studio-demo-82s.mp4").exists():
             self.skipTest("Approved Studio media absent; run in authorized CI production artifact job")
@@ -112,12 +112,12 @@ class PublicationContract(unittest.TestCase):
             manifest=build()
         self.assertTrue(manifest["phase03_publication_indexable"])
         self.assertEqual(manifest["phase03_article_publication_date"],"2026-11-09")
-        self.assertEqual(manifest["route_count"],49)
+        self.assertEqual(manifest["route_count"],53)
         self.assertEqual(len(manifest["phase03_publication_routes"]),15)
         locs=ET.parse(ROOT/"dist"/"sitemap.xml").getroot()
         actual=[u.text for u in locs.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]
-        self.assertEqual(len(actual),48)
-        self.assertEqual(len(set(actual)),48)
+        self.assertEqual(len(actual),52)
+        self.assertEqual(len(set(actual)),52)
         self.assertIn(ORIGIN+"/fr/research/",actual)
         self.assertIn(ORIGIN+"/research/articles/model-risk-governance-2026/",actual)
         for route in list(ROUTES)+manifest["phase03_publication_routes"]:
@@ -146,7 +146,7 @@ class PublicationContract(unittest.TestCase):
                 self.assertIn('inLanguage":"fr"',html)
             if route in EN_FR:
                 self.assertIn('hreflang="fr"',html)
-        self.assertEqual(len(list((ROOT/"dist").rglob("index.html"))),49)
+        self.assertEqual(len(list((ROOT/"dist").rglob("index.html"))),53)
 
 class PublicObserverReleaseRegression(unittest.TestCase):
     """The public acceptance check must not pass the pre-Phase-03 site."""
@@ -155,7 +155,7 @@ class PublicObserverReleaseRegression(unittest.TestCase):
         from public_seo_observer import audit
         from seo import read_catalog
         routes = set(read_catalog()["routes"]) | set(article_routes(approved_sources())) | set(FR_EN)
-        self.assertEqual(len(routes),48)
+        self.assertEqual(len(routes),52)
         xml = ('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
                + ''.join('<url><loc>'+ORIGIN+route+'</loc></url>' for route in sorted(routes))
                + '</urlset>').encode()
@@ -173,7 +173,7 @@ class PublicObserverReleaseRegression(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError,"Missing public path.*404"):
                 audit()
 
-    def test_legacy_33_url_sitemap_cannot_qualify_phase03(self):
+    def test_legacy_37_url_sitemap_cannot_qualify_phase03(self):
         from public_seo_observer import audit
         from seo import read_catalog
         core = sorted(read_catalog()["routes"])
