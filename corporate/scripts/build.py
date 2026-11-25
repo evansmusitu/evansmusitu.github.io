@@ -184,7 +184,7 @@ def build()->dict:
  if DST.exists():shutil.rmtree(DST)
  DST.mkdir(parents=True)
  asset_dest=DST/'assets';asset_dest.mkdir()
- for name in ('site.css','site.js','favicon.svg'):
+ for name in ('site.css','site.js','favicon.svg','cartesia-startups-primary.svg'):
   shutil.copyfile(ASSETS/name,asset_dest/name)
  staged_media=verified_studio_media_ready(mode)
  if staged_media:
