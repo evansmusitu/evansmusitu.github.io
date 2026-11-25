@@ -317,3 +317,6 @@ body::before{height:700px;background:radial-gradient(ellipse at 83% 7%,rgba(112,
 .axiom-filter-bar,.enquiry-builder{display:none}
 .has-js .axiom-filter-bar{display:flex}
 .has-js .enquiry-builder{display:grid}
+
+/* Official Cartesia Startups lockup, displayed without alteration on a light surface. */
+.startup-grant{display:flex;flex-direction:column;align-items:flex-start;gap:10px;width:fit-content;max-width:100%;margin-top:24px;padding:16px 18px;border:1px solid #deded9;border-radius:12px;background:#f9f9f8;color:#1e1c1a}.startup-grant span{font-size:11px;letter-spacing:.08em;text-transform:uppercase}.startup-grant img{display:block;width:250px;max-width:100%;height:auto}.startup-grant:focus-visible{outline:3px solid var(--mint);outline-offset:4px}
